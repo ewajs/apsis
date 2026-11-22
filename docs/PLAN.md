@@ -16,11 +16,13 @@ unless they say to keep going. Each milestone ends with a `0.N.0` release.
       needed one re-run (the deploy action asked for the artifact before GitHub listed it).
 - [x] **0.3 Bilingual shell and PWA.** Lit app shell, design tokens, `@lit/localize`
       with es-AR and English, language switch, manifest, icon, service worker.
-      **Verify:** switch without reload; installs and opens offline on a phone.
+      **Verify:** switch without reload; installs and opens offline on a phone. Live
+      2026-11-22: shell, manifest, service worker and an offline reload checked in a
+      headless phone browser; install on a real phone still to try.
 
 ## M1 — Data you can trust (v0.1.0)
 
-- [ ] **1.1 Horizons client and parser.** Pure parser in `core` tested against
+- [x] **1.1 Horizons client and parser.** Pure parser in `core` tested against
       recorded responses; `npm run data` fetches the planets and five spacecraft for
       the live window and writes chunks. **Verify:** chunks validate; a Horizons error
       fails the run with a clear message.

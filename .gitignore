@@ -9,3 +9,4 @@ playwright-report/
 # Local agent worktrees
 .claude/worktrees/
 dev-dist/
+public/data/

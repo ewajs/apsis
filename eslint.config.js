@@ -38,6 +38,8 @@ export default [
         // Last, so it only takes the files directly in src/ (main.ts) that no folder above claims.
         { type: 'app', pattern: 'src' },
         { type: 'scripts', pattern: 'scripts' },
+        // Recorded API answers; only tests may read them.
+        { type: 'fixtures', pattern: 'tests/fixtures' },
       ],
       'boundaries/files': [{ pattern: '**/*.test.ts', category: 'test' }],
       'import/resolver': {
@@ -77,6 +79,10 @@ export default [
             {
               from: { file: { categories: 'test' } },
               allow: { to: packages('vitest') },
+            },
+            {
+              from: { file: { categories: 'test' } },
+              allow: { to: elements('fixtures') },
             },
           ],
         },
