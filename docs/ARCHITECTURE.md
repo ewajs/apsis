@@ -1,0 +1,86 @@
+# Architecture
+
+> Planned. This describes the design agreed in [the decisions](decisions/README.md);
+> nothing is implemented yet. Sections become "current" as steps land.
+
+## Overview
+
+Apsis has two halves that meet at a folder of JSON files:
+
+```
+                 ┌──────────── build time (Node, GitHub Actions) ────────────┐
+catalogue.yaml ─►│ scripts/data: validate catalogue, fetch Horizons, write   │─► dist/data/*.json
+Horizons API  ─► │ chunks; committed archive copied as is                    │
+                 └───────────────────────────────────────────────────────────┘
+                 ┌──────────────────────── browser ──────────────────────────┐
+dist/data/*.json►│ data: load chunks ─► core: interpolate at t ─► scene / map│─► pixels
+                 │                                    ui (Lit): picker, card, │
+                 │                                    time slider            │
+                 └───────────────────────────────────────────────────────────┘
+```
+
+There is no backend. A daily scheduled build refreshes the active missions' data and
+redeploys the static site ([ADR 0008](decisions/0008-hosting-and-delivery.md)).
+
+## Folders
+
+```
+data/
+  catalogue.yaml          hand-written missions, bilingual (ADR 0009)
+  archive/<body>/<year>.json   committed ephemeris chunks that never change
+scripts/data/             Node + TS: Horizons client, catalogue validation, chunk writer
+src/
+  core/                   pure: Horizons parsing, time scales, Hermite interpolation,
+                          frames and units, orbit ellipses, distances and light-time
+  data/                   browser loading of the catalogue and chunks (fetch, cache)
+  scene/                  three.js: renderer, camera, bodies, markers, trails
+  map/                    2D top-down SVG of the ecliptic plane
+  ui/                     Lit components: shell, picker, card, time slider, settings
+  i18n/                   @lit/localize setup and generated locale modules
+  main.ts                 wires data, the time controller, scene, map and ui
+public/textures/          planet textures and CREDITS.md
+tests/fixtures/           recorded Horizons responses
+docs/                     this file, PLAN.md, decisions/, guides/
+```
+
+`scripts/` is never imported by `src/`. Shared types (the chunk format, the
+catalogue entry) live in `src/core` and the scripts import them from there, so the
+format is defined once.
+
+## Dependency direction
+
+```
+main.ts ─► ui ─► core (types and pure helpers)
+        ─► scene ─► core
+        ─► map ─► core
+        ─► data ─► core
+core ─► nothing
+```
+
+`scene`, `map`, `ui` and `data` are siblings and never import each other: `main.ts` hands
+each one what it needs. ESLint's boundary rules enforce this.
+
+## Time
+
+A single time controller in `main.ts` owns the displayed instant `t` (UTC
+milliseconds, as the clock gives it) and its rate (paused, real time, or faster,
+forwards or backwards). Every frame it converts `t` to TDB, asks `core` for each
+body's state at that instant, and hands the states to the scene or the map. "Now"
+is the controller's default, not a special case anywhere else.
+
+## Rendering
+
+The scene uses three.js `WebGLRenderer` with a logarithmic depth buffer. Positions
+stay in kilometres as 64-bit JavaScript numbers; each frame the scene subtracts the
+focus's position before writing three.js positions, so the GPU's 32-bit floats only
+ever see small numbers near what you're looking at
+([ADR 0004](decisions/0004-frames-units-and-time.md)). Bodies are drawn at true size
+with a minimum size on screen ([ADR 0005](decisions/0005-scale.md)).
+
+## Caching and offline
+
+The service worker precaches the app shell and textures. Data chunks are cached at
+runtime: live chunks show the cached copy and refresh in the background; archived
+chunks are served from the cache once fetched
+([ADR 0007](decisions/0007-pwa.md)). Data is never part of the app's version, so the
+daily data refresh doesn't make every visitor update the app.

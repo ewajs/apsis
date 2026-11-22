@@ -1,0 +1,98 @@
+# Plan
+
+One step is one reviewable PR. `[ ]` planned, `[~]` in progress, `[x]` done. Details
+are settled when a step starts; the owner reviews each step before the next begins
+unless they say to keep going. Each milestone ends with a `0.N.0` release.
+
+## M0 — Foundation
+
+- [~] **0.1 Charter and decisions.** README, AGENTS/CLAUDE, CONTRIBUTING,
+  ARCHITECTURE, ADRs 0001–0009, this plan. **Verify:** links resolve, docs agree
+  with each other, planned behavior labeled as planned.
+- [ ] **0.2 Scaffold and delivery.** Node 24, Vite, TS strict, ESLint (with folder
+      boundaries), Prettier, Vitest, `npm run check`, PR CI, Pages deploy of a
+      placeholder page under `/apsis/`. **Verify:** clean install, check and build; a
+      deliberately wrong import fails lint; the placeholder is live.
+- [ ] **0.3 Bilingual shell and PWA.** Lit app shell, design tokens, `@lit/localize`
+      with es-AR and English, language switch, manifest, icon, service worker.
+      **Verify:** switch without reload; installs and opens offline on a phone.
+
+## M1 — Data you can trust (v0.1.0)
+
+- [ ] **1.1 Horizons client and parser.** Pure parser in `core` tested against
+      recorded responses; `npm run data` fetches the planets and five spacecraft for
+      the live window and writes chunks. **Verify:** chunks validate; a Horizons error
+      fails the run with a clear message.
+- [ ] **1.2 Catalogue.** YAML schema and validation, five bilingual entries, and a
+      verification table in `docs/guides/data.md` for every candidate below: Horizons
+      ID, coverage, status, source. **Verify:** a broken entry fails validation.
+- [ ] **1.3 Time and interpolation.** UTC → TDB, cubic Hermite, chunk lookup, "no data
+      for this date". **Verify:** against Horizons samples between the daily ones,
+      within a stated tolerance; a guide explains Hermite with a diagram.
+- [ ] **1.4 The 2D map.** SVG top-down view of the ecliptic: Sun, planets, spacecraft
+      and their trails, at the current instant, with optional log distance.
+      **Verify:** positions match Horizons for a chosen date; readable at 375×667.
+- [ ] **1.5 Planet orbits.** Osculating elements from Horizons, committed; ellipses
+      drawn on the map. **Verify:** each planet's current position sits on its ellipse.
+- [ ] **1.6 Daily refresh.** Scheduled build, data date in the page, the 60-day
+      mitigation (ADR 0008). **Verify:** a scheduled run deploys fresh data.
+
+Spacecraft to verify in 1.2 (the first five ship in M1, the rest in 4.3): BepiColombo,
+Hera, JUICE, Europa Clipper, Psyche, Juno, Lucy, Parker Solar Probe, Solar Orbiter,
+New Horizons, Voyager 1, Voyager 2, MMX, Tianwen-2. Each needs a Horizons ephemeris;
+those without one get `horizons: null` (ADR 0009).
+
+## M2 — The 3D scene (v0.2.0)
+
+- [ ] **2.1 Scene.** `WebGLRenderer`, floating origin, log depth, camera controls,
+      Sun and textured planets (true size with minimum on-screen size), orbit lines,
+      2D/3D switch. **Verify:** no jitter zoomed in near Neptune; runs on a mid-range phone.
+- [ ] **2.2 Spacecraft.** Markers, labels with decluttering, trails. **Verify:**
+      positions match the 2D map.
+- [ ] **2.3 True scale and polish.** True-scale setting, Saturn's rings, lighting
+      from the Sun, star background. **Verify:** the owner reviews the look.
+
+## M3 — Time (v0.3.0)
+
+- [ ] **3.1 Time slider.** Forwards and backwards, play speeds, back to now.
+- [ ] **3.2 Archive and loading on demand.** `npm run data:archive`, committed
+      chunks, yearly loading around the displayed instant, runtime caching by kind.
+- [ ] **3.3 Cassini.** The first ended mission, 1997–2017, with a fine step at flybys;
+      planets archived for its years.
+
+## M4 — Pick one (v0.4.0)
+
+- [ ] **4.1 Picker and selection.** List, search, selection, camera flies to it.
+- [ ] **4.2 Mission card.** Distance from Earth, light-time, speed, next milestone,
+      blurb, links.
+- [ ] **4.3 Full catalogue.** Every verified candidate from 1.2.
+
+## M5 — Local views (v0.5.0)
+
+- [ ] **5.1 Target-centred views.** Frames centred on a planet or asteroid, finer-step
+      local data for orbiters.
+- [ ] **5.2 First targets.** BepiColombo at Mercury, Juno at Jupiter, Hera at Didymos,
+      Cassini at Saturn.
+
+## M6 — Spacecraft models (v0.6.0)
+
+- [ ] **6.1 Model survey.** For each mission: an available model, its source and
+      license (NASA 3D Resources, ESA, others), or "make our own".
+- [ ] **6.2 Models in local views.** GLB loading, scale, orientation (attitude is not
+      in Horizons; a sensible default pose).
+
+## M7 — AR (v0.7.0)
+
+- [ ] **7.1 Tabletop solar system.** WebXR `immersive-ar` on Android: the scene on a
+      table, at the displayed instant.
+- [ ] **7.2 iPhone.** Check WebXR support again; otherwise Quick Look with a USDZ
+      snapshot.
+
+## Later, not planned
+
+SPICE for missions Horizons lacks; major moons; Earth-centred view for near-Earth
+missions; a link to fly a trajectory in gravitas.
+
+## Releases
+
+None yet.

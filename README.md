@@ -1,0 +1,35 @@
+# Apsis
+
+Where are they now? Apsis is an open-source web app that shows deep-space missions
+in a 3D solar system: pick a spacecraft and see where it is today, where it has been
+and where it is going, with a short card about the mission. Planets and spacecraft
+positions come from NASA JPL's [Horizons](https://ssd.jpl.nasa.gov/horizons/) system.
+
+It aims to be fun and informative, not engineering-grade. It is a static,
+installable web app (PWA) in Spanish (Argentina) and English, hosted on GitHub Pages.
+
+An _apsis_ is one of the two extreme points of an orbit: the closest and the
+farthest from the body it goes around.
+
+**Status:** planning. Nothing is built yet; [the plan](docs/PLAN.md) lists the
+milestones, and [the decisions](docs/decisions/README.md) explain the design.
+
+## Documentation
+
+- [PLAN.md](docs/PLAN.md): milestones and the PRs that make them up.
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md): how the pieces fit together.
+- [Decisions](docs/decisions/README.md): why things are the way they are.
+- [CONTRIBUTING.md](CONTRIBUTING.md): how we work.
+
+## Credits
+
+- Ephemerides: [JPL Horizons](https://ssd.jpl.nasa.gov/horizons/), NASA/JPL-Caltech
+  Solar System Dynamics group.
+- Planet textures: [Solar System Scope](https://www.solarsystemscope.com/textures/),
+  licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), based on
+  NASA elevation and imagery data.
+
+## License
+
+Code is [MIT](LICENSE). Third-party assets keep their own licenses, listed above
+and in `public/textures/CREDITS.md` once they are added.
