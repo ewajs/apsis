@@ -29,6 +29,21 @@ Conventional commits (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`,
 `data:` for catalogue or archived-ephemeris changes). Each milestone ends with
 version `0.N.0` in `package.json` and a short release note in PLAN.md.
 
+## Commands
+
+| Command                                   | Does                                                         |
+| ----------------------------------------- | ------------------------------------------------------------ |
+| `npm run dev`                             | Dev server at `/apsis/`; append `-- --host` to try a phone   |
+| `npm run check`                           | Format, lint, types and unit tests: the PR gate              |
+| `npm run lint`                            | ESLint, including folder boundaries; warnings fail           |
+| `npm run typecheck`                       | The app, `core` alone (no DOM, no Node), scripts and configs |
+| `npm test` / `npm run test:watch`         | Vitest, tests beside the code as `*.test.ts`                 |
+| `npm run format` / `npm run format:check` | Write / check formatting                                     |
+| `npm run build` / `npm run preview`       | Production build to `dist/` / serve it                       |
+
+CI runs `check`, `npm audit --omit=dev` (advisories in what ships) and `build` on every
+PR; on `main` it then deploys that same build to Pages.
+
 ## Code
 
 - TypeScript strict, no `any`. Validate external data (Horizons responses, the

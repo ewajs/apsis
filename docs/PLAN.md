@@ -7,9 +7,9 @@ unless they say to keep going. Each milestone ends with a `0.N.0` release.
 ## M0 — Foundation
 
 - [x] **0.1 Charter and decisions.** README, AGENTS/CLAUDE, CONTRIBUTING,
-  ARCHITECTURE, ADRs 0001–0009, this plan. **Verify:** links resolve, docs agree
-  with each other, planned behavior labeled as planned.
-- [ ] **0.2 Scaffold and delivery.** Node 24, Vite, TS strict, ESLint (with folder
+      ARCHITECTURE, ADRs 0001–0009, this plan. **Verify:** links resolve, docs agree
+      with each other, planned behavior labeled as planned.
+- [x] **0.2 Scaffold and delivery.** Node 24, Vite, TS strict, ESLint (with folder
       boundaries), Prettier, Vitest, `npm run check`, PR CI, Pages deploy of a
       placeholder page under `/apsis/`. **Verify:** clean install, check and build; a
       deliberately wrong import fails lint; the placeholder is live.

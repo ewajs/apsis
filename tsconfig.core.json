@@ -1,0 +1,6 @@
+// core is pure (ADR 0001): no DOM and no Node types are visible to it, so using
+// `document`, `fetch` or `process` there fails the type check.
+{
+  "extends": "./tsconfig.base.json",
+  "include": ["src/core"]
+}
