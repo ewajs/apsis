@@ -42,4 +42,5 @@ logarithmic.
   scene than to retrofit.
 - **Logarithmic depth.** A scene spanning metres to tens of AU loses depth precision
   with a linear buffer (far objects flicker through each other). three.js supports
-  `logarithmicDepthBuffer` on `WebGLRenderer`.
+  `logarithmicDepthBuffer` on `WebGPURenderer`, on both backends. It also offers a
+  reversed depth buffer, which can be more precise; step 2.1 compares the two.

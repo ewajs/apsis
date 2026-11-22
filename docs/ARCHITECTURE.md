@@ -70,7 +70,7 @@ is the controller's default, not a special case anywhere else.
 
 ## Rendering
 
-The scene uses three.js `WebGLRenderer` with a logarithmic depth buffer. Positions
+The scene uses three.js `WebGPURenderer` (WebGL 2 fallback) with a logarithmic depth buffer. Positions
 stay in kilometres as 64-bit JavaScript numbers; each frame the scene subtracts the
 focus's position before writing three.js positions, so the GPU's 32-bit floats only
 ever see small numbers near what you're looking at

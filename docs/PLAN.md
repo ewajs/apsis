@@ -44,9 +44,9 @@ those without one get `horizons: null` (ADR 0009).
 
 ## M2 — The 3D scene (v0.2.0)
 
-- [ ] **2.1 Scene.** `WebGLRenderer`, floating origin, log depth, camera controls,
+- [ ] **2.1 Scene.** `WebGPURenderer` with WebGL fallback, floating origin, log depth, camera controls,
       Sun and textured planets (true size with minimum on-screen size), orbit lines,
-      2D/3D switch. **Verify:** no jitter zoomed in near Neptune; runs on a mid-range phone.
+      2D/3D switch. **Verify:** no jitter zoomed in near Neptune; runs on a mid-range phone on both backends.
 - [ ] **2.2 Spacecraft.** Markers, labels with decluttering, trails. **Verify:**
       positions match the 2D map.
 - [ ] **2.3 True scale and polish.** True-scale setting, Saturn's rings, lighting
@@ -83,10 +83,12 @@ those without one get `horizons: null` (ADR 0009).
 
 ## M7 — AR (v0.7.0)
 
-- [ ] **7.1 Tabletop solar system.** WebXR `immersive-ar` on Android: the scene on a
-      table, at the displayed instant.
-- [ ] **7.2 iPhone.** Check WebXR support again; otherwise Quick Look with a USDZ
-      snapshot.
+- [ ] **7.1 Spacecraft in your room.** Hand off each model to the phone's own AR
+      viewer: Scene Viewer on Android (GLB), Quick Look on iPhone (USDZ). Static
+      models at real size, no live data.
+- [ ] **7.2 Tabletop solar system.** Export the scene at the displayed instant as a
+      GLB/USDZ snapshot and hand it off the same way. Live AR (WebXR) only if the
+      snapshot falls short.
 
 ## Later, not planned
 
