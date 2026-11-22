@@ -19,10 +19,11 @@ prefer explicit code, familiar platform mechanisms and small changes over clever
 
 1. Pick the next step in [PLAN.md](docs/PLAN.md) and mark it `[~]`.
 2. Branch from `main`: `feat/`, `fix/`, `docs/`, `chore/`, `data/`.
-3. Implement with tests. A step whose source code (`src/`, `scripts/`, config) grows
-   beyond ~400 changed lines is split in PLAN.md first. Tests, docs, generated files
-   and the lockfile don't count: a PR can pass 1,000 lines in total and still be one
-   reviewable step.
+3. Implement with tests. A PR is one self-contained, reviewable unit; size is a hint,
+   not a limit. As a rough guide, more than ~400 changed lines of source code (`src/`,
+   `scripts/`, config) is worth a second look for a natural split; tests, docs,
+   generated files and the lockfile don't count. Never split a unit just to get under
+   a number.
 4. `npm run check` passes; try the change in a browser at 375×667 and on desktop.
 5. Open a PR; CI must be green. Tick the step `[x]` in the same PR.
 6. The owner reviews and merges. `main` deploys to GitHub Pages.
