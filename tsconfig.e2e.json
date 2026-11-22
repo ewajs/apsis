@@ -1,0 +1,9 @@
+// Browser tests run in Node but pass functions to the page, so they see both.
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node"]
+  },
+  "include": ["tests/e2e"]
+}

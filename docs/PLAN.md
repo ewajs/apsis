@@ -12,8 +12,9 @@ unless they say to keep going. Each milestone ends with a `0.N.0` release.
 - [x] **0.2 Scaffold and delivery.** Node 24, Vite, TS strict, ESLint (with folder
       boundaries), Prettier, Vitest, `npm run check`, PR CI, Pages deploy of a
       placeholder page under `/apsis/`. **Verify:** clean install, check and build; a
-      deliberately wrong import fails lint; the placeholder is live.
-- [ ] **0.3 Bilingual shell and PWA.** Lit app shell, design tokens, `@lit/localize`
+      deliberately wrong import fails lint; the placeholder is live. Live at https://ewajs.github.io/apsis/ on 2026-11-22; the first deploy
+      needed one re-run (the deploy action asked for the artifact before GitHub listed it).
+- [x] **0.3 Bilingual shell and PWA.** Lit app shell, design tokens, `@lit/localize`
       with es-AR and English, language switch, manifest, icon, service worker.
       **Verify:** switch without reload; installs and opens offline on a phone.
 

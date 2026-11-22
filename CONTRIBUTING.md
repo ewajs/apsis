@@ -40,6 +40,10 @@ version `0.N.0` in `package.json` and a short release note in PLAN.md.
 | `npm test` / `npm run test:watch`         | Vitest, tests beside the code as `*.test.ts`                 |
 | `npm run format` / `npm run format:check` | Write / check formatting                                     |
 | `npm run build` / `npm run preview`       | Production build to `dist/` / serve it                       |
+| `npm run e2e`                             | Build, then the browser tests on a phone and a desktop       |
+| `npm run icons`                           | Redraw the icon and render its PNGs into `public/`           |
+
+Before the first `npm run e2e`, install the browser: `npx playwright install chromium`.
 
 CI runs `check`, `npm audit --omit=dev` (advisories in what ships) and `build` on every
 PR; on `main` it then deploys that same build to Pages.

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<title>Apsis</title>
+<rect width="512" height="512" rx="96" fill="#070b14"/>
+<g transform="rotate(-45 256 256)">
+<ellipse cx="256" cy="256" rx="170" ry="147.2" fill="none" stroke="#5cc8ff" stroke-opacity=".8" stroke-width="32"/>
+<circle cx="341" cy="256" r="62" fill="#ffb547"/>
+<circle cx="86" cy="256" r="50" fill="#5cc8ff"/><circle cx="86" cy="256" r="22" fill="#e8ecf4"/>
+</g>
+</svg>

@@ -1,0 +1,41 @@
+/*
+ * Design tokens and page-wide styles. Components use the tokens through var(), which
+ * reaches inside their shadow roots. Palette "P1 · Deep space", chosen on 2026-11-22.
+ * Contrast on --color-surface (WCAG): text 14.6:1, muted 5.9:1, sun 9.9:1, craft 9.2:1.
+ * scripts/icons.ts reads the colours below, so the app icon always matches.
+ */
+:root {
+  --color-bg: #070b14;
+  --color-surface: #111a2e;
+  --color-line: #233150;
+  --color-text: #e8ecf4;
+  --color-muted: #8a97b0;
+  /* The Sun, and the app's accent: highlights, the primary button. */
+  --color-sun: #ffb547;
+  /* Spacecraft and their trails. */
+  --color-craft: #5cc8ff;
+  /* Text on a --color-sun or --color-craft fill. */
+  --color-on-accent: #070b14;
+
+  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --radius: 14px;
+  --space: 16px;
+  --dur-fast: 150ms;
+
+  color-scheme: dark;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+  }
+}

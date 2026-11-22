@@ -35,12 +35,13 @@ src/
   data/                   browser loading of the catalogue and chunks (fetch, cache)
   scene/                  three.js: renderer, camera, bodies, markers, trails
   map/                    2D top-down SVG of the ecliptic plane
-  ui/                     Lit components: shell, picker, card, time slider, settings
+  ui/                     Lit components: shell, picker, card, time slider, settings;
+                          styles.css holds the design tokens
   i18n/                   @lit/localize setup and generated locale modules
   main.ts                 wires data, the time controller, scene, map and ui
-public/textures/          planet textures and CREDITS.md
-tests/fixtures/           recorded Horizons responses
-docs/                     this file, PLAN.md, decisions/, guides/
+public/                   icons (from scripts/icons.ts); textures/ and CREDITS.md later
+tests/                    i18n completeness; e2e/ browser tests; fixtures/ recorded Horizons responses
+docs/                     this file, PLAN.md, decisions/, guides/ (start with ui-shell.md)
 ```
 
 `scripts/` is never imported by `src/`. Shared types (the chunk format, the
