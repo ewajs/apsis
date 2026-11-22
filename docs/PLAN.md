@@ -6,7 +6,7 @@ unless they say to keep going. Each milestone ends with a `0.N.0` release.
 
 ## M0 — Foundation
 
-- [~] **0.1 Charter and decisions.** README, AGENTS/CLAUDE, CONTRIBUTING,
+- [x] **0.1 Charter and decisions.** README, AGENTS/CLAUDE, CONTRIBUTING,
   ARCHITECTURE, ADRs 0001–0009, this plan. **Verify:** links resolve, docs agree
   with each other, planned behavior labeled as planned.
 - [ ] **0.2 Scaffold and delivery.** Node 24, Vite, TS strict, ESLint (with folder
