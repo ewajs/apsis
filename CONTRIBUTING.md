@@ -1,0 +1,71 @@
+# Contributing
+
+Apsis is a small, static web app. The owner must be able to follow all of it, so
+prefer explicit code, familiar platform mechanisms and small changes over cleverness.
+
+## Principles
+
+1. **Simple over complex.** Build the simplest thing that solves today's problem. No
+   abstraction, option or extension point until a second real use needs it.
+2. **Pure logic, edges outside.** Orbital math, interpolation and data parsing are
+   pure functions in `src/core`. Network, storage, the clock, three.js and the DOM
+   live at the edges and pass data in.
+3. **Real data, honestly shown.** Positions come from Horizons. If we don't have a
+   position, we say so; we never invent one.
+4. **Code documents itself.** Types and TSDoc on exports are the reference; prose docs
+   explain how the pieces fit and why.
+
+## Working cycle
+
+1. Pick the next step in [PLAN.md](docs/PLAN.md) and mark it `[~]`.
+2. Branch from `main`: `feat/`, `fix/`, `docs/`, `chore/`, `data/`.
+3. Implement with tests. A step that grows beyond ~400 changed lines is split in
+   PLAN.md first.
+4. `npm run check` passes; try the change in a browser at 375×667 and on desktop.
+5. Open a PR; CI must be green. Tick the step `[x]` in the same PR.
+6. The owner reviews and merges. `main` deploys to GitHub Pages.
+
+Conventional commits (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`,
+`data:` for catalogue or archived-ephemeris changes). Each milestone ends with
+version `0.N.0` in `package.json` and a short release note in PLAN.md.
+
+## Code
+
+- TypeScript strict, no `any`. Validate external data (Horizons responses, the
+  catalogue) at the boundary, where it enters.
+- Plain data and pure functions for logic. Stateful owners (the scene, the time
+  controller) may be classes with private fields.
+- Name things after the domain: _ephemeris, state vector, chunk, epoch, focus,
+  trail, apsis_. Units in names when ambiguous (`distanceKm`, `tdbSeconds`).
+- Tunable numbers (minimum on-screen size, trail length, time steps) live in one
+  named constant each.
+- Comments explain _why_. No commented-out code, no TODOs without a PLAN.md entry.
+- Prettier formats; ESLint warnings are errors, including folder boundaries.
+
+## Dependencies
+
+A dependency must remove real complexity. For each new one, say in the PR what it
+saves, its license, its cost in bundle size and the alternatives considered. Runtime
+stack changes get an ADR. Commit the lockfile.
+
+## Testing
+
+- Vitest for `src/core` and the data scripts. Parsers are tested against recorded
+  Horizons responses in `tests/fixtures/`, never against the live API.
+- Interpolation is tested against Horizons itself: fixtures sampled at a fine step
+  give the expected positions between the coarse samples, within stated tolerances.
+- Playwright runs locally for changes to page flow, input, rendering or the PWA. CI
+  runs the fast checks only.
+- No snapshot tests of components or screenshots as proof of correctness.
+
+## Documentation
+
+- Every exported function, type and constant has a TSDoc comment.
+- Every Lit component starts with a comment: what it shows, its properties and the
+  events it fires.
+- Developer guides in `docs/guides/` explain how a feature works end to end. Write
+  one with each feature the owner will want to dig into later (the data pipeline,
+  interpolation, the scene's scale and floating origin).
+- A change that makes a doc wrong fixes the doc in the same PR.
+- Code, comments and developer docs are English. Player-facing text is es-AR
+  (voseo) and English.
