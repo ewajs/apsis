@@ -11,8 +11,21 @@ installable web app (PWA) in Spanish (Argentina) and English, hosted on GitHub P
 An _apsis_ is one of the two extreme points of an orbit: the closest and the
 farthest from the body it goes around.
 
-**Status:** planning. Nothing is built yet; [the plan](docs/PLAN.md) lists the
-milestones, and [the decisions](docs/decisions/README.md) explain the design.
+**Status:** scaffolding. The site is a placeholder; [the plan](docs/PLAN.md) lists
+the milestones, and [the decisions](docs/decisions/README.md) explain the design.
+
+## Development
+
+Node 24 ([`.nvmrc`](.nvmrc)), then:
+
+```sh
+nvm use
+npm ci
+npm run dev     # http://localhost:5173/apsis/
+npm run check   # what every PR must pass
+```
+
+[CONTRIBUTING.md](CONTRIBUTING.md) lists every command.
 
 ## Documentation
 

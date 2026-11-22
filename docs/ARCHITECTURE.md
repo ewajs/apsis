@@ -57,6 +57,11 @@ main.ts ─► ui ─► core (types and pure helpers)
 core ─► nothing
 ```
 
+`eslint.config.js` encodes this, external packages included (only `scene` may import
+`three`, only `ui` and `i18n` Lit). Files directly in `src/` belong to the app, which
+nothing may import; a new folder needs its own entry there. `tsconfig.core.json`
+type-checks `core` with no DOM or Node types, so browser and Node APIs fail there.
+
 `scene`, `map`, `ui` and `data` are siblings and never import each other: `main.ts` hands
 each one what it needs. ESLint's boundary rules enforce this.
 
