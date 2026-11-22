@@ -19,8 +19,11 @@ prefer explicit code, familiar platform mechanisms and small changes over clever
 
 1. Pick the next step in [PLAN.md](docs/PLAN.md) and mark it `[~]`.
 2. Branch from `main`: `feat/`, `fix/`, `docs/`, `chore/`, `data/`.
-3. Implement with tests. A step that grows beyond ~400 changed lines is split in
-   PLAN.md first.
+3. Implement with tests. A PR is one self-contained, reviewable unit; size is a hint,
+   not a limit. As a rough guide, more than ~400 changed lines of source code (`src/`,
+   `scripts/`, config) is worth a second look for a natural split; tests, docs,
+   generated files and the lockfile don't count. Never split a unit just to get under
+   a number.
 4. `npm run check` passes; try the change in a browser at 375×667 and on desktop.
 5. Open a PR; CI must be green. Tick the step `[x]` in the same PR.
 6. The owner reviews and merges. `main` deploys to GitHub Pages.
@@ -40,6 +43,10 @@ version `0.N.0` in `package.json` and a short release note in PLAN.md.
 | `npm test` / `npm run test:watch`         | Vitest, tests beside the code as `*.test.ts`                 |
 | `npm run format` / `npm run format:check` | Write / check formatting                                     |
 | `npm run build` / `npm run preview`       | Production build to `dist/` / serve it                       |
+| `npm run e2e`                             | Build, then the browser tests on a phone and a desktop       |
+| `npm run icons`                           | Redraw the icon and render its PNGs into `public/`           |
+
+Before the first `npm run e2e`, install the browser: `npx playwright install chromium`.
 
 CI runs `check`, `npm audit --omit=dev` (advisories in what ships) and `build` on every
 PR; on `main` it then deploys that same build to Pages.

@@ -24,6 +24,8 @@ here so the working rules have one source of truth.
   cannot tell them apart.
 - Player-facing text exists in Spanish (es-AR, voseo) and English, through
   `@lit/localize` or the catalogue's `{ es, en }` fields. Never hard-code it.
+- Colours, durations and radii are tokens in `src/ui/styles.css`; components use
+  `var(--…)`, never literal values. Touch targets are at least 44 px.
 - Every third-party asset has its source and license in a CREDITS file before it ships.
 
 ## Scope and autonomy

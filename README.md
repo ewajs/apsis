@@ -11,7 +11,7 @@ installable web app (PWA) in Spanish (Argentina) and English, hosted on GitHub P
 An _apsis_ is one of the two extreme points of an orbit: the closest and the
 farthest from the body it goes around.
 
-**Status:** scaffolding. The site is a placeholder; [the plan](docs/PLAN.md) lists
+**Status:** the installable, bilingual shell is up; data and the scene come next. [the plan](docs/PLAN.md) lists
 the milestones, and [the decisions](docs/decisions/README.md) explain the design.
 
 ## Development

@@ -45,7 +45,7 @@ export default [
           project: ['tsconfig.json', 'tsconfig.node.json'],
           noWarnOnMultipleProjects: true,
         },
-        node: { extensions: ['.ts', '.js'] },
+        node: { extensions: ['.ts', '.js', '.css'] },
       },
     },
     rules: {
@@ -72,6 +72,8 @@ export default [
             // The data scripts share core's types and pure parsers, and run on Node.
             allow('scripts', elements('scripts', 'core')),
             allow('scripts', nodeBuiltins),
+            // Renders the icons in the pinned Playwright Chromium.
+            allow('scripts', packages('@playwright/test')),
             {
               from: { file: { categories: 'test' } },
               allow: { to: packages('vitest') },
