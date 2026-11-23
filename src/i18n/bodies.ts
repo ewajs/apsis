@@ -1,0 +1,21 @@
+/** The names of the Sun and the planets in the current language. */
+import { msg } from '@lit/localize';
+
+/**
+ * The Sun's or a planet's name, in the language showing now; any other id comes back
+ * as it is (spacecraft names come from the catalogue and aren't translated).
+ */
+export function bodyName(id: string): string {
+  const names: Record<string, () => string> = {
+    sun: () => msg('Sol', { id: 'sun' }),
+    mercury: () => msg('Mercurio', { id: 'planet-mercury' }),
+    venus: () => msg('Venus', { id: 'planet-venus' }),
+    earth: () => msg('Tierra', { id: 'planet-earth' }),
+    mars: () => msg('Marte', { id: 'planet-mars' }),
+    jupiter: () => msg('Júpiter', { id: 'planet-jupiter' }),
+    saturn: () => msg('Saturno', { id: 'planet-saturn' }),
+    uranus: () => msg('Urano', { id: 'planet-uranus' }),
+    neptune: () => msg('Neptuno', { id: 'planet-neptune' }),
+  };
+  return names[id]?.() ?? id;
+}

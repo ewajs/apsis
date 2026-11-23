@@ -1,7 +1,8 @@
 # 0005. Scale
 
 - Status: Accepted; the minimum on-screen size implemented in 2.1 (7 px, 12 px for the
-  Sun); the true-scale button and spacecraft markers come in 2.2 and 2.3.
+  Sun), spacecraft markers (6 px) and decluttered labels in 2.2; the true-scale switch
+  in 2.3b (shared with the map's log/true switch; spacecraft keep their markers).
 - Date: 2026-11-22
 
 ## Decision

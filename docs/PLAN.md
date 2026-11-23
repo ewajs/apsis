@@ -55,10 +55,14 @@ those without one get `horizons: null` (ADR 0009).
       on demand, WebKit (iPhone) and WebGPU browser tests. **Verify:** no jitter zoomed in
       near Neptune (unit-tested, and Neptune found up close on every backend); runs on a
       mid-range phone: still to try on a real device.
-- [ ] **2.2 Spacecraft.** Markers, labels with decluttering, trails. **Verify:**
-      positions match the 2D map.
-- [ ] **2.3 True scale and polish.** True-scale setting, Saturn's rings, lighting
-      from the Sun, star background. **Verify:** the owner reviews the look.
+- [x] **2.2 Spacecraft.** Markers, labels with decluttering (HTML, sharing `placeLabels`
+      with the map), trails. **Verify:** positions match the 2D map (both use the same
+      interpolation and `trailPoints`); labels in both languages, apart, on every backend.
+- [x] **2.3a Planets that turn.** Axial tilt and spin from the IAU rotation models, and
+      Saturn's rings in its equatorial plane. **Verify:** the Sun overhead near longitude
+      180° at Greenwich midnight, at the solstice latitude; textures never mirrored.
+- [x] **2.3b The look.** Star and Milky Way background, the true-scale button in 3D.
+      **Verify:** the owner reviews the look.
 
 ## M3 — Time (v0.3.0)
 
@@ -110,6 +114,20 @@ SPICE for missions Horizons lacks; major moons; Earth-centred view for near-Eart
 missions; a link to fly a trajectory in gravitas.
 
 ## Releases
+
+### v0.2.0 — The 3D scene (2026-11-23)
+
+The solar system in three dimensions, one tap from the map.
+
+- The Sun and the planets at true scale, drawn at least a few pixels across so you can
+  find them, or at true size on request; textured, tilted and spinning as they really
+  stand (IAU rotation models), Saturn with its rings.
+- The five spacecraft with their last 30 days, every body named, names kept apart.
+- Orbits that pass exactly through their planets, and a floating origin, so close-ups
+  (`?focus=neptune`) are steady.
+- The Milky Way behind it all, along the real galactic plane.
+- WebGPU where the browser has it, WebGL 2 elsewhere; the 3D code loads only when you
+  ask for it.
 
 ### v0.1.0 — Data you can trust (2026-11-23)
 

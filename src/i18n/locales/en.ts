@@ -30,4 +30,8 @@ export const templates = {
   'scene-label': 'The Sun and the planets in 3D. Drag to turn, pinch or scroll to zoom.',
   'scene-loading': 'Preparing the 3D view…',
   'scene-failed': 'This device couldn’t show the 3D view. Carry on with the 2D map.',
+  'scene-scale-enlarged-note': 'Planets enlarged so you can see them',
+  'scene-scale-to-true': 'Show true sizes',
+  'scene-scale-true-note': 'True sizes: it’s almost all empty space',
+  'scene-scale-to-enlarged': 'Enlarge the planets',
 };
