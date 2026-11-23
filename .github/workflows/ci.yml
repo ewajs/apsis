@@ -53,6 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      actions: read
       contents: read
       pages: write
       id-token: write
@@ -71,6 +72,22 @@ jobs:
         with:
           name: github-pages-${{ github.run_attempt }}
           path: dist
+      # Right after an upload, GitHub's artifact list can lag a moment behind, and
+      # deploy-pages fails if it looks too early (it happened on 3 of the first 9
+      # deploys). Wait until the artifact is listed, for up to a minute.
+      - name: Wait for the Pages artifact to be listed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: github-pages-${{ github.run_attempt }}
+        run: |
+          for attempt in $(seq 1 30); do
+            if gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
+              --jq '.artifacts[].name' | grep -qx "$NAME"; then
+              echo "$NAME is listed"; exit 0
+            fi
+            sleep 2
+          done
+          echo "$NAME not listed after a minute; deploying anyway"
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v5.0.1
