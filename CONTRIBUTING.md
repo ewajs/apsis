@@ -44,6 +44,7 @@ version `0.N.0` in `package.json` and a short release note in PLAN.md.
 | `npm run format` / `npm run format:check` | Write / check formatting                                     |
 | `npm run build` / `npm run preview`       | Production build to `dist/` / serve it                       |
 | `npm run data`                            | Fetch the live window from Horizons into `public/data/`      |
+| `npm run data:orbits`                     | Refetch the committed planet orbits (`data/orbits.json`)     |
 | `npm run e2e`                             | Build, then the browser tests on a phone and a desktop       |
 | `npm run icons`                           | Redraw the icon and render its PNGs into `public/`           |
 

@@ -17,7 +17,8 @@ How positions get from JPL Horizons to the app. Code: `scripts/data/`,
 4. parses and validates each answer (`parseVectors`, `assertValidSamples`);
 5. splits each body's samples into calendar-year chunks (`chunkByYear`);
 6. only if every body succeeded, replaces `public/data/` with the chunks,
-   `index.json` and `catalogue.json` (the validated catalogue, for the browser). Vite copies `public/` into the build, so the app finds them under
+   `index.json`, `catalogue.json` (the validated catalogue, for the browser) and
+   `orbits.json` (the committed planet orbits, validated, ADR 0010). Vite copies `public/` into the build, so the app finds them under
    `/apsis/data/`.
 
 A failure anywhere exits non-zero with Horizons' own message, leaves the previous

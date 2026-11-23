@@ -1,13 +1,15 @@
 /**
  * Fetches the live ephemeris window from JPL Horizons and writes it where the app
- * loads it: public/data/<body>/<year>.json, public/data/index.json and the validated
- * catalogue as public/data/catalogue.json (ADR 0002, 0003, 0009).
+ * loads it: public/data/<body>/<year>.json, public/data/index.json, the validated
+ * catalogue as public/data/catalogue.json, and the committed planet orbits
+ * (data/orbits.json) as public/data/orbits.json (ADR 0002, 0003, 0009, 0010).
  * The output is generated, never committed. Any failure exits non-zero, so a build
  * never ships partial data.
  *
  *   npm run data
  */
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { assertOrbitFile } from '../../src/core/orbit-file.ts';
 import {
   assertValidSamples,
   chunkByYear,
@@ -65,8 +67,15 @@ async function fetchBody(body: Body, start: string, stop: string) {
   return chunkByYear(samples, body);
 }
 
+const orbits: unknown = JSON.parse(
+  readFileSync(new URL('../../data/orbits.json', import.meta.url), 'utf8'),
+);
 const missions = (() => {
   try {
+    assertOrbitFile(
+      orbits,
+      PLANETS.map((planet) => planet.id),
+    );
     return readCatalogue();
   } catch (error) {
     console.error(error instanceof Error ? error.message : error);
@@ -124,9 +133,12 @@ for (const [file, content] of [
   ...files,
   ['index.json', index] as const,
   ['catalogue.json', missions] as const,
+  ['orbits.json', orbits] as const,
 ]) {
   const url = new URL(file, output);
   mkdirSync(new URL('./', url), { recursive: true });
   writeFileSync(url, JSON.stringify(content));
 }
-console.log(`Wrote ${files.length} chunks, index.json and catalogue.json to public/data/`);
+console.log(
+  `Wrote ${files.length} chunks, index.json, catalogue.json and orbits.json to public/data/`,
+);

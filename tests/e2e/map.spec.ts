@@ -62,3 +62,31 @@ test('fits a phone held either way', async ({ page }) => {
     expect(fits).toBe(true);
   }
 });
+
+test('puts every planet on its drawn orbit', async ({ page }) => {
+  await page.goto('./');
+  for (const body of index.bodies.filter((b) => b.kind === 'planet')) {
+    const marker = page.locator(`solar-map [data-body="${body.id}"] circle`);
+    const orbit = page.locator(`solar-map [data-orbit="${body.id}"]`);
+    const [cx, cy] = [
+      Number(await marker.getAttribute('cx')),
+      Number(await marker.getAttribute('cy')),
+    ];
+    const points = (await orbit.getAttribute('points'))!
+      .split(' ')
+      .map((pair) => pair.split(',').map(Number) as [number, number]);
+    // Distance from the marker's centre to the nearest segment of the orbit's polyline.
+    const gap = Math.min(
+      ...points.slice(1).map(([x2, y2], i) => {
+        const [x1, y1] = points[i]!;
+        const [dx, dy] = [x2 - x1, y2 - y1];
+        const k = Math.max(
+          0,
+          Math.min(1, ((cx - x1) * dx + (cy - y1) * dy) / (dx * dx + dy * dy || 1)),
+        );
+        return Math.hypot(cx - (x1 + k * dx), cy - (y1 + k * dy));
+      }),
+    );
+    expect(gap, body.id).toBeLessThan(1.5);
+  }
+});
