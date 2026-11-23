@@ -3,6 +3,8 @@ import earth from '../../tests/fixtures/horizons/earth-new-year.json';
 import {
   assertValidSamples,
   chunkByYear,
+  chunkPath,
+  DATA_FORMAT,
   tdbSecondsFromJulianDate,
   yearOf,
   type Sample,
@@ -33,7 +35,7 @@ describe('chunkByYear', () => {
     expect(chunks.map((c) => c.year)).toEqual([2026, 2027]);
     expect(chunks[0]!.samples).toEqual(samples.slice(0, 3));
     expect(chunks[1]!.samples).toEqual(samples.slice(2));
-    expect(chunks[0]).toMatchObject({ format: 1, body: 'earth', horizonsId: '399' });
+    expect(chunks[0]).toMatchObject({ format: DATA_FORMAT, body: 'earth', horizonsId: '399' });
   });
 
   it('keeps a single year in one chunk', () => {
@@ -52,5 +54,12 @@ describe('assertValidSamples', () => {
     expect(() => assertValidSamples([at(0)], 'one')).toThrow(/need at least 2/);
     expect(() => assertValidSamples([at(DAY), at(DAY)], 'same')).toThrow(/not later/);
     expect(() => assertValidSamples([at(0), [DAY, NaN, 0, 0, 0, 0, 0]], 'nan')).toThrow(/finite/);
+  });
+});
+
+describe('chunkPath', () => {
+  it('keeps archived and live years apart', () => {
+    expect(chunkPath('juno', { year: 2025, archived: true })).toBe('archive/juno/2025.json');
+    expect(chunkPath('juno', { year: 2026, archived: false })).toBe('live/juno/2026.json');
   });
 });

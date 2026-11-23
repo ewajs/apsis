@@ -22,7 +22,8 @@
     "e2e": "npm run build && playwright test",
     "icons": "node scripts/icons.ts",
     "data": "node scripts/data/fetch.ts",
-    "data:orbits": "node scripts/data/orbits.ts"
+    "data:orbits": "node scripts/data/orbits.ts",
+    "data:archive": "node scripts/data/archive.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

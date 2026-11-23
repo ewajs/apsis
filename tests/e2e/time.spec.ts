@@ -24,18 +24,36 @@ test('plays forwards a day per second, and the address follows', async ({ page }
     .toBeGreaterThan(2 * DAY_MS);
 });
 
-test('plays backwards, and stops at the start of the data', async ({ page }) => {
-  // The live window starts 60 days back; at a month per second that's reached in ~2 s.
+test('plays backwards into the archive, and stops at its start', async ({ page }) => {
+  // The archive starts on 1 January of its first year; from early March, a month per
+  // second gets there in about two seconds.
   const index = JSON.parse(
     readFileSync(new URL('../../public/data/index.json', import.meta.url), 'utf8'),
   );
-  const start = Date.parse(`${index.span.start}T00:00Z`);
-  await page.goto(`./?play=-month`);
+  const first = Math.min(
+    ...index.bodies.flatMap((body: { years: { year: number }[] }) => body.years.map((y) => y.year)),
+  );
+  await page.goto(`./?t=${first}-03-01T00:00Z&play=-month`);
   await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
-  await expect.poll(() => addressTime(page.url()), { timeout: 15_000 }).toBe(start);
+  await expect.poll(() => addressTime(page.url()), { timeout: 15_000 }).toBe(Date.UTC(first, 0, 1));
   // And it stays there: stopped, not running past the data.
   await page.waitForTimeout(1_000);
-  expect(addressTime(page.url())).toBe(start);
+  expect(addressTime(page.url())).toBe(Date.UTC(first, 0, 1));
+});
+
+test('loads an archived year when the instant needs it, and only then', async ({ page }) => {
+  const archive: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/data/archive/')) archive.push(request.url());
+  });
+  // Mid-2026 needs only the live year: nothing from the archive.
+  await page.goto('./?t=2026-06-15T00:00Z');
+  await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
+  expect(archive).toEqual([]);
+  // Mid-2025 is archived: its files load, and Earth is drawn there.
+  await page.goto('./?t=2025-06-15T00:00Z');
+  await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
+  expect(archive.some((url) => url.endsWith('/data/archive/earth/2025.json'))).toBe(true);
 });
 
 test.describe('the time bar', () => {
@@ -99,4 +117,22 @@ test.describe('the time bar', () => {
       new Date(target).toISOString(),
     );
   });
+});
+
+test('keeps an archived year for offline, once seen', async ({ page, context }) => {
+  await page.goto('./?t=2025-06-15T00:00Z');
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      await new Promise((resolve) =>
+        navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true }),
+      );
+    }
+  });
+  // One visit through the service worker caches the year (cache-first: it never changes).
+  await page.reload();
+  await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
 });

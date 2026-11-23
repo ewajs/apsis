@@ -34,19 +34,20 @@ version `0.N.0` in `package.json` and a short release note in PLAN.md.
 
 ## Commands
 
-| Command                                   | Does                                                         |
-| ----------------------------------------- | ------------------------------------------------------------ |
-| `npm run dev`                             | Dev server at `/apsis/`; append `-- --host` to try a phone   |
-| `npm run check`                           | Format, lint, types and unit tests: the PR gate              |
-| `npm run lint`                            | ESLint, including folder boundaries; warnings fail           |
-| `npm run typecheck`                       | The app, `core` alone (no DOM, no Node), scripts and configs |
-| `npm test` / `npm run test:watch`         | Vitest, tests beside the code as `*.test.ts`                 |
-| `npm run format` / `npm run format:check` | Write / check formatting                                     |
-| `npm run build` / `npm run preview`       | Production build to `dist/` / serve it                       |
-| `npm run data`                            | Fetch the live window from Horizons into `public/data/`      |
-| `npm run data:orbits`                     | Refetch the committed planet orbits (`data/orbits.json`)     |
-| `npm run e2e`                             | Build, then the browser tests on a phone and a desktop       |
-| `npm run icons`                           | Redraw the icon and render its PNGs into `public/`           |
+| Command                                   | Does                                                            |
+| ----------------------------------------- | --------------------------------------------------------------- |
+| `npm run dev`                             | Dev server at `/apsis/`; append `-- --host` to try a phone      |
+| `npm run check`                           | Format, lint, types and unit tests: the PR gate                 |
+| `npm run lint`                            | ESLint, including folder boundaries; warnings fail              |
+| `npm run typecheck`                       | The app, `core` alone (no DOM, no Node), scripts and configs    |
+| `npm test` / `npm run test:watch`         | Vitest, tests beside the code as `*.test.ts`                    |
+| `npm run format` / `npm run format:check` | Write / check formatting                                        |
+| `npm run build` / `npm run preview`       | Production build to `dist/` / serve it                          |
+| `npm run data`                            | Fetch the live window from Horizons into `public/data/`         |
+| `npm run data:orbits`                     | Refetch the committed planet orbits (`data/orbits.json`)        |
+| `npm run data:archive`                    | Archive whole past years (`-- --year 2025`; see the data guide) |
+| `npm run e2e`                             | Build, then the browser tests on a phone and a desktop          |
+| `npm run icons`                           | Redraw the icon and render its PNGs into `public/`              |
 
 Before the first `npm run e2e`, install the browsers (`npx playwright install chromium
 webkit`) and fetch data (`npm run data`): the map tests use what's in `public/data/`.

@@ -17,7 +17,8 @@ import { bodyName } from './i18n/bodies.ts';
 import { SPEEDS, type Playback, type Speed } from './core/playback.ts';
 import { parseInstant, tdbSecondsFromUtcMs } from './core/time.ts';
 import { TimeController } from './time/controller.ts';
-import { loadLiveData, type LiveData } from './data/load.ts';
+import { ChunkStore, loadCatalogue, type Catalogue } from './data/load.ts';
+import { yearsToLoad } from './core/loading.ts';
 import type { MapBody } from './map/solar-map.ts';
 import type { SolarScene } from './scene/solar-scene.ts';
 import { sceneFailed, sceneLabel, sceneLoading } from './ui/messages.ts';
@@ -50,7 +51,8 @@ sceneView.style.cssText =
 sceneView.hidden = true;
 app.append(map, sceneView);
 
-let data: LiveData | undefined;
+let data: Catalogue | undefined;
+let store: ChunkStore | undefined;
 let scene: SolarScene | undefined;
 let sceneStarting: Promise<SolarScene | undefined> | undefined;
 
@@ -90,6 +92,7 @@ function showTime(playback: Playback) {
   map.time = tdb;
   if (scene) scene.time = tdb;
   app.playback = playback;
+  loadYearsFor(playback);
   const now = performance.now();
   if (playback.rate !== 0 && !playback.live && now - addressWrittenAt < ADDRESS_EVERY_MS) return;
   addressWrittenAt = now;
@@ -99,6 +102,21 @@ function showTime(playback: Playback) {
   history.replaceState(null, '', address);
 }
 showTime(time.playback);
+
+/** Loads the years the shown instant needs (ADR 0011), and redraws once they're in. */
+function loadYearsFor(playback: Playback) {
+  if (!store) return;
+  const loading = store.ensure(yearsToLoad(playback.instantMs, playback.rate));
+  map.loadingYears = store.loading;
+  loading
+    .then((arrived) => {
+      if (!arrived) return;
+      map.requestUpdate();
+      scene?.refresh();
+    })
+    .catch((error: unknown) => console.error(error))
+    .finally(() => (map.loadingYears = store!.loading));
+}
 
 // The time bar's intents.
 app.addEventListener('time-play', (event) => time.play((event as CustomEvent<number>).detail));
@@ -178,7 +196,7 @@ function fillScene() {
       name: named[body.id]!,
       // Spacecraft are metres across: always drawn at their minimum size.
       radiusKm: RADIUS_KM[body.id] ?? 0,
-      chunks: data!.chunks.get(body.id) ?? new Map(),
+      chunks: store!.chunks.get(body.id) ?? new Map(),
       texture: TEXTURES[body.id],
       orbit: data!.orbits.planets[body.id],
       rotation: ROTATION[body.id],
@@ -208,24 +226,29 @@ document.body.replaceChildren(app);
 if (params.get('view') === '3d') void showView('scene');
 
 try {
-  data = await loadLiveData(`${import.meta.env.BASE_URL}data/`);
+  const base = `${import.meta.env.BASE_URL}data/`;
+  data = await loadCatalogue(base);
+  store = new ChunkStore(base, data.index);
   const bodies: MapBody[] = data.index.bodies.map((body) => ({
     id: body.id,
     kind: body.kind,
     name: data!.missions.find((mission) => mission.id === body.id)?.name ?? body.id,
-    chunks: data!.chunks.get(body.id) ?? new Map(),
+    chunks: store!.chunks.get(body.id) ?? new Map(),
     orbit: data!.orbits.planets[body.id],
   }));
   map.bodies = bodies;
+  await store.ensure(yearsToLoad(time.playback.instantMs, time.playback.rate));
   map.status = 'ready';
   app.fetchedAt = data.index.fetchedAt;
-  // Playback stops at the edges of the data. The span's dates are TDB; ending two
-  // minutes early keeps clear of the last sample whatever the 69 s offset to UTC.
+  // Playback runs from the first archived year to the end of the live data. The live
+  // span's dates are TDB; ending two minutes early keeps clear of the last sample
+  // whatever the 69 s offset to UTC.
+  const firstYear = Math.min(...data.index.bodies.flatMap((body) => body.years.map((y) => y.year)));
   time.range = app.timeRange = {
-    startMs: Date.parse(`${data.index.span.start}T00:00Z`),
+    startMs: Date.UTC(firstYear, 0, 1),
     endMs: Date.parse(`${data.index.span.stop}T00:00Z`) - 120_000,
   };
-  // `?play=day` (or week, month; `-day` backwards) starts playing, until the slider exists.
+  // `?play=day` (or week, month; `-day` backwards) starts playing from the link.
   const play = params.get('play');
   const speed = play?.replace(/^-/, '') as Speed | undefined;
   if (speed && speed in SPEEDS) time.play((play!.startsWith('-') ? -1 : 1) * SPEEDS[speed]);

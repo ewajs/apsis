@@ -77,9 +77,10 @@ Shape: ADR 0011 (accepted 2026-11-23).
 - [x] **3.2 The slider.** Play, pause, speed (real time, 1 day, 1 week, 1 month per
       second), direction, "now"; along the bottom, on phone and desktop. Within the live
       window only.
-- [ ] **3.3 The archive.** `npm run data:archive`, `data/archive/` committed, the live
+- [x] **3.3 The archive.** `npm run data:archive`, `data/archive/` committed, the live
       window from 1 January, `data/archive/` and `data/live/` paths, loading years on
-      demand, cache-first for the archive.
+      demand, cache-first for the archive. 2025 archived for every body to prove it; the
+      full history from launch is 3.5.
 - [ ] **3.4 Encounters.** `encounter: true` milestones get hourly samples ±3 days.
 - [ ] **3.5 Cassini and the full history.** Cassini (1997–2017) and every catalogue
       mission archived from launch; planets from 1977.

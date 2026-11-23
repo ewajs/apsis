@@ -41,8 +41,11 @@ outside the data (`?t=1990-01-01` shows "no data for this date").
 | Playing       | every frame (`requestAnimationFrame`)  |
 | Paused        | not at all                             |
 
-`play(rate)`, `pause()`, `seek(instant)` and `goLive()` are what the time bar calls. `range` is set once the data's span is known (ending two minutes early, clear of
-the last sample whatever the TDB/UTC offset).
+`play(rate)`, `pause()`, `seek(instant)` and `goLive()` are what the time bar calls.
+`range` is set once the index is known: from 1 January of the first year with data
+(archived or live) to the end of the live window (two minutes early, clear of the last
+sample whatever the TDB/UTC offset). Years load as the instant needs them (see
+[data.md](data.md)).
 
 ## The address bar
 

@@ -1,4 +1,4 @@
-import { LitElement, css, html, nothing } from 'lit';
+import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import { currentLocale, type Locale } from '../i18n/localization.ts';
@@ -132,7 +132,8 @@ export class ApsisApp extends LitElement {
         <span
           >${msg('Posiciones: JPL Horizons, NASA/JPL-Caltech.', { id: 'credit-horizons' })}</span
         >
-        ${this.fetchedAt ? html`<span>${this.#dataDate()}</span>` : nothing}
+        <!-- Always there, so the footer doesn't change height when the data arrives. -->
+        <span>${this.fetchedAt ? this.#dataDate() : '\u00a0'}</span>
       </footer>
     `;
   }

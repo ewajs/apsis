@@ -1,54 +1,95 @@
 /**
- * Loads what `npm run data` wrote: the index, the catalogue, the planet orbits and
- * every chunk the index lists.
- * The live window is small (two years, about 260 KB), so everything loads at once;
- * loading years on demand comes with the time slider (M3).
+ * Loads what `npm run data` built (ADR 0011): first the index, the catalogue and the
+ * planet orbits, then each body's years on demand, as the shown instant needs them
+ * (`ChunkStore`). See docs/guides/data.md.
  */
 import type { Mission } from '../core/catalogue.ts';
-import { DATA_FORMAT, type Chunk, type DataIndex } from '../core/ephemeris.ts';
+import { chunkPath, DATA_FORMAT, type Chunk, type DataIndex } from '../core/ephemeris.ts';
 import { assertOrbitFile, type OrbitFile } from '../core/orbit-file.ts';
 
-/** Everything the app knows, ready to use. */
-export type LiveData = {
-  index: DataIndex;
-  missions: Mission[];
-  orbits: OrbitFile;
-  /** Each body's chunks, by body id and then by year. */
-  chunks: Map<string, Map<number, Chunk>>;
-};
+/** What's known before any positions load. */
+export type Catalogue = { index: DataIndex; missions: Mission[]; orbits: OrbitFile };
+
+async function getJson<T>(url: string): Promise<T> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
+  return (await response.json()) as T;
+}
 
 /**
- * Fetches the data under `base` (the site's base URL plus `data/`).
- * Throws when a file is missing or in a format this build doesn't read.
+ * Fetches the index, the catalogue and the orbits under `base` (the site's base URL plus
+ * `data/`). Right after an app update, the service worker may still hold an index in
+ * the previous format: then a fresh one is fetched, past the cache (the query string
+ * makes it a different address).
  */
-export async function loadLiveData(base: string): Promise<LiveData> {
-  const get = async <T>(file: string): Promise<T> => {
-    const response = await fetch(`${base}${file}`);
-    if (!response.ok) throw new Error(`${file}: HTTP ${response.status}`);
-    return (await response.json()) as T;
-  };
-
-  const [index, missions, orbits] = await Promise.all([
-    get<DataIndex>('index.json'),
-    get<Mission[]>('catalogue.json'),
-    get<unknown>('orbits.json'),
+export async function loadCatalogue(base: string): Promise<Catalogue> {
+  const [cached, missions, orbits] = await Promise.all([
+    getJson<DataIndex>(`${base}index.json`),
+    getJson<Mission[]>(`${base}catalogue.json`),
+    getJson<unknown>(`${base}orbits.json`),
   ]);
+  const index =
+    cached.format === DATA_FORMAT
+      ? cached
+      : await getJson<DataIndex>(`${base}index.json?format=${DATA_FORMAT}`);
   if (index.format !== DATA_FORMAT) throw new Error(`index.json: format ${index.format}`);
   const planets = index.bodies.filter((body) => body.kind === 'planet').map((body) => body.id);
   assertOrbitFile(orbits, planets);
+  return { index, missions, orbits };
+}
 
-  const chunks = new Map<string, Map<number, Chunk>>();
-  await Promise.all(
-    index.bodies.flatMap((body) =>
-      body.years.map(async (year) => {
-        const chunk = await get<Chunk>(`${body.id}/${year}.json`);
-        if (chunk.format !== DATA_FORMAT)
-          throw new Error(`${body.id}/${year}: format ${chunk.format}`);
-        const years = chunks.get(body.id) ?? new Map<number, Chunk>();
-        years.set(year, chunk);
-        chunks.set(body.id, years);
-      }),
-    ),
-  );
-  return { index, missions, orbits, chunks };
+/** Bodies' yearly chunks, fetched on demand and kept for the visit. */
+export class ChunkStore {
+  /**
+   * Each body's loaded chunks, by year. The views hold these very maps, so a year that
+   * arrives is there for them at once (then call their refresh).
+   */
+  readonly chunks = new Map<string, Map<number, Chunk>>();
+  #base: string;
+  #index: DataIndex;
+  #requested = new Set<string>();
+  #pending = 0;
+
+  constructor(base: string, index: DataIndex) {
+    this.#base = base;
+    this.#index = index;
+    for (const body of index.bodies) this.chunks.set(body.id, new Map());
+  }
+
+  /** Whether any year is still on its way. */
+  get loading(): boolean {
+    return this.#pending > 0;
+  }
+
+  /**
+   * Makes sure every body's chunks for `years` are loaded (those it has). Resolves to
+   * whether anything new arrived. Cheap to call often: years already loaded or on
+   * their way are skipped.
+   */
+  async ensure(years: readonly number[]): Promise<boolean> {
+    const loads = this.#index.bodies.flatMap((body) =>
+      body.years
+        .filter((entry) => years.includes(entry.year))
+        .filter((entry) => !this.#requested.has(`${body.id}/${entry.year}`))
+        .map(async (entry) => {
+          this.#requested.add(`${body.id}/${entry.year}`);
+          this.#pending++;
+          try {
+            const chunk = await getJson<Chunk>(`${this.#base}${chunkPath(body.id, entry)}`);
+            if (chunk.format !== DATA_FORMAT) {
+              throw new Error(`${body.id}/${entry.year}: format ${chunk.format}`);
+            }
+            this.chunks.get(body.id)!.set(entry.year, chunk);
+          } catch (error) {
+            // Let a later call try again.
+            this.#requested.delete(`${body.id}/${entry.year}`);
+            throw error;
+          } finally {
+            this.#pending--;
+          }
+        }),
+    );
+    await Promise.all(loads);
+    return loads.length > 0;
+  }
 }

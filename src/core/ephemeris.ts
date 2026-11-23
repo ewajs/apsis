@@ -20,8 +20,11 @@ export function position(sample: Sample): Vector3 {
   return [sample[1], sample[2], sample[3]];
 }
 
-/** Version of the chunk and index formats; bumped only once data is archived (M3). */
-export const DATA_FORMAT = 1;
+/**
+ * Version of the chunk and index formats. 2 since the archive (ADR 0011): each year in
+ * the index says whether it's archived or live.
+ */
+export const DATA_FORMAT = 2;
 
 /** One body's samples for one calendar year, plus the first sample of the next year. */
 export type Chunk = {
@@ -35,15 +38,31 @@ export type Chunk = {
 /** What kind of body a data entry is. */
 export type BodyKind = 'planet' | 'spacecraft';
 
+/** One year of a body's data, and where it's kept (ADR 0011). */
+export type YearEntry = {
+  year: number;
+  /** Committed and never edited (`true`), or fetched on each build (`false`). */
+  archived: boolean;
+};
+
 /** What `data/index.json` says: which bodies have data, for which years, and how fresh. */
 export type DataIndex = {
   format: typeof DATA_FORMAT;
-  /** When the data was fetched, ISO 8601 UTC. */
+  /** When the live data was fetched, ISO 8601 UTC. */
   fetchedAt: string;
-  /** The span requested from Horizons, as calendar dates (TDB). */
+  /** The span of the live data, as calendar dates (TDB). */
   span: { start: string; stop: string };
-  bodies: { id: string; horizonsId: string; kind: BodyKind; years: number[] }[];
+  bodies: { id: string; horizonsId: string; kind: BodyKind; years: YearEntry[] }[];
 };
+
+/**
+ * Where a body's year lives, relative to the data folder: `archive/…` or `live/…`.
+ * The one place that decides it, for the scripts and the browser alike.
+ * @example chunkPath('juno', { year: 2025, archived: true }) // 'archive/juno/2025.json'
+ */
+export function chunkPath(body: string, { year, archived }: YearEntry): string {
+  return `${archived ? 'archive' : 'live'}/${body}/${year}.json`;
+}
 
 /** The J2000 epoch (2000-01-01 12:00 TDB) as a Julian date. */
 export const J2000_JULIAN_DATE = 2451545;

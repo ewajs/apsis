@@ -59,6 +59,8 @@ export class SolarMap extends LitElement {
   @property({ type: Number }) time = 0;
   /** Whether the data has arrived. */
   @property() status: 'loading' | 'ready' | 'failed' = 'loading';
+  /** Whether more years are on their way: no "no data" note meanwhile. */
+  @property({ type: Boolean }) loadingYears = false;
 
   /** How distances from the Sun are drawn. */
   @property() scale: MapScale = 'log';
@@ -266,7 +268,7 @@ export class SolarMap extends LitElement {
         })}
       </svg>
       ${
-        missing.length > 0
+        missing.length > 0 && !this.loadingYears
           ? html`<p class="missing">
               ${msg('Sin datos para esta fecha:', { id: 'map-missing' })}
               ${missing.map((body) => this.#label(body)).join(', ')}
