@@ -28,6 +28,8 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm audit --omit=dev
+      # Fresh ephemerides from JPL Horizons; a failed fetch fails the run (ADR 0002).
+      - run: npm run data
       - run: npm run build
       - name: Upload the site
         id: build-artifact
