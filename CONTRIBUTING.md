@@ -64,6 +64,10 @@ PR; on `main` it then deploys that same build to Pages.
   trail, apsis_. Units in names when ambiguous (`distanceKm`, `tdbSeconds`).
 - Tunable numbers (minimum on-screen size, trail length, time steps) live in one
   named constant each.
+- One home per responsibility, no duplicated logic. Generic vector and angle maths
+  lives in `src/core/math.ts` (a `math/` folder once it grows); domain modules
+  (`orbits`, `frames`, `ephemeris`) build on it instead of carrying their own helpers,
+  and so do tests.
 - Comments explain _why_. No commented-out code, no TODOs without a PLAN.md entry.
 - Prettier formats; ESLint warnings are errors, including folder boundaries.
 

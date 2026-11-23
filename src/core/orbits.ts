@@ -3,6 +3,7 @@
  * orientation of the two-body orbit a body would follow from a given instant, if only
  * the Sun pulled on it. See docs/guides/orbits.md.
  */
+import { combine, radians, type Vector3 } from './math.ts';
 
 /** Osculating orbital elements around the Sun, in the ecliptic J2000 frame. */
 export type OrbitalElements = {
@@ -20,11 +21,6 @@ export type OrbitalElements = {
   /** Where the body was along its orbit at the epoch, measured from perihelion (ν). */
   trueAnomalyDeg: number;
 };
-
-/** A position in km: heliocentric ecliptic J2000. */
-export type Vector3 = readonly [x: number, y: number, z: number];
-
-const radians = (degrees: number) => (degrees * Math.PI) / 180;
 
 /**
  * The orbit's plane, as two unit vectors in the ecliptic frame: P points to
@@ -45,13 +41,15 @@ function orbitPlane(elements: OrbitalElements): { p: Vector3; q: Vector3 } {
   };
 }
 
-/** The point on the orbit at a true anomaly (angle from perihelion, seen from the Sun). */
+/**
+ * The point on the orbit at a true anomaly (angle from perihelion, seen from the Sun),
+ * in ecliptic km.
+ */
 export function orbitPoint(elements: OrbitalElements, trueAnomalyRad: number): Vector3 {
   const { eccentricity: e, semiMajorAxisKm: a } = elements;
   const r = (a * (1 - e * e)) / (1 + e * Math.cos(trueAnomalyRad));
-  const [x, y] = [r * Math.cos(trueAnomalyRad), r * Math.sin(trueAnomalyRad)];
   const { p, q } = orbitPlane(elements);
-  return [x * p[0] + y * q[0], x * p[1] + y * q[1], x * p[2] + y * q[2]];
+  return combine(r * Math.cos(trueAnomalyRad), p, r * Math.sin(trueAnomalyRad), q);
 }
 
 /**
@@ -65,8 +63,6 @@ export function orbitPath(elements: OrbitalElements, count: number): Vector3[] {
   return Array.from({ length: count + 1 }, (_, k) => {
     const anomaly = (2 * Math.PI * k) / count;
     // In the orbit's plane, with the Sun (a focus) at the origin.
-    const x = a * (Math.cos(anomaly) - e);
-    const y = b * Math.sin(anomaly);
-    return [x * p[0] + y * q[0], x * p[1] + y * q[1], x * p[2] + y * q[2]] as const;
+    return combine(a * (Math.cos(anomaly) - e), p, b * Math.sin(anomaly), q);
   });
 }

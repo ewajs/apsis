@@ -31,8 +31,9 @@ data/
   archive/<body>/<year>.json   committed ephemeris chunks that never change
 scripts/data/             Node + TS: Horizons client, catalogue validation, chunk writer
 src/
-  core/                   pure: Horizons parsing, time scales, Hermite interpolation,
-                          frames and units, orbit ellipses, distances and light-time
+  core/                   pure: vector maths (math.ts), Horizons parsing, time scales,
+                          Hermite interpolation, frames and units, orbit ellipses,
+                          distances and light-time
   data/                   browser loading of the catalogue and chunks (fetch, cache)
   scene/                  three.js: renderer, camera, bodies, markers, trails
   map/                    2D top-down SVG of the ecliptic plane

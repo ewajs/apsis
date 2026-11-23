@@ -4,10 +4,10 @@ import embVectors from '../../tests/fixtures/horizons/emb-vectors.json';
 import marsElements from '../../tests/fixtures/horizons/mars-elements.json';
 import marsVectors from '../../tests/fixtures/horizons/mars-vectors.json';
 import { parseElements, parseVectors } from './horizons.ts';
+import { distance, length, radians } from './math.ts';
 import { orbitPath, orbitPoint } from './orbits.ts';
+import { position } from './ephemeris.ts';
 import { KM_PER_AU } from './units.ts';
-
-const radians = (degrees: number) => (degrees * Math.PI) / 180;
 
 describe('parseElements', () => {
   it('reads the Earth–Moon barycentre’s orbit', () => {
@@ -28,10 +28,10 @@ describe('orbitPoint', () => {
   ] as const) {
     it(`puts ${name} where Horizons does, to within 1 km`, () => {
       const elements = parseElements(elementsAnswer);
-      const [t, x, y, z] = parseVectors(vectorsAnswer)[0]!;
-      expect(t).toBe(elements.epoch);
-      const [px, py, pz] = orbitPoint(elements, radians(elements.trueAnomalyDeg));
-      expect(Math.hypot(px - x, py - y, pz - z)).toBeLessThan(1);
+      const sample = parseVectors(vectorsAnswer)[0]!;
+      expect(sample[0]).toBe(elements.epoch);
+      const point = orbitPoint(elements, radians(elements.trueAnomalyDeg));
+      expect(distance(point, position(sample))).toBeLessThan(1);
     });
   }
 });
@@ -49,15 +49,15 @@ describe('orbitPath', () => {
 
   it('stays between perihelion and aphelion distance', () => {
     for (const point of path) {
-      const r = Math.hypot(...point);
+      const r = length(point);
       expect(r).toBeGreaterThanOrEqual(a * (1 - e) - 1);
       expect(r).toBeLessThanOrEqual(a * (1 + e) + 1);
     }
   });
 
   it('passes through the planet', () => {
-    const [, x, y, z] = parseVectors(marsVectors)[0]!;
-    const nearest = Math.min(...path.map(([px, py, pz]) => Math.hypot(px - x, py - y, pz - z)));
+    const mars = position(parseVectors(marsVectors)[0]!);
+    const nearest = Math.min(...path.map((point) => distance(point, mars)));
     // 360 points around Mars's orbit are about 6 million km apart; the planet sits
     // between two of them, so within half that of the nearest.
     expect(nearest).toBeLessThan(3.5e6);

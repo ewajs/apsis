@@ -37,7 +37,8 @@ y = b sin E                b = a √(1 − e²), the semi-minor axis
 ```
 
 `orbitPlane` builds two unit vectors in the ecliptic frame from `i`, `Ω` and `ω`: **P**
-towards perihelion and **Q** 90° ahead of it. Each point is then `x·P + y·Q`.
+towards perihelion and **Q** 90° ahead of it. Each point is then `x·P + y·Q`
+(`combine` in `core/math.ts`, where the generic vector maths lives).
 `orbitPath` steps `E` evenly, which keeps points smooth at both ends of the ellipse;
 stepping the true anomaly instead would bunch them up near perihelion.
 

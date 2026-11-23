@@ -2,6 +2,7 @@
  * Ephemeris data as Apsis stores it (ADR 0003): state vectors in yearly chunks.
  * Positions are km and velocities km/s, heliocentric ecliptic J2000 (ADR 0004).
  */
+import type { Vector3 } from './math.ts';
 
 /** One state vector: `[t, x, y, z, vx, vy, vz]`, with `t` in TDB seconds since J2000. */
 export type Sample = readonly [
@@ -13,6 +14,11 @@ export type Sample = readonly [
   vy: number,
   vz: number,
 ];
+
+/** The position part of a sample, in km. */
+export function position(sample: Sample): Vector3 {
+  return [sample[1], sample[2], sample[3]];
+}
 
 /** Version of the chunk and index formats; bumped only once data is archived (M3). */
 export const DATA_FORMAT = 1;
