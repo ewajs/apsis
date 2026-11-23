@@ -1,0 +1,112 @@
+# 0011. Every mission's history, and moving through time
+
+- Status: **Proposed** (2026-11-23), for the owner's review before M3 starts. Nothing
+  here is built.
+- Builds on ADR 0003 (chunks), 0007 (caching) and 0008 (delivery).
+
+## Goal
+
+From the owner (2026-11-23): every mission's **whole history**, from launch to its end
+or to now, and a **time slider** to move through it, forwards and backwards; and no
+need to update anything every day.
+
+## Proposal
+
+### 1. Two kinds of data, split at the start of the current year
+
+```text
+launch ──────────── archive: whole past years, committed, never edited ────────────┬── live ──▶
+                                                                          1 January this year   +60 days
+```
+
+- **Archive:** every complete past year, for every body, in the chunk format of ADR 0003. Written once into `data/archive/<body>/<year>.json`, committed, never edited.
+  Ended missions (Cassini) are archived whole when they join the catalogue.
+- **Live:** from 1 January of the current year to 60 days ahead, fetched on every build
+  (weekly, ADR 0008), exactly as today but starting at the year's start instead of 60
+  days back. It's never committed.
+- **The year rolls over once a year:** in January, `npm run data:archive -- --year 2026`
+  fetches last year whole and commits it (a small PR). Until it's done, nothing
+  breaks: the live window still covers the last 60 days.
+
+Why the year, not a monthly cut-off: chunks are already yearly, so an archived year is
+one file per body, written once, and the live data never overlaps a file in the
+archive. A monthly cut-off would mean editing archived files, or chunks by month.
+
+### 2. Steps
+
+- **Daily, for every body,** as today. Hermite makes that effectively exact away from
+  encounters (ADR 0003, measured).
+- **Finer around encounters:** milestones marked `encounter: true` in the catalogue (a
+  flyby, a perihelion) get samples every hour for 3 days either side, fetched as a
+  separate Horizons request and merged into the chunk (chunks already allow any step).
+  At Parker's perihelion that takes the error from 200,000 km to well under 100 km.
+
+### 3. Size
+
+Measured on today's files: one body-year at a daily step is **30 KB raw, 14 KB
+gzipped**.
+
+| What                                                        | Body-years | Raw      | Committed (gzip-ish) |
+| ----------------------------------------------------------- | ---------- | -------- | -------------------- |
+| The 14 candidate missions, launch → end/now (Cassini incl.) | ≈ 190      | ≈ 6 MB   | ≈ 3 MB               |
+| Planets, 1977 → now (the Voyagers' launch)                  | ≈ 400      | ≈ 12 MB  | ≈ 6 MB               |
+| Encounter samples (≈ 40 encounters × 145 hourly samples)    | —          | ≈ 0.5 MB | small                |
+
+About 18 MB in the repository, once. **A visit loads only the years it shows:** about
+18 chunks (8 planets and ~10 spacecraft) for one year, roughly 250 KB gzipped. Dragging
+the slider across fifty years would load more, but only what's looked at.
+
+If size ever matters: outer planets at a 5-day step (Hermite error stays far below a
+pixel there) halves the planets' share.
+
+### 4. Loading and caching
+
+- In the build, archive and live live under different paths: `data/archive/…` and
+  `data/live/…`. `index.json` lists, for each body, which years exist and where.
+- The browser keeps a small cache of chunks in memory and loads the years around the
+  displayed instant (the year shown, plus the next or previous one as the slider
+  heads that way).
+- The service worker (ADR 0007): **archive files are cache-first** (they never change,
+  so after the first visit they're instant and offline); **live files stay
+  stale-while-revalidate**.
+
+### 5. Time
+
+- One **time controller** in `main.ts` owns the displayed instant and its rate:
+  paused, real time, or faster, forwards or backwards (for example 1 day, 1 week or 1
+  month per second). Everything else already takes the time as an input.
+- **The slider** sits along the bottom: its range is from the first data (1977) to the
+  end of the live window. It has play/pause, speed, direction and a "now" button, and
+  dragging is immediate. The address bar's `?t=` follows it, so any moment can be
+  shared.
+- Bodies with no data at the shown instant are hidden and listed as today ("no data
+  for this date"): before launch, after the end, or in a gap.
+
+### 6. What doesn't change
+
+Planet orbits stay one epoch (ADR 0010): 3D close-ups pin each orbit to its planet, and
+the 2D drift is under a pixel even in 1977. The frame and time conversions already work
+for any date (the TDB − UTC constant is off by up to 21 s before 2017: a few hundred
+km, invisible).
+
+## Alternatives considered
+
+- **Everything live, nothing committed:** fetching 50 years for 20 bodies on every
+  build is about 600 Horizons requests and minutes of CI per build, and history would
+  depend on Horizons being up. No.
+- **Commit the live data too:** daily or weekly commits of changing files (ADR 0003
+  already turned this down).
+- **A monthly cut-off:** more freshness than we need, and archived files would change.
+- **A database or a backend:** nothing here needs one; static files and the cache do
+  the job.
+
+## Open questions for the owner
+
+1. **The year roll-over:** a manual command in January, as proposed, or a scheduled
+   workflow that opens the PR by itself?
+2. **How far back:** planets from 1977 (the Voyagers), or only where a mission in the
+   catalogue needs them (each mission's own span)? The second saves space but leaves
+   gaps.
+3. **Which ended missions join first:** Cassini (1997–2017) as planned; others you'd
+   like (Rosetta, Galileo, Dawn…), each only if Horizons has it.
+4. **The slider's default speeds:** 1 day, 1 week and 1 month per second?
