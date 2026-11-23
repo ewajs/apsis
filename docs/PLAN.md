@@ -115,6 +115,20 @@ missions; a link to fly a trajectory in gravitas.
 
 ## Releases
 
+### v0.2.0 — The 3D scene (2026-11-23)
+
+The solar system in three dimensions, one tap from the map.
+
+- The Sun and the planets at true scale, drawn at least a few pixels across so you can
+  find them, or at true size on request; textured, tilted and spinning as they really
+  stand (IAU rotation models), Saturn with its rings.
+- The five spacecraft with their last 30 days, every body named, names kept apart.
+- Orbits that pass exactly through their planets, and a floating origin, so close-ups
+  (`?focus=neptune`) are steady.
+- The Milky Way behind it all, along the real galactic plane.
+- WebGPU where the browser has it, WebGL 2 elsewhere; the 3D code loads only when you
+  ask for it.
+
 ### v0.1.0 — Data you can trust (2026-11-23)
 
 The first release: an installable, bilingual app showing where five deep-space
