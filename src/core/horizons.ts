@@ -4,6 +4,7 @@
  * network call itself lives in scripts/data.
  */
 import { tdbSecondsFromJulianDate, type Sample } from './ephemeris.ts';
+import type { OrbitalElements } from './orbits.ts';
 
 /** The Horizons API endpoint. */
 export const HORIZONS_API = 'https://ssd.jpl.nasa.gov/api/horizons.api';
@@ -61,6 +62,69 @@ type Envelope = { result?: unknown; error?: unknown; signature?: { version?: unk
  * plain `Error` when the answer isn't shaped as expected.
  */
 export function parseVectors(response: unknown): Sample[] {
+  return dataRows(response).map((cells) => {
+    const numbers = [cells[0], ...cells.slice(2, 8)].map(Number);
+    if (cells.length < 8 || !numbers.every(Number.isFinite)) {
+      throw new Error(`Unreadable Horizons row: ${cells.join(',')}`);
+    }
+    const [julianDate, x, y, z, vx, vy, vz] = numbers as [number, ...number[]];
+    const km = (n: number | undefined) => Math.round(n! * 1e3) / 1e3;
+    const kmPerS = (n: number | undefined) => Math.round(n! * 1e6) / 1e6;
+    const t = Math.round(tdbSecondsFromJulianDate(julianDate) * 1e3) / 1e3;
+    return [t, km(x), km(y), km(z), kmPerS(vx), kmPerS(vy), kmPerS(vz)];
+  });
+}
+
+/**
+ * The query parameters for a body's osculating orbital elements around the Sun's
+ * centre, in the ecliptic J2000 frame, km and degrees, at one instant.
+ */
+export function elementsQuery(horizonsId: string, epoch: string): Record<string, string> {
+  const quoted = (value: string) => `'${value}'`;
+  return {
+    format: 'json',
+    COMMAND: quoted(horizonsId),
+    OBJ_DATA: quoted('NO'),
+    MAKE_EPHEM: quoted('YES'),
+    EPHEM_TYPE: quoted('ELEMENTS'),
+    CENTER: quoted('500@10'),
+    REF_PLANE: quoted('ECLIPTIC'),
+    REF_SYSTEM: quoted('ICRF'),
+    OUT_UNITS: quoted('KM-S'),
+    CSV_FORMAT: quoted('YES'),
+    // A one-step span; the first row is the epoch.
+    START_TIME: quoted(epoch),
+    STOP_TIME: quoted(`${epoch} 00:01`),
+    STEP_SIZE: quoted('1m'),
+  };
+}
+
+/**
+ * Reads an elements answer: the first row's elements. Columns, as Horizons names them:
+ * JDTDB, date, EC, QR, IN, OM, W, Tp, N, MA, TA, A, AD, PR.
+ */
+export function parseElements(response: unknown): OrbitalElements {
+  const cells = dataRows(response)[0];
+  const numbers = cells?.map(Number);
+  if (!cells || !numbers || cells.length < 14) throw new Error('Horizons answer has no elements');
+  const value = (column: number) => {
+    const n = numbers[column]!;
+    if (!Number.isFinite(n)) throw new Error(`Unreadable Horizons element in: ${cells.join(',')}`);
+    return n;
+  };
+  return {
+    epoch: tdbSecondsFromJulianDate(value(0)),
+    eccentricity: value(2),
+    inclinationDeg: value(4),
+    ascendingNodeDeg: value(5),
+    argumentOfPeriapsisDeg: value(6),
+    trueAnomalyDeg: value(10),
+    semiMajorAxisKm: value(11),
+  };
+}
+
+// Checks the envelope and returns the CSV cells of every row between $$SOE and $$EOE.
+function dataRows(response: unknown): string[][] {
   const envelope = (response ?? {}) as Envelope;
   const version = String(envelope.signature?.version ?? '');
   if (version.split('.')[0] !== HORIZONS_API_MAJOR) {
@@ -79,21 +143,7 @@ export function parseVectors(response: unknown): Sample[] {
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line !== '')
-    .map(parseRow);
-}
-
-// A CSV row: JDTDB, calendar date, X, Y, Z, VX, VY, VZ (and a trailing comma).
-function parseRow(line: string): Sample {
-  const cells = line.split(',').map((cell) => cell.trim());
-  const numbers = [cells[0], ...cells.slice(2, 8)].map(Number);
-  if (cells.length < 8 || !numbers.every(Number.isFinite)) {
-    throw new Error(`Unreadable Horizons row: ${line}`);
-  }
-  const [julianDate, x, y, z, vx, vy, vz] = numbers as [number, ...number[]];
-  const km = (n: number | undefined) => Math.round(n! * 1e3) / 1e3;
-  const kmPerS = (n: number | undefined) => Math.round(n! * 1e6) / 1e6;
-  const t = Math.round(tdbSecondsFromJulianDate(julianDate) * 1e3) / 1e3;
-  return [t, km(x), km(y), km(z), kmPerS(vx), kmPerS(vy), kmPerS(vz)];
+    .map((line) => line.split(',').map((cell) => cell.trim()));
 }
 
 // Horizons explains a refusal in the first lines of its text; keep them for the error.

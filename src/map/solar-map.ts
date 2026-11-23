@@ -3,6 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
 import type { BodyKind, Chunk } from '../core/ephemeris.ts';
 import { stateFromChunks } from '../core/interpolate.ts';
+import { orbitPath, type OrbitalElements } from '../core/orbits.ts';
 import { KM_PER_AU } from '../core/units.ts';
 import { currentLocale } from '../i18n/localization.ts';
 import { placeLabels, type LabelRequest } from './labels.ts';
@@ -15,8 +16,12 @@ export type MapBody = {
   /** Shown next to the marker; planets get theirs from `planetName`. */
   name: string;
   chunks: ReadonlyMap<number, Chunk>;
+  /** The orbit to draw, for planets (ADR 0010). */
+  orbit?: OrbitalElements | undefined;
 };
 
+/** Points per drawn orbit: smooth at any size on the log map. */
+const ORBIT_POINTS = 240;
 /** How much of a spacecraft's past path the map draws, in days. */
 export const TRAIL_DAYS = 30;
 const DAY = 86_400;
@@ -54,7 +59,8 @@ export function planetName(id: string): string {
 
 /**
  * @component The 2D map: the solar system from above the ecliptic, with the Sun,
- * planets, spacecraft and their trails at one instant (docs/guides/map.md).
+ * planets and their orbits, spacecraft and their trails at one instant
+ * (docs/guides/map.md).
  *
  * Properties: `bodies` (what to draw), `time` (TDB seconds since J2000), `status`.
  * The scale (log or linear) is the map's own state, switched by its button.
@@ -106,6 +112,12 @@ export class SolarMap extends LitElement {
     .ring {
       fill: none;
       stroke: var(--color-line);
+      stroke-dasharray: 2 4;
+    }
+    .orbit {
+      fill: none;
+      stroke: var(--color-muted);
+      stroke-opacity: 0.45;
     }
     .ring-label {
       fill: var(--color-muted);
@@ -256,6 +268,12 @@ export class SolarMap extends LitElement {
             svg`<circle class="ring" r=${r * radius}></circle>
               <text class="ring-label" x="3" y=${y}>${text}</text>`,
         )}
+        ${this.bodies.map((body) =>
+          body.orbit
+            ? svg`<polyline class="orbit" data-orbit=${body.id}
+                points=${this.#orbit(body.orbit, toPx)}></polyline>`
+            : nothing,
+        )}
         ${markers
           .filter(({ body }) => body.kind === 'spacecraft')
           .map(
@@ -317,6 +335,14 @@ export class SolarMap extends LitElement {
       points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
     }
     return points.join(' ');
+  }
+
+  /** A planet's whole orbit, projected like everything else. */
+  #orbit(orbit: OrbitalElements, toPx: (x: number, y: number) => { x: number; y: number }): string {
+    return orbitPath(orbit, ORBIT_POINTS)
+      .map(([x, y]) => toPx(x, y))
+      .map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`)
+      .join(' ');
   }
 
   #toggleScale() {

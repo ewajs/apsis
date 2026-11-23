@@ -44,6 +44,7 @@ version `0.N.0` in `package.json` and a short release note in PLAN.md.
 | `npm run format` / `npm run format:check` | Write / check formatting                                     |
 | `npm run build` / `npm run preview`       | Production build to `dist/` / serve it                       |
 | `npm run data`                            | Fetch the live window from Horizons into `public/data/`      |
+| `npm run data:orbits`                     | Refetch the committed planet orbits (`data/orbits.json`)     |
 | `npm run e2e`                             | Build, then the browser tests on a phone and a desktop       |
 | `npm run icons`                           | Redraw the icon and render its PNGs into `public/`           |
 
@@ -51,7 +52,8 @@ Before the first `npm run e2e`, install the browser (`npx playwright install chr
 and fetch data (`npm run data`): the map tests use what's in `public/data/`.
 
 CI runs `check`, `npm audit --omit=dev` (advisories in what ships), `data` and `build` on every
-PR; on `main` it then deploys that same build to Pages.
+PR; on `main` it then deploys that same build to Pages. A weekly schedule (Mondays)
+rebuilds and redeploys with fresh data (ADR 0008).
 
 ## Code
 
@@ -63,6 +65,10 @@ PR; on `main` it then deploys that same build to Pages.
   trail, apsis_. Units in names when ambiguous (`distanceKm`, `tdbSeconds`).
 - Tunable numbers (minimum on-screen size, trail length, time steps) live in one
   named constant each.
+- One home per responsibility, no duplicated logic. Generic vector and angle maths
+  lives in `src/core/math.ts` (a `math/` folder once it grows); domain modules
+  (`orbits`, `frames`, `ephemeris`) build on it instead of carrying their own helpers,
+  and so do tests.
 - Comments explain _why_. No commented-out code, no TODOs without a PLAN.md entry.
 - Prettier formats; ESLint warnings are errors, including folder boundaries.
 

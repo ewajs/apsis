@@ -1,0 +1,78 @@
+{
+  "format": 1,
+  "epoch": "2026-01-01",
+  "planets": {
+    "mercury": {
+      "epoch": 820497600,
+      "eccentricity": 0.2056426160956197,
+      "inclinationDeg": 7.003422810415504,
+      "ascendingNodeDeg": 48.29881667444637,
+      "argumentOfPeriapsisDeg": 29.19881272328852,
+      "trueAnomalyDeg": 164.8633974616086,
+      "semiMajorAxisKm": 57909051.27942418
+    },
+    "venus": {
+      "epoch": 820497600,
+      "eccentricity": 0.006780942266658413,
+      "inclinationDeg": 3.394392156342094,
+      "ascendingNodeDeg": 76.60714242821713,
+      "argumentOfPeriapsisDeg": 54.87317496286026,
+      "trueAnomalyDeg": 145.5726079640048,
+      "semiMajorAxisKm": 108209293.6140176
+    },
+    "earth": {
+      "epoch": 820497600,
+      "eccentricity": 0.0166704903934354,
+      "inclinationDeg": 0.003434103619219214,
+      "ascendingNodeDeg": 174.9687434161021,
+      "argumentOfPeriapsisDeg": 288.061846295553,
+      "trueAnomalyDeg": 357.1773027297473,
+      "semiMajorAxisKm": 149598154.1449882
+    },
+    "mars": {
+      "epoch": 820497600,
+      "eccentricity": 0.09348461462371369,
+      "inclinationDeg": 1.847490441639179,
+      "ascendingNodeDeg": 49.48317254200653,
+      "argumentOfPeriapsisDeg": 286.6231751478101,
+      "trueAnomalyDeg": 307.7038435782561,
+      "semiMajorAxisKm": 227941422.1325839
+    },
+    "jupiter": {
+      "epoch": 820497600,
+      "eccentricity": 0.04826812110726147,
+      "inclinationDeg": 1.30356686438861,
+      "ascendingNodeDeg": 100.5179438702679,
+      "argumentOfPeriapsisDeg": 273.5333339323142,
+      "trueAnomalyDeg": 94.91816265289451,
+      "semiMajorAxisKm": 778274942.947431
+    },
+    "saturn": {
+      "epoch": 820497600,
+      "eccentricity": 0.05535357040578952,
+      "inclinationDeg": 2.487910232325189,
+      "ascendingNodeDeg": 113.6324066054327,
+      "argumentOfPeriapsisDeg": 338.1382522589528,
+      "trueAnomalyDeg": 269.8010300076631,
+      "semiMajorAxisKm": 1428055521.089613
+    },
+    "uranus": {
+      "epoch": 820497600,
+      "eccentricity": 0.04682475433570785,
+      "inclinationDeg": 0.7727821486924716,
+      "ascendingNodeDeg": 74.01656631889256,
+      "argumentOfPeriapsisDeg": 91.37571273338726,
+      "trueAnomalyDeg": 254.1460937934419,
+      "semiMajorAxisKm": 2884711242.151256
+    },
+    "neptune": {
+      "epoch": 820497600,
+      "eccentricity": 0.0111117795103033,
+      "inclinationDeg": 1.77055586322394,
+      "ascendingNodeDeg": 131.7999777977519,
+      "argumentOfPeriapsisDeg": 276.1762314309181,
+      "trueAnomalyDeg": 313.0325685667455,
+      "semiMajorAxisKm": 4505159999.037787
+    }
+  }
+}

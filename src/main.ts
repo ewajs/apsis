@@ -47,6 +47,7 @@ try {
     kind: body.kind,
     name: data.missions.find((mission) => mission.id === body.id)?.name ?? body.id,
     chunks: data.chunks.get(body.id) ?? new Map(),
+    orbit: data.orbits.planets[body.id],
   }));
   map.bodies = bodies;
   map.status = 'ready';

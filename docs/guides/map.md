@@ -1,7 +1,9 @@
 # The 2D map
 
-The solar system seen from above the ecliptic's north pole: the Sun, the planets and
-the spacecraft at one instant, with each spacecraft's last 30 days as a trail. Code:
+The solar system seen from above the ecliptic's north pole: the Sun, the planets with
+their orbits (see [orbits.md](orbits.md)) and the spacecraft at one instant, with each
+spacecraft's last 30 days as a trail. The scale rings are dashed, so they don't read
+as orbits. Code:
 `src/map/` (projection, labels, the `<solar-map>` component), `src/data/load.ts`,
 `src/main.ts`.
 

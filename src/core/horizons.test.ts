@@ -3,7 +3,10 @@ import earth from '../../tests/fixtures/horizons/earth-new-year.json';
 import juno from '../../tests/fixtures/horizons/juno.json';
 import noSuchRecord from '../../tests/fixtures/horizons/error-no-such-record.json';
 import outsideCoverage from '../../tests/fixtures/horizons/error-outside-coverage.json';
+import { position } from './ephemeris.ts';
 import { HorizonsError, parseVectors, vectorsQuery } from './horizons.ts';
+import { length } from './math.ts';
+import { KM_PER_AU } from './units.ts';
 
 // Recorded answers (tests/fixtures/horizons), never the live API.
 describe('parseVectors', () => {
@@ -22,9 +25,10 @@ describe('parseVectors', () => {
     const samples = parseVectors(earth);
     expect(samples).toHaveLength(4);
     // Earth stays within 0.98–1.02 AU of the Sun.
-    for (const [, x, y, z] of samples) {
-      expect(Math.hypot(x, y, z) / 149_597_870.7).toBeGreaterThan(0.98);
-      expect(Math.hypot(x, y, z) / 149_597_870.7).toBeLessThan(1.02);
+    for (const sample of samples) {
+      const au = length(position(sample)) / KM_PER_AU;
+      expect(au).toBeGreaterThan(0.98);
+      expect(au).toBeLessThan(1.02);
     }
   });
 

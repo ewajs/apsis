@@ -1,6 +1,6 @@
 {
   "name": "apsis",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -21,7 +21,8 @@
     "format:check": "prettier --check .",
     "e2e": "npm run build && playwright test",
     "icons": "node scripts/icons.ts",
-    "data": "node scripts/data/fetch.ts"
+    "data": "node scripts/data/fetch.ts",
+    "data:orbits": "node scripts/data/orbits.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

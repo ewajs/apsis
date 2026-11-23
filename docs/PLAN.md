@@ -36,10 +36,11 @@ unless they say to keep going. Each milestone ends with a `0.N.0` release.
       and their trails, at the current instant, with optional log distance. Also brought
       forward from 1.6: the data date in the footer.
       **Verify:** positions match Horizons for a chosen date; readable at 375×667.
-- [ ] **1.5 Planet orbits.** Osculating elements from Horizons, committed; ellipses
+- [x] **1.5 Planet orbits.** Osculating elements from Horizons, committed; ellipses
       drawn on the map. **Verify:** each planet's current position sits on its ellipse.
-- [ ] **1.6 Daily refresh.** Scheduled build, the 60-day
-      mitigation (ADR 0008). **Verify:** a scheduled run deploys fresh data.
+- [x] **1.6 Weekly refresh.** Scheduled build (weekly, not daily, agreed 2026-11-23), and
+      the recovery if GitHub's 60-day rule ever switches it off (ADR 0008). **Verify:** a scheduled run deploys
+      fresh data.
 
 Spacecraft to verify in 1.2 (the first five ship in M1, the rest in 4.3): BepiColombo,
 Hera, JUICE, Europa Clipper, Psyche, Juno, Lucy, Parker Solar Probe, Solar Orbiter,
@@ -57,6 +58,9 @@ those without one get `horizons: null` (ADR 0009).
       from the Sun, star background. **Verify:** the owner reviews the look.
 
 ## M3 — Time (v0.3.0)
+
+Goal (agreed 2026-11-23): every mission's whole history, from launch to its end or to
+now, without daily updates (ADR 0003).
 
 - [ ] **3.1 Time slider.** Forwards and backwards, play speeds, back to now.
 - [ ] **3.2 Archive and loading on demand.** `npm run data:archive`, committed
@@ -104,4 +108,15 @@ missions; a link to fly a trajectory in gravitas.
 
 ## Releases
 
-None yet.
+### v0.1.0 — Data you can trust (2026-11-23)
+
+The first release: an installable, bilingual app showing where five deep-space
+missions are right now, on a 2D map of the solar system.
+
+- Positions for the planets and Juno, Europa Clipper, Psyche, Parker Solar Probe and
+  Voyager 1 from JPL Horizons, refreshed weekly, interpolated to the current instant
+  (cubic Hermite, measured against Horizons).
+- A map from above the ecliptic, on a log or a true scale, with planet orbits,
+  spacecraft trails and labels that avoid each other.
+- A hand-written bilingual mission catalogue, validated on every build.
+- Spanish (Argentina) and English; installs to the home screen and opens offline.

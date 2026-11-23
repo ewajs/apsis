@@ -2,12 +2,13 @@ import { describe, expect, it } from 'vitest';
 import earthDaily from '../../tests/fixtures/horizons/earth-daily.json';
 import earthHourly from '../../tests/fixtures/horizons/earth-hourly.json';
 import parkerHourly from '../../tests/fixtures/horizons/parker-perihelion-hourly.json';
-import { chunkByYear, type Chunk, type Sample } from './ephemeris.ts';
+import { chunkByYear, position, type Chunk, type Sample } from './ephemeris.ts';
+import { distance } from './math.ts';
 import { parseVectors } from './horizons.ts';
 import { hermite, stateAt, stateFromChunks } from './interpolate.ts';
 
 const HOUR = 3_600;
-const distance = (a: Sample, b: Sample) => Math.hypot(a[1] - b[1], a[2] - b[2], a[3] - b[3]);
+const apart = (a: Sample, b: Sample) => distance(position(a), position(b));
 
 /** The largest position error when interpolating `truth` from every `step`-th sample. */
 function worstError(truth: Sample[], step: number): number {
@@ -15,7 +16,7 @@ function worstError(truth: Sample[], step: number): number {
   return Math.max(
     ...truth.map((sample) => {
       const state = stateAt(coarse, sample[0]);
-      return state ? distance(state, sample) : 0;
+      return state ? apart(state, sample) : 0;
     }),
   );
 }
@@ -43,7 +44,7 @@ describe('accuracy against Horizons', () => {
   it('follows Earth to within 1 km from daily samples', () => {
     const daily = parseVectors(earthDaily);
     for (const truth of parseVectors(earthHourly)) {
-      expect(distance(stateAt(daily, truth[0])!, truth)).toBeLessThan(1);
+      expect(apart(stateAt(daily, truth[0])!, truth)).toBeLessThan(1);
     }
   });
 

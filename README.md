@@ -11,8 +11,10 @@ installable web app (PWA) in Spanish (Argentina) and English, hosted on GitHub P
 An _apsis_ is one of the two extreme points of an orbit: the closest and the
 farthest from the body it goes around.
 
-**Status:** the installable, bilingual shell is up; data and the scene come next. [the plan](docs/PLAN.md) lists
-the milestones, and [the decisions](docs/decisions/README.md) explain the design.
+**Status:** v0.1.0. A 2D map shows where five missions are right now, with planet
+orbits and trails; the 3D scene is next. [The plan](docs/PLAN.md) lists the
+milestones, and [the decisions](docs/decisions/README.md) explain the design.
+[Open it](https://ewajs.github.io/apsis/).
 
 ## Development
 

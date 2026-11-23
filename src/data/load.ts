@@ -1,15 +1,18 @@
 /**
- * Loads what `npm run data` wrote: the index, the catalogue and every chunk it lists.
+ * Loads what `npm run data` wrote: the index, the catalogue, the planet orbits and
+ * every chunk the index lists.
  * The live window is small (two years, about 260 KB), so everything loads at once;
  * loading years on demand comes with the time slider (M3).
  */
 import type { Mission } from '../core/catalogue.ts';
 import { DATA_FORMAT, type Chunk, type DataIndex } from '../core/ephemeris.ts';
+import { assertOrbitFile, type OrbitFile } from '../core/orbit-file.ts';
 
 /** Everything the app knows, ready to use. */
 export type LiveData = {
   index: DataIndex;
   missions: Mission[];
+  orbits: OrbitFile;
   /** Each body's chunks, by body id and then by year. */
   chunks: Map<string, Map<number, Chunk>>;
 };
@@ -25,11 +28,14 @@ export async function loadLiveData(base: string): Promise<LiveData> {
     return (await response.json()) as T;
   };
 
-  const [index, missions] = await Promise.all([
+  const [index, missions, orbits] = await Promise.all([
     get<DataIndex>('index.json'),
     get<Mission[]>('catalogue.json'),
+    get<unknown>('orbits.json'),
   ]);
   if (index.format !== DATA_FORMAT) throw new Error(`index.json: format ${index.format}`);
+  const planets = index.bodies.filter((body) => body.kind === 'planet').map((body) => body.id);
+  assertOrbitFile(orbits, planets);
 
   const chunks = new Map<string, Map<number, Chunk>>();
   await Promise.all(
@@ -44,5 +50,5 @@ export async function loadLiveData(base: string): Promise<LiveData> {
       }),
     ),
   );
-  return { index, missions, chunks };
+  return { index, missions, orbits, chunks };
 }
