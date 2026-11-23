@@ -89,6 +89,7 @@ function showTime(playback: Playback) {
   const tdb = tdbSecondsFromUtcMs(playback.instantMs);
   map.time = tdb;
   if (scene) scene.time = tdb;
+  app.playback = playback;
   const now = performance.now();
   if (playback.rate !== 0 && !playback.live && now - addressWrittenAt < ADDRESS_EVERY_MS) return;
   addressWrittenAt = now;
@@ -98,6 +99,12 @@ function showTime(playback: Playback) {
   history.replaceState(null, '', address);
 }
 showTime(time.playback);
+
+// The time bar's intents.
+app.addEventListener('time-play', (event) => time.play((event as CustomEvent<number>).detail));
+app.addEventListener('time-pause', () => time.pause());
+app.addEventListener('time-seek', (event) => time.seek((event as CustomEvent<number>).detail));
+app.addEventListener('time-live', () => time.goLive());
 
 /**
  * Shows the map or the 3D view; the 3D code loads the first time it's needed.
@@ -214,7 +221,7 @@ try {
   app.fetchedAt = data.index.fetchedAt;
   // Playback stops at the edges of the data. The span's dates are TDB; ending two
   // minutes early keeps clear of the last sample whatever the 69 s offset to UTC.
-  time.range = {
+  time.range = app.timeRange = {
     startMs: Date.parse(`${data.index.span.start}T00:00Z`),
     endMs: Date.parse(`${data.index.span.stop}T00:00Z`) - 120_000,
   };

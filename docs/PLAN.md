@@ -74,7 +74,7 @@ Shape: ADR 0011 (accepted 2026-11-23).
 
 - [x] **3.1 The time controller.** One owner of the displayed instant and its rate in
       `main.ts`; `?t=` follows it. No UI yet beyond the address bar.
-- [ ] **3.2 The slider.** Play, pause, speed (real time, 1 day, 1 week, 1 month per
+- [x] **3.2 The slider.** Play, pause, speed (real time, 1 day, 1 week, 1 month per
       second), direction, "now"; along the bottom, on phone and desktop. Within the live
       window only.
 - [ ] **3.3 The archive.** `npm run data:archive`, `data/archive/` committed, the live

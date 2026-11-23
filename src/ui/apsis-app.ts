@@ -4,6 +4,8 @@ import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import { currentLocale, type Locale } from '../i18n/localization.ts';
 import './language-switch.ts';
 import './scale-switch.ts';
+import './time-slider.ts';
+import type { Playback, Range } from '../core/playback.ts';
 import './view-switch.ts';
 import type { View } from './view-switch.ts';
 
@@ -15,9 +17,9 @@ import type { View } from './view-switch.ts';
  * Properties: `locale`, the language showing now; `view`, the map or the 3D scene;
  * `trueScale`, whether that view shows true scale (all passed to their switches);
  * `fetchedAt`, when the data was fetched (ISO 8601); `notice`, a short message for
- * the visitor, if any.
+ * the visitor, if any; `playback` and `timeRange`, for the time bar.
  * Events: `locale-change`, `view-change` and `true-scale-change` bubble up from the
- * switches.
+ * switches, and `time-play`, `time-pause`, `time-seek` and `time-live` from the time bar.
  */
 @customElement('apsis-app')
 export class ApsisApp extends LitElement {
@@ -31,6 +33,10 @@ export class ApsisApp extends LitElement {
   @property({ type: Boolean }) trueScale = false;
   /** A short message for the visitor, shown under the header. */
   @property() notice = '';
+  /** Where time is and how it moves, for the time bar. */
+  @property({ attribute: false }) playback: Playback | undefined;
+  /** The span there's data for, for the time bar. */
+  @property({ attribute: false }) timeRange: Range | undefined;
 
   constructor() {
     super();
@@ -40,7 +46,7 @@ export class ApsisApp extends LitElement {
   static override styles = css`
     :host {
       display: grid;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: auto 1fr auto auto;
       height: 100dvh;
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
         env(safe-area-inset-left);
@@ -121,6 +127,7 @@ export class ApsisApp extends LitElement {
         <slot></slot>
         <scale-switch .view=${this.view} ?trueScale=${this.trueScale}></scale-switch>
       </main>
+      <time-slider .playback=${this.playback} .range=${this.timeRange}></time-slider>
       <footer>
         <span
           >${msg('Posiciones: JPL Horizons, NASA/JPL-Caltech.', { id: 'credit-horizons' })}</span

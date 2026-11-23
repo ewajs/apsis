@@ -37,3 +37,66 @@ test('plays backwards, and stops at the start of the data', async ({ page }) => 
   await page.waitForTimeout(1_000);
   expect(addressTime(page.url())).toBe(start);
 });
+
+test.describe('the time bar', () => {
+  const bar = (page: import('@playwright/test').Page) => page.locator('time-slider');
+
+  test('plays and pauses, and goes back to now', async ({ page }) => {
+    await page.goto('./?t=2026-11-01T00:00Z');
+    await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
+    const start = addressTime(page.url())!;
+
+    await bar(page)
+      .getByRole('button', { name: /^(Play|Reproducir)$/ })
+      .click();
+    await expect
+      .poll(() => addressTime(page.url())! - start, { timeout: 10_000 })
+      .toBeGreaterThan(DAY_MS);
+    await bar(page)
+      .getByRole('button', { name: /^(Pause|Pausar)$/ })
+      .click();
+    const paused = addressTime(page.url());
+    await page.waitForTimeout(1_000);
+    expect(addressTime(page.url())).toBe(paused);
+
+    await bar(page)
+      .getByRole('button', { name: /^(Now|Ahora)$/ })
+      .click();
+    await expect.poll(() => addressTime(page.url())).toBeNull();
+  });
+
+  test('plays backwards after a change of direction', async ({ page }) => {
+    await page.goto('./?t=2026-11-20T00:00Z');
+    await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
+    const start = addressTime(page.url())!;
+    await bar(page)
+      .getByRole('button', { name: /Forwards in time|Hacia adelante/ })
+      .click();
+    await bar(page)
+      .getByRole('combobox', { name: /Speed|Velocidad/ })
+      .selectOption('week');
+    await bar(page)
+      .getByRole('button', { name: /^(Play|Reproducir)$/ })
+      .click();
+    await expect
+      .poll(() => start - addressTime(page.url())!, { timeout: 10_000 })
+      .toBeGreaterThan(5 * DAY_MS);
+  });
+
+  test('jumps to the date the slider is dragged to', async ({ page }) => {
+    await page.goto('./');
+    await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
+    const target = Date.UTC(2026, 10, 10, 12, 0);
+    await bar(page)
+      .getByRole('slider', { name: /Date shown|Fecha mostrada/ })
+      .evaluate((input: HTMLInputElement, value) => {
+        input.value = String(value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }, target);
+    await expect.poll(() => addressTime(page.url())).toBe(target);
+    await expect(bar(page).locator('time')).toHaveAttribute(
+      'datetime',
+      new Date(target).toISOString(),
+    );
+  });
+});

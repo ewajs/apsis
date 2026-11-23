@@ -39,7 +39,8 @@ src/
   data/                   browser loading of the catalogue and chunks (fetch, cache)
   scene/                  three.js: renderer, camera, bodies, markers, trails
   map/                    2D top-down SVG of the ecliptic plane
-  ui/                     Lit components: shell, picker, card, time slider, settings;
+  ui/                     Lit components: shell, view/scale/language switches, time bar
+                          (later: picker, card, settings);
                           styles.css holds the design tokens
   i18n/                   @lit/localize setup, locale modules, body names
   time/                   the time controller: the clock, driving core/playback.ts
