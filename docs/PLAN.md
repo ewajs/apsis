@@ -69,13 +69,18 @@ those without one get `horizons: null` (ADR 0009).
 Goal (agreed 2026-11-23): every mission's whole history, from launch to its end or to
 now, without daily updates (ADR 0003).
 
-- [ ] **3.1 Time slider.** Forwards and backwards, play speeds, back to now.
-- [ ] **3.2 Archive and loading on demand.** `npm run data:archive`, committed
-      chunks, yearly loading around the displayed instant, runtime caching by kind.
-- [ ] **3.3 Cassini.** The first ended mission, 1997–2017, with a fine step at flybys
-      (6 h or finer: daily samples miss Parker's perihelion by 200,000 km, see
-      `docs/guides/interpolation.md`);
-      planets archived for its years.
+Proposed shape: ADR 0011 (awaiting the owner's review). Steps if it's accepted:
+
+- [ ] **3.1 The time controller.** One owner of the displayed instant and its rate in
+      `main.ts`; `?t=` follows it. No UI yet beyond the address bar.
+- [ ] **3.2 The slider.** Play, pause, speed, direction, "now"; along the bottom, on phone
+      and desktop. Within the live window only.
+- [ ] **3.3 The archive.** `npm run data:archive`, `data/archive/` committed, the live
+      window from 1 January, `data/archive/` and `data/live/` paths, loading years on
+      demand, cache-first for the archive.
+- [ ] **3.4 Encounters.** `encounter: true` milestones get hourly samples ±3 days.
+- [ ] **3.5 Cassini and the full history.** Cassini (1997–2017) and every catalogue
+      mission archived from launch; planets as far back as agreed.
 
 ## M4 — Pick one (v0.4.0)
 
