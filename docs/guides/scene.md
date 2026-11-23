@@ -1,7 +1,7 @@
 # The 3D view
 
-The Sun, the planets and their orbits in three dimensions, at true scale with a minimum
-size on screen. Code: `src/scene/` (`solar-scene.ts`, `apparent-size.ts`),
+The Sun, the planets and their orbits, and the spacecraft with their trails, in three
+dimensions, at true scale with a minimum size on screen, every body named. Code: `src/scene/` (`solar-scene.ts`, `apparent-size.ts`, `label-layer.ts`),
 `src/core/frames.ts` (axes), `src/core/math.ts` (vectors), `orbitPathThrough` in
 `src/core/orbits.ts`, and the wiring in
 `src/main.ts`. Decisions: ADR 0001 (renderer), 0004 (frames, floating origin), 0005
@@ -77,6 +77,32 @@ at the planet, packs points densely there (from about 100 km apart at Mars to 2,
 at Neptune: well inside the planet either way) and sparsely on the far side, and shifts the whole ellipse by the planet's drift, so it passes exactly
 through the planet. The shift is invisible at solar-system scale. The scene recomputes
 orbit lines only when the time or the focus changes, never per frame.
+
+## Spacecraft and trails
+
+Spacecraft are a few metres across, so they're always drawn at their minimum: a 6 px
+dot in the spacecraft colour (`--color-craft`), unlit. Behind each one, its last 30
+days (`trailPoints` in `core/trails.ts`, the same function the 2D map uses), drawn as a
+line relative to the focus and recomputed only when the time or the focus changes,
+like the orbits.
+
+Up close the trails show their limits: with one sample a day, Juno's trail around
+Jupiter is a jagged polygon, and Juno itself whips out of a close-up frame. That's the
+interpolation finding of step 1.3; Jupiter-centred data minutes apart comes with the
+local views (M5).
+
+## Labels
+
+Names are HTML, not drawn into the scene: crisp at any size, in the visitor's
+language, and nothing to rebuild when it changes. `LabelLayer` keeps one `<span>` per
+body over the canvas. Every frame, `#placeLabels` projects each visible body to the
+screen (three.js's `Vector3.project`, which gives -1…1 coordinates, turned into CSS
+px), works out its radius in px, and hands the list to `placeLabels` in
+`core/labels.ts`: the same algorithm the 2D map uses, spacecraft first. A label with
+no free spot hides; a label whose position hasn't changed isn't touched.
+
+Planet names come from `i18n/bodies.ts` (shared with the map), mission names from the
+catalogue; `main.ts` renames them after a language switch (`setNames`).
 
 ## Light and depth
 

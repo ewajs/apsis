@@ -55,8 +55,9 @@ those without one get `horizons: null` (ADR 0009).
       on demand, WebKit (iPhone) and WebGPU browser tests. **Verify:** no jitter zoomed in
       near Neptune (unit-tested, and Neptune found up close on every backend); runs on a
       mid-range phone: still to try on a real device.
-- [ ] **2.2 Spacecraft.** Markers, labels with decluttering, trails. **Verify:**
-      positions match the 2D map.
+- [x] **2.2 Spacecraft.** Markers, labels with decluttering (HTML, sharing `placeLabels`
+      with the map), trails. **Verify:** positions match the 2D map (both use the same
+      interpolation and `trailPoints`); labels in both languages, apart, on every backend.
 - [ ] **2.3 True scale and polish.** True-scale setting, Saturn's rings, lighting
       from the Sun, star background. **Verify:** the owner reviews the look.
 

@@ -88,3 +88,33 @@ test('stays on the map, and says why, when 3D can’t start', async ({ page }) =
   await expect(page.getByRole('status')).toContainText(/vista 3D|3D view/);
   await expect(page.locator('solar-map')).toBeVisible();
 });
+
+test.describe('in a Spanish browser', () => {
+  test.use({ locale: 'es-AR' });
+
+  test('names the planets and the spacecraft, in the visitor’s language', async ({
+    page,
+  }, testInfo) => {
+    await page.goto(sceneAddress(testInfo.project.name));
+    await expect(page.locator('canvas[data-backend]')).toBeVisible({ timeout: 20_000 });
+    const label = (id: string) => page.locator(`[data-label="${id}"]`);
+    // Europa Clipper is about to fly past Earth: both must be named, apart.
+    await expect(label('europa-clipper')).toHaveText('Europa Clipper');
+    await expect(label('europa-clipper')).toHaveCSS('visibility', 'visible');
+    await expect(label('earth')).toHaveText('Tierra');
+    await expect(label('earth')).toHaveCSS('visibility', 'visible');
+    const [clipper, earth] = [
+      (await label('europa-clipper').boundingBox())!,
+      (await label('earth').boundingBox())!,
+    ];
+    const apart =
+      clipper.x >= earth.x + earth.width ||
+      earth.x >= clipper.x + clipper.width ||
+      clipper.y >= earth.y + earth.height ||
+      earth.y >= clipper.y + clipper.height;
+    expect(apart).toBe(true);
+
+    await page.getByRole('button', { name: 'English' }).click();
+    await expect(label('earth')).toHaveText('Earth');
+  });
+});

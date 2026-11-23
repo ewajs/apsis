@@ -3,17 +3,19 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
 import type { BodyKind, Chunk } from '../core/ephemeris.ts';
 import { stateFromChunks } from '../core/interpolate.ts';
+import { trailPoints } from '../core/trails.ts';
 import { orbitPath, type OrbitalElements } from '../core/orbits.ts';
 import { KM_PER_AU } from '../core/units.ts';
+import { bodyName } from '../i18n/bodies.ts';
 import { currentLocale } from '../i18n/localization.ts';
-import { placeLabels, type LabelRequest } from './labels.ts';
+import { placeLabels, type LabelRequest } from '../core/labels.ts';
 import { LOG_RINGS_AU, mapPoint, radialFraction, type MapScale } from './projection.ts';
 
 /** A body the map can draw. */
 export type MapBody = {
   id: string;
   kind: BodyKind;
-  /** Shown next to the marker; planets get theirs from `planetName`. */
+  /** Shown next to the marker; planets get theirs from `bodyName`. */
   name: string;
   chunks: ReadonlyMap<number, Chunk>;
   /** The orbit to draw, for planets (ADR 0010). */
@@ -22,9 +24,6 @@ export type MapBody = {
 
 /** Points per drawn orbit: smooth at any size on the log map. */
 const ORBIT_POINTS = 240;
-/** How much of a spacecraft's past path the map draws, in days. */
-export const TRAIL_DAYS = 30;
-const DAY = 86_400;
 /** Empty space around the outermost ring, in px. */
 const MARGIN = 22;
 /** Room kept free at the bottom for the scale note and button, in px. */
@@ -41,21 +40,6 @@ const LABEL_CHAR_WIDTH = 6.6;
 /** The rings' own labels: 10 px text. */
 const RING_LABEL_HEIGHT = 11;
 const RING_LABEL_CHAR_WIDTH = 5.6;
-
-/** A planet's name in the current language. */
-export function planetName(id: string): string {
-  const names: Record<string, () => string> = {
-    mercury: () => msg('Mercurio', { id: 'planet-mercury' }),
-    venus: () => msg('Venus', { id: 'planet-venus' }),
-    earth: () => msg('Tierra', { id: 'planet-earth' }),
-    mars: () => msg('Marte', { id: 'planet-mars' }),
-    jupiter: () => msg('Júpiter', { id: 'planet-jupiter' }),
-    saturn: () => msg('Saturno', { id: 'planet-saturn' }),
-    uranus: () => msg('Urano', { id: 'planet-uranus' }),
-    neptune: () => msg('Neptuno', { id: 'planet-neptune' }),
-  };
-  return names[id]?.() ?? id;
-}
 
 /**
  * @component The 2D map: the solar system from above the ecliptic, with the Sun,
@@ -283,7 +267,7 @@ export class SolarMap extends LitElement {
             ({ body }) =>
               svg`<polyline class="trail" points=${this.#trail(body, toPx)}></polyline>`,
           )}
-        <circle class="sun" r=${SUN_RADIUS}><title>${msg('Sol', { id: 'sun' })}</title></circle>
+        <circle class="sun" r=${SUN_RADIUS}><title>${bodyName('sun')}</title></circle>
         ${markers.map(
           ({ body, x, y }) => svg`<g data-body=${body.id}>
             <circle class=${body.kind} cx=${x} cy=${y}
@@ -325,19 +309,15 @@ export class SolarMap extends LitElement {
   }
 
   #label(body: MapBody): string {
-    return body.kind === 'planet' ? planetName(body.id) : body.name;
+    return body.kind === 'planet' ? bodyName(body.id) : body.name;
   }
 
-  /** The past `TRAIL_DAYS` of a body's path, one point a day, ending at the shown instant. */
+  /** A spacecraft's trail (`trailPoints`), projected like everything else. */
   #trail(body: MapBody, toPx: (x: number, y: number) => { x: number; y: number }): string {
-    const points: string[] = [];
-    for (let day = TRAIL_DAYS; day >= 0; day--) {
-      const state = stateFromChunks(body.chunks, this.time - day * DAY);
-      if (!state) continue;
-      const { x, y } = toPx(state[1], state[2]);
-      points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
-    }
-    return points.join(' ');
+    return trailPoints(body.chunks, this.time)
+      .map(([x, y]) => toPx(x, y))
+      .map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`)
+      .join(' ');
   }
 
   /** A planet's whole orbit, projected like everything else. */

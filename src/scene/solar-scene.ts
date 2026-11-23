@@ -1,6 +1,7 @@
 /**
  * The 3D view (ADR 0001, 0004, 0005): the Sun and the planets at true size with a
- * minimum size on screen, and the planets' orbits, around whatever the camera looks at.
+ * minimum size on screen and their orbits, the spacecraft with their trails, and every
+ * body's name (`LabelLayer`), around whatever the camera looks at.
  * See docs/guides/scene.md.
  *
  * Positions stay in km as 64-bit numbers. Every frame, the focus's position is
@@ -14,13 +15,23 @@ import { toScene } from '../core/frames.ts';
 import { stateFromChunks } from '../core/interpolate.ts';
 import { subtract, type Vector3 } from '../core/math.ts';
 import { orbitPathThrough, type OrbitalElements } from '../core/orbits.ts';
+import { TRAIL_DAYS, trailPoints } from '../core/trails.ts';
 import { KM_PER_AU } from '../core/units.ts';
-import { displayRadius, MIN_DIAMETER_PX, SUN_MIN_DIAMETER_PX } from './apparent-size.ts';
+import {
+  CRAFT_MIN_DIAMETER_PX,
+  displayRadius,
+  MIN_DIAMETER_PX,
+  SUN_MIN_DIAMETER_PX,
+  unitsPerPixel,
+} from './apparent-size.ts';
+import { LabelLayer, type ScreenBody } from './label-layer.ts';
 
 /** A body the scene can draw. */
 export type SceneBody = {
   id: string;
   kind: BodyKind;
+  /** Shown on the body's label, in the visitor's language. */
+  name: string;
   radiusKm: number;
   chunks: ReadonlyMap<number, Chunk>;
   /** File name in the textures folder, for bodies drawn as spheres. */
@@ -61,7 +72,15 @@ const ORBIT_POINTS = 360;
 const AMBIENT_INTENSITY = 0.06;
 const SUN_INTENSITY = 2.5;
 
-type Drawn = { body: SceneBody; mesh: THREE.Mesh; orbit?: THREE.Line };
+/** A body on screen: its sphere, and its orbit (planets) or trail (spacecraft). */
+type Drawn = { body: SceneBody; mesh: THREE.Mesh; orbit?: THREE.Line; trail?: THREE.Line };
+
+/** Each kind's smallest size on screen. */
+const MINIMUM_PX: Record<BodyKind | 'sun', number> = {
+  sun: SUN_MIN_DIAMETER_PX,
+  planet: MIN_DIAMETER_PX,
+  spacecraft: CRAFT_MIN_DIAMETER_PX,
+};
 
 /** The 3D view. Create it with `SolarScene.create`, which resolves once it can draw. */
 export class SolarScene {
@@ -76,13 +95,16 @@ export class SolarScene {
   #sun: Drawn;
   #options: SceneOptions;
   #observer: ResizeObserver;
+  #width = 1;
   #height = 1;
+  #labels: LabelLayer;
   #time = 0;
   #focus = 'sun';
   #trueScale = false;
   #orbitColor: THREE.Color;
-  /** The time and focus the orbit lines were last drawn for. */
-  #orbitsDrawnFor = '';
+  #craftColor: THREE.Color;
+  /** The time and focus the orbit lines and trails were last drawn for. */
+  #linesDrawnFor = '';
 
   /** Creates the renderer (WebGPU, or WebGL 2 where WebGPU is missing) and the scene. */
   static async create(options: SceneOptions): Promise<SolarScene> {
@@ -102,6 +124,7 @@ export class SolarScene {
     // Colours come from the design tokens (styles.css), like everything else.
     renderer.setClearColor(new THREE.Color(style.getPropertyValue('--color-bg').trim()));
     this.#orbitColor = new THREE.Color(style.getPropertyValue('--color-muted').trim());
+    this.#craftColor = new THREE.Color(style.getPropertyValue('--color-craft').trim());
 
     const canvas = renderer.domElement;
     // Absolutely placed, so the canvas's own size never feeds back into its container's
@@ -112,9 +135,10 @@ export class SolarScene {
     canvas.setAttribute('aria-label', options.label);
     canvas.dataset.backend = this.backend;
     options.container.append(canvas);
+    this.#labels = new LabelLayer(options.container);
 
     this.#scene.add(new THREE.AmbientLight(0xffffff, AMBIENT_INTENSITY), this.#sunLight);
-    this.#sun = this.#add({ id: 'sun', kind: 'planet', radiusKm: 0, chunks: new Map() });
+    this.#sun = this.#add({ id: 'sun', kind: 'planet', name: '', radiusKm: 0, chunks: new Map() });
     // The Sun is the light, so it isn't lit: swap the standard material for a basic one.
     (this.#sun.mesh.material as THREE.Material).dispose();
     this.#sun.mesh.material = new THREE.MeshBasicMaterial();
@@ -143,13 +167,27 @@ export class SolarScene {
   }
 
   /** The bodies to draw, replacing any before. The Sun is always there. */
-  setBodies(bodies: readonly SceneBody[], sun: { radiusKm: number; texture: string }): void {
+  setBodies(
+    bodies: readonly SceneBody[],
+    sun: { name: string; radiusKm: number; texture: string },
+  ): void {
     for (const drawn of this.#drawn.filter((d) => d !== this.#sun)) this.#remove(drawn);
     this.#drawn = [this.#sun];
-    this.#sun.body = { ...this.#sun.body, radiusKm: sun.radiusKm };
+    this.#sun.body = { ...this.#sun.body, name: sun.name, radiusKm: sun.radiusKm };
     this.#loadTexture(this.#sun.mesh, sun.texture);
     for (const body of bodies) this.#add(body);
     this.#controls.minDistance = sun.radiusKm * 1.5;
+    this.#linesDrawnFor = '';
+    this.#labels.setNames(this.#drawn.map(({ body }) => body));
+  }
+
+  /** Renames bodies, by id (after a language change). */
+  setNames(names: Readonly<Record<string, string>>): void {
+    for (const drawn of this.#drawn) {
+      const name = names[drawn.body.id];
+      if (name !== undefined) drawn.body = { ...drawn.body, name };
+    }
+    this.#labels.setNames(this.#drawn.map(({ body }) => body));
   }
 
   /** The instant shown, in TDB seconds since J2000. */
@@ -191,45 +229,52 @@ export class SolarScene {
     this.#controls.dispose();
     for (const drawn of this.#drawn) this.#remove(drawn);
     this.#sphere.dispose();
+    this.#labels.dispose();
     this.#renderer.dispose();
     this.#renderer.domElement.remove();
   }
 
   #add(body: SceneBody): Drawn {
-    const material = new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0 });
+    // Spacecraft are a flat dot in their own colour; planets are lit by the Sun.
+    const material =
+      body.kind === 'spacecraft'
+        ? new THREE.MeshBasicMaterial({ color: this.#craftColor })
+        : new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0 });
     const mesh = new THREE.Mesh(this.#sphere, material);
     mesh.name = body.id;
     this.#scene.add(mesh);
     if (body.texture) this.#loadTexture(mesh, body.texture);
     const drawn: Drawn = { body, mesh };
-    if (body.orbit) {
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute(
-        'position',
-        new THREE.BufferAttribute(new Float32Array((ORBIT_POINTS + 1) * 3), 3),
-      );
-      const line = new THREE.Line(
-        geometry,
-        new THREE.LineBasicMaterial({ color: this.#orbitColor, transparent: true, opacity: 0.45 }),
-      );
-      // Its bounds change as the focus moves; always draw it.
-      line.frustumCulled = false;
-      this.#scene.add(line);
-      drawn.orbit = line;
-    }
+    if (body.orbit) drawn.orbit = this.#line(ORBIT_POINTS + 1, this.#orbitColor, 0.45);
+    if (body.kind === 'spacecraft') drawn.trail = this.#line(TRAIL_DAYS + 1, this.#craftColor, 0.6);
     this.#drawn.push(drawn);
     return drawn;
   }
 
-  #remove({ mesh, orbit }: Drawn): void {
+  /** An empty line of up to `points` points, filled in as time and focus change. */
+  #line(points: number, color: THREE.Color, opacity: number): THREE.Line {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(points * 3), 3));
+    const line = new THREE.Line(
+      geometry,
+      new THREE.LineBasicMaterial({ color, transparent: true, opacity }),
+    );
+    // Its bounds change as the focus moves; always draw it.
+    line.frustumCulled = false;
+    this.#scene.add(line);
+    return line;
+  }
+
+  #remove({ mesh, orbit, trail }: Drawn): void {
     const material = mesh.material as THREE.MeshStandardMaterial;
     material.map?.dispose();
     material.dispose();
     mesh.removeFromParent();
-    if (orbit) {
-      orbit.geometry.dispose();
-      (orbit.material as THREE.Material).dispose();
-      orbit.removeFromParent();
+    for (const line of [orbit, trail]) {
+      if (!line) continue;
+      line.geometry.dispose();
+      (line.material as THREE.Material).dispose();
+      line.removeFromParent();
     }
   }
 
@@ -253,27 +298,52 @@ export class SolarScene {
     }
     const origin = states.get(this.#focus) ?? sunAt;
 
-    // Orbit lines only move when the time or the focus does, not with the camera.
-    const orbitsKey = `${this.#time}|${this.#focus}`;
-    const redrawOrbits = orbitsKey !== this.#orbitsDrawnFor;
-    this.#orbitsDrawnFor = orbitsKey;
+    // Orbits and trails only move when the time or the focus does, not with the camera.
+    const linesKey = `${this.#time}|${this.#focus}`;
+    const redrawLines = linesKey !== this.#linesDrawnFor;
+    this.#linesDrawnFor = linesKey;
 
-    for (const { body, mesh, orbit } of this.#drawn) {
+    this.#controls.update();
+    for (const { body, mesh, orbit, trail } of this.#drawn) {
       const at = states.get(body.id);
       mesh.visible = at !== undefined;
+      if (trail) trail.visible = at !== undefined;
       if (!at) continue;
       mesh.position.set(...toScene(subtract(at, origin)));
-      const minimum = body.id === 'sun' ? SUN_MIN_DIAMETER_PX : MIN_DIAMETER_PX;
+      const minimum = MINIMUM_PX[body.id === 'sun' ? 'sun' : body.kind];
       const distance = this.#camera.position.distanceTo(mesh.position);
       mesh.scale.setScalar(
         displayRadius(body.radiusKm, distance, FOV_DEG, this.#height, minimum, this.#trueScale),
       );
-      if (redrawOrbits && orbit && body.orbit) this.#placeOrbit(orbit, body.orbit, at, origin);
+      if (redrawLines && orbit && body.orbit) this.#placeOrbit(orbit, body.orbit, at, origin);
+      if (redrawLines && trail) this.#placeTrail(trail, body.chunks, origin);
     }
     this.#sunLight.position.copy(this.#sun.mesh.position);
-
-    this.#controls.update();
+    this.#placeLabels();
     this.#renderer.render(this.#scene, this.#camera);
+  }
+
+  /** Where each visible body lands on screen, spacecraft first, for the labels. */
+  #placeLabels(): void {
+    const onScreen: ScreenBody[] = [];
+    const point = new THREE.Vector3();
+    const order = [...this.#drawn].sort(
+      (a, b) => Number(b.body.kind === 'spacecraft') - Number(a.body.kind === 'spacecraft'),
+    );
+    for (const { body, mesh } of order) {
+      if (!mesh.visible) continue;
+      point.copy(mesh.position).project(this.#camera);
+      // Outside -1…1 in depth means behind the camera or past the far plane.
+      if (point.z < -1 || point.z > 1) continue;
+      const distance = this.#camera.position.distanceTo(mesh.position);
+      onScreen.push({
+        id: body.id,
+        x: ((point.x + 1) / 2) * this.#width,
+        y: ((1 - point.y) / 2) * this.#height,
+        radius: mesh.scale.x / unitsPerPixel(distance, FOV_DEG, this.#height),
+      });
+    }
+    this.#labels.place(onScreen, this.#width, this.#height);
   }
 
   /**
@@ -288,9 +358,19 @@ export class SolarScene {
     vertices.needsUpdate = true;
   }
 
+  /** A spacecraft's last `TRAIL_DAYS`, relative to the focus. */
+  #placeTrail(line: THREE.Line, chunks: ReadonlyMap<number, Chunk>, origin: Vector3): void {
+    const vertices = line.geometry.getAttribute('position') as THREE.BufferAttribute;
+    const points = trailPoints(chunks, this.#time);
+    points.forEach((point, i) => vertices.setXYZ(i, ...toScene(subtract(point, origin))));
+    vertices.needsUpdate = true;
+    line.geometry.setDrawRange(0, points.length);
+  }
+
   #resize(): void {
     const { clientWidth: width, clientHeight: height } = this.#options.container;
     if (width === 0 || height === 0) return;
+    this.#width = width;
     this.#height = height;
     this.#renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.#renderer.setSize(width, height, false);

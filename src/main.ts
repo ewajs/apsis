@@ -11,6 +11,7 @@
 import './ui/styles.css';
 import { pickLocale, setLocale, type Locale } from './i18n/localization.ts';
 import { RADIUS_KM } from './core/bodies.ts';
+import { bodyName } from './i18n/bodies.ts';
 import { parseInstant, tdbSecondsFromUtcMs } from './core/time.ts';
 import { loadLiveData, type LiveData } from './data/load.ts';
 import type { MapBody } from './map/solar-map.ts';
@@ -58,7 +59,7 @@ async function showLocale(locale: Locale) {
 app.addEventListener('locale-change', (event) => {
   const locale = (event as CustomEvent<Locale>).detail;
   localStorage.setItem(LOCALE_KEY, locale);
-  void showLocale(locale);
+  void showLocale(locale).then(() => scene?.setNames(names()));
 });
 
 app.addEventListener('view-change', (event) => {
@@ -122,20 +123,34 @@ function startScene(): Promise<SolarScene | undefined> {
   return sceneStarting;
 }
 
+/** Every body's name in the language showing now: planets translated, missions as named. */
+function names(): Record<string, string> {
+  const all: Record<string, string> = { sun: bodyName('sun') };
+  for (const body of data?.index.bodies ?? []) {
+    all[body.id] =
+      body.kind === 'planet'
+        ? bodyName(body.id)
+        : (data!.missions.find((mission) => mission.id === body.id)?.name ?? body.id);
+  }
+  return all;
+}
+
 /** Hands the scene its bodies, once both the scene and the data are there. */
 function fillScene() {
   if (!scene || !data) return;
-  const planets = data.index.bodies.filter((body) => body.kind === 'planet');
+  const named = names();
   scene.setBodies(
-    planets.map((body) => ({
+    data.index.bodies.map((body) => ({
       id: body.id,
       kind: body.kind,
-      radiusKm: RADIUS_KM[body.id] ?? 1,
+      name: named[body.id]!,
+      // Spacecraft are metres across: always drawn at their minimum size.
+      radiusKm: RADIUS_KM[body.id] ?? 0,
       chunks: data!.chunks.get(body.id) ?? new Map(),
       texture: TEXTURES[body.id],
       orbit: data!.orbits.planets[body.id],
     })),
-    { radiusKm: RADIUS_KM.sun!, texture: TEXTURES.sun! },
+    { name: named.sun!, radiusKm: RADIUS_KM.sun!, texture: TEXTURES.sun! },
   );
   scene.focus = params.get('focus') ?? 'sun';
   showTime();

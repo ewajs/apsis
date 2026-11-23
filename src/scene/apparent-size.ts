@@ -7,6 +7,8 @@
 export const MIN_DIAMETER_PX = 7;
 /** The Sun stays a little larger, so it reads as the Sun from anywhere. */
 export const SUN_MIN_DIAMETER_PX = 12;
+/** Spacecraft are metres across: always this size, a little smaller than planets. */
+export const CRAFT_MIN_DIAMETER_PX = 6;
 
 /**
  * How many world units one screen pixel spans at `distance` from a perspective camera.
