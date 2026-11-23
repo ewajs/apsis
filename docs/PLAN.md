@@ -42,7 +42,8 @@ unless they say to keep going. Each milestone ends with a `0.N.0` release.
       the recovery if GitHub's 60-day rule ever switches it off (ADR 0008). **Verify:** a scheduled run deploys
       fresh data.
 
-Spacecraft to verify in 1.2 (the first five ship in M1, the rest in 4.3): BepiColombo,
+Spacecraft checked in 1.2 (the first five shipped in M1; the catalogue grows from 4.3 on,
+representative kinds of journey first): BepiColombo,
 Hera, JUICE, Europa Clipper, Psyche, Juno, Lucy, Parker Solar Probe, Solar Orbiter,
 New Horizons, Voyager 1, Voyager 2, MMX, Tianwen-2. Each needs a Horizons ephemeris;
 those without one get `horizons: null` (ADR 0009).
@@ -69,25 +70,29 @@ those without one get `horizons: null` (ADR 0009).
 Goal (agreed 2026-11-23): every mission's whole history, from launch to its end or to
 now, without daily updates (ADR 0003).
 
-Proposed shape: ADR 0011 (awaiting the owner's review). Steps if it's accepted:
+Shape: ADR 0011 (accepted 2026-11-23).
 
 - [ ] **3.1 The time controller.** One owner of the displayed instant and its rate in
       `main.ts`; `?t=` follows it. No UI yet beyond the address bar.
-- [ ] **3.2 The slider.** Play, pause, speed, direction, "now"; along the bottom, on phone
-      and desktop. Within the live window only.
+- [ ] **3.2 The slider.** Play, pause, speed (real time, 1 day, 1 week, 1 month per
+      second), direction, "now"; along the bottom, on phone and desktop. Within the live
+      window only.
 - [ ] **3.3 The archive.** `npm run data:archive`, `data/archive/` committed, the live
       window from 1 January, `data/archive/` and `data/live/` paths, loading years on
       demand, cache-first for the archive.
 - [ ] **3.4 Encounters.** `encounter: true` milestones get hourly samples ±3 days.
 - [ ] **3.5 Cassini and the full history.** Cassini (1997–2017) and every catalogue
-      mission archived from launch; planets as far back as agreed.
+      mission archived from launch; planets from 1977.
+- [ ] **3.6 More ended missions.** Rosetta (a comet), Galileo, Dawn.
 
 ## M4 — Pick one (v0.4.0)
 
 - [ ] **4.1 Picker and selection.** List, search, selection, camera flies to it.
 - [ ] **4.2 Mission card.** Distance from Earth, light-time, speed, next milestone,
       blurb, links.
-- [ ] **4.3 Full catalogue.** Every verified candidate from 1.2.
+- [ ] **4.3 More kinds of journey.** JWST (parked at L2, Earth's neighbourhood),
+      BepiColombo (Mercury), New Horizons (the Kuiper belt). The catalogue then grows one
+      entry at a time, by PR: representative first, everything eventually.
 
 ## M5 — Local views (v0.5.0)
 
@@ -95,7 +100,8 @@ Proposed shape: ADR 0011 (awaiting the owner's review). Steps if it's accepted:
       local data for orbiters (target-centred, minutes apart: heliocentric samples 3 h
       apart still miss Juno's perijove by 29,000 km).
 - [ ] **5.2 First targets.** BepiColombo at Mercury, Juno at Jupiter, Hera at Didymos,
-      Cassini at Saturn.
+      Cassini at Saturn, and the ISS around Earth (it laps Earth every 92 minutes, so it
+      only makes sense here, with Earth-centred data minutes apart).
 
 ## M6 — Spacecraft models (v0.6.0)
 

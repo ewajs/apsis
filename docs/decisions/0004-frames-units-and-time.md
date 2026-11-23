@@ -1,6 +1,6 @@
 # 0004. Frames, units, time and the floating origin
 
-- Status: Accepted; implementation in M1 (core) and M2 (scene).
+- Status: Accepted; implemented in M1 (core) and M2 (scene).
 - Date: 2026-11-22
 
 ## Decision

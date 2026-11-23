@@ -15,5 +15,5 @@ not silently contradicted by code.
 | [0007](0007-pwa.md)                                | Installable PWA; data cached apart from the app                       |
 | [0008](0008-hosting-and-delivery.md)               | GitHub Pages, deployed on push and daily on a schedule                |
 | [0009](0009-catalogue.md)                          | Hand-written bilingual YAML catalogue                                 |
-| [0011](0011-history-and-time.md)                   | **Proposed:** every mission's history and the time slider             |
+| [0011](0011-history-and-time.md)                   | Every mission's history in yearly files, and the time slider          |
 | [0010](0010-planet-orbits.md)                      | Planet orbits from osculating elements, fetched once and committed    |

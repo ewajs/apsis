@@ -1,6 +1,6 @@
 # 0006. Languages
 
-- Status: Accepted; implementation in step 0.3.
+- Status: Accepted; implemented in step 0.3.
 - Date: 2026-11-22
 
 ## Decision
