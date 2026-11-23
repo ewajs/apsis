@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 270" font-family="system-ui, sans-serif" font-size="13">
+  <title>Cubic Hermite interpolation between two samples</title>
+  <rect width="480" height="270" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#d9822b"/>
+    </marker>
+  </defs>
+  <!-- The true path, which we only know at the two samples. -->
+  <path d="M60 205 C110 145 290 135 340 175" fill="none" stroke="#2a6fdb" stroke-width="4"/>
+  <line x1="60" y1="205" x2="340" y2="175" stroke="#888" stroke-width="2" stroke-dasharray="7 6"/>
+  <line x1="60" y1="205" x2="122" y2="131" stroke="#d9822b" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="340" y1="175" x2="402" y2="225" stroke="#d9822b" stroke-width="3" marker-end="url(#arrow)"/>
+  <circle cx="60" cy="205" r="7" fill="#1d1d1f"/>
+  <circle cx="340" cy="175" r="7" fill="#1d1d1f"/>
+  <text x="22" y="236" fill="#1d1d1f">sample at t₀: position and velocity</text>
+  <text x="300" y="155" fill="#1d1d1f">sample at t₁</text>
+  <text x="40" y="152" fill="#d9822b">velocity</text>
+  <text x="175" y="92" fill="#2a6fdb" font-weight="600">Hermite: through both positions,</text>
+  <text x="175" y="108" fill="#2a6fdb" font-weight="600">along both velocities</text>
+  <text x="150" y="214" fill="#666">straight line: cuts the corner</text>
+  <text x="20" y="30" fill="#1d1d1f" font-size="15" font-weight="600">Between two samples, one day apart</text>
+</svg>

@@ -29,7 +29,7 @@ unless they say to keep going. Each milestone ends with a `0.N.0` release.
 - [x] **1.2 Catalogue.** YAML schema and validation, five bilingual entries, and a
       verification table in `docs/guides/data.md` for every candidate below: Horizons
       ID, coverage, status, source. **Verify:** a broken entry fails validation.
-- [ ] **1.3 Time and interpolation.** UTC → TDB, cubic Hermite, chunk lookup, "no data
+- [x] **1.3 Time and interpolation.** UTC → TDB, cubic Hermite, chunk lookup, "no data
       for this date". **Verify:** against Horizons samples between the daily ones,
       within a stated tolerance; a guide explains Hermite with a diagram.
 - [ ] **1.4 The 2D map.** SVG top-down view of the ecliptic: Sun, planets, spacecraft
@@ -60,7 +60,9 @@ those without one get `horizons: null` (ADR 0009).
 - [ ] **3.1 Time slider.** Forwards and backwards, play speeds, back to now.
 - [ ] **3.2 Archive and loading on demand.** `npm run data:archive`, committed
       chunks, yearly loading around the displayed instant, runtime caching by kind.
-- [ ] **3.3 Cassini.** The first ended mission, 1997–2017, with a fine step at flybys;
+- [ ] **3.3 Cassini.** The first ended mission, 1997–2017, with a fine step at flybys
+      (6 h or finer: daily samples miss Parker's perihelion by 200,000 km, see
+      `docs/guides/interpolation.md`);
       planets archived for its years.
 
 ## M4 — Pick one (v0.4.0)
@@ -73,7 +75,8 @@ those without one get `horizons: null` (ADR 0009).
 ## M5 — Local views (v0.5.0)
 
 - [ ] **5.1 Target-centred views.** Frames centred on a planet or asteroid, finer-step
-      local data for orbiters.
+      local data for orbiters (target-centred, minutes apart: heliocentric samples 3 h
+      apart still miss Juno's perijove by 29,000 km).
 - [ ] **5.2 First targets.** BepiColombo at Mercury, Juno at Jupiter, Hera at Didymos,
       Cassini at Saturn.
 

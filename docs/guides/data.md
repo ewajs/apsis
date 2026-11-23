@@ -105,5 +105,10 @@ Notes:
 ## Tests
 
 `src/core/*.test.ts` run against answers recorded in `tests/fixtures/horizons/`
-(Earth across a New Year, Juno, and two refusals), never the live API. Re-record a
-fixture with the request in `vectorsQuery` if Horizons changes its format.
+(Earth across a New Year, Juno, two refusals, and daily/hourly pairs for the
+interpolation tests), never the live API. Record one with exactly the fetch's
+parameters:
+
+```sh
+node scripts/data/record-fixture.ts parker-perihelion-hourly -96 2026-11-30 2026-12-04 1h
+```

@@ -59,7 +59,15 @@ drawn and the UI says there is no data for that date.
 - **JSON first.** Binary typed arrays would be smaller and faster to load. JSON is
   readable and compresses well; switch if size or parse time becomes measurable.
 
+## Measured (2026-11-22, step 1.3)
+
+Against Horizons' own hourly samples, daily samples with Hermite are within 0.07 km
+for Earth, but miss by 200,000 km at Parker's perihelion and 480,000 km at Juno's
+perijove. Error falls about 16-fold per halved step. Encounters need a 6-hour step or
+finer (M3); orbiters need target-centred data minutes apart (M5).
+[The interpolation guide](../guides/interpolation.md) has the table.
+
 ## Revisit when
 
-A flyby or orbiter needs a step finer than an hour to look right, or the data for a
-typical visit exceeds a few megabytes.
+The data for a typical visit exceeds a few megabytes, or a view needs better than the
+measured accuracy.
