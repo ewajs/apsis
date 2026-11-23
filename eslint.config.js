@@ -63,7 +63,7 @@ export default [
             allow('core', elements('core')),
             allow('data', elements('data', 'core')),
             allow('scene', elements('scene', 'core')),
-            allow('scene', packages('three', 'three/*')),
+            allow('scene', packages('three', 'three/**')),
             allow('map', elements('map', 'core', 'i18n')),
             allow('map', packages('lit', 'lit/*', '@lit/localize')),
             allow('ui', elements('ui', 'core', 'i18n')),

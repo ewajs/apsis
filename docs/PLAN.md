@@ -49,9 +49,12 @@ those without one get `horizons: null` (ADR 0009).
 
 ## M2 — The 3D scene (v0.2.0)
 
-- [ ] **2.1 Scene.** `WebGPURenderer` with WebGL fallback, floating origin, log depth, camera controls,
-      Sun and textured planets (true size with minimum on-screen size), orbit lines,
-      2D/3D switch. **Verify:** no jitter zoomed in near Neptune; runs on a mid-range phone on both backends.
+- [x] **2.1 Scene.** `WebGPURenderer` with WebGL fallback, floating origin, log depth,
+      camera controls, Sun and textured planets (true size with minimum on-screen size),
+      orbit lines that pass through their planets, 2D/3D switch, the 3D code loaded only
+      on demand, WebKit (iPhone) and WebGPU browser tests. **Verify:** no jitter zoomed in
+      near Neptune (unit-tested, and Neptune found up close on every backend); runs on a
+      mid-range phone: still to try on a real device.
 - [ ] **2.2 Spacecraft.** Markers, labels with decluttering, trails. **Verify:**
       positions match the 2D map.
 - [ ] **2.3 True scale and polish.** True-scale setting, Saturn's rings, lighting

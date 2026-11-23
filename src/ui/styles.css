@@ -34,6 +34,11 @@ body {
   min-height: 100dvh;
 }
 
+/* `hidden` always wins, even over a component's own display or an inline style. */
+[hidden] {
+  display: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root {
     --dur-fast: 0ms;

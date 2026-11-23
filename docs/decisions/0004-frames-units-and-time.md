@@ -43,4 +43,8 @@ logarithmic.
 - **Logarithmic depth.** A scene spanning metres to tens of AU loses depth precision
   with a linear buffer (far objects flicker through each other). three.js supports
   `logarithmicDepthBuffer` on `WebGPURenderer`, on both backends. It also offers a
-  reversed depth buffer, which can be more precise; step 2.1 compares the two.
+  reversed depth buffer, which can be more precise. Step 2.1 shipped the logarithmic
+  one: no depth artefacts in any view tried. Compare the two if close-ups (M5) show any.
+- **Orbit lines pass through their planets** (step 2.1). Densest at the planet and
+  shifted by its drift from the osculating ellipse; see `orbitPathThrough` and
+  [the scene guide](../guides/scene.md).

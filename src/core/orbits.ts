@@ -3,7 +3,7 @@
  * orientation of the two-body orbit a body would follow from a given instant, if only
  * the Sun pulled on it. See docs/guides/orbits.md.
  */
-import { combine, radians, type Vector3 } from './math.ts';
+import { add, combine, dot, radians, subtract, type Vector3 } from './math.ts';
 
 /** Osculating orbital elements around the Sun, in the ecliptic J2000 frame. */
 export type OrbitalElements = {
@@ -57,12 +57,50 @@ export function orbitPoint(elements: OrbitalElements, trueAnomalyRad: number): V
  * evenly in eccentric anomaly so they stay smooth around both ends of the orbit.
  */
 export function orbitPath(elements: OrbitalElements, count: number): Vector3[] {
+  const pointAt = ellipse(elements);
+  return Array.from({ length: count + 1 }, (_, k) => pointAt((2 * Math.PI * k) / count));
+}
+
+/**
+ * The ellipse as a function of eccentric anomaly E (0 to 2π from perihelion), in
+ * ecliptic km. In the orbit's own plane, with the Sun (a focus) at the origin, the point
+ * is (a (cos E − e), b sin E); P and Q place that plane in the ecliptic frame.
+ */
+function ellipse(elements: OrbitalElements): (eccentricAnomaly: number) => Vector3 {
   const { eccentricity: e, semiMajorAxisKm: a } = elements;
   const b = a * Math.sqrt(1 - e * e);
   const { p, q } = orbitPlane(elements);
+  return (anomaly) => combine(a * (Math.cos(anomaly) - e), p, b * Math.sin(anomaly), q);
+}
+
+/**
+ * The ellipse as `count + 1` points that pass exactly through `position` (ecliptic km),
+ * for drawing an orbit next to its planet up close (docs/guides/scene.md):
+ *
+ * - points are densest at the body, so the line doesn't cut across it as a chord;
+ * - the whole ellipse is shifted by the body's small drift from it (planets wander up
+ *   to about 0.0004 AU from one epoch's osculating orbit), pinning it to the body.
+ *
+ * The first and last points are both `position`.
+ */
+export function orbitPathThrough(
+  elements: OrbitalElements,
+  count: number,
+  position: Vector3,
+): Vector3[] {
+  const e = elements.eccentricity;
+  const { p, q } = orbitPlane(elements);
+  // The body's direction within the orbit's plane, as an eccentric anomaly.
+  const trueAnomaly = Math.atan2(dot(position, q), dot(position, p));
+  const start = 2 * Math.atan(Math.sqrt((1 - e) / (1 + e)) * Math.tan(trueAnomaly / 2));
+
+  const pointAt = ellipse(elements);
+  const shift = subtract(position, pointAt(start));
   return Array.from({ length: count + 1 }, (_, k) => {
-    const anomaly = (2 * Math.PI * k) / count;
-    // In the orbit's plane, with the Sun (a focus) at the origin.
-    return combine(a * (Math.cos(anomaly) - e), p, b * Math.sin(anomaly), q);
+    // w runs from −1 to 1. 1 − (1 − |w|)³ flattens out at both ends, so the points
+    // bunch up where the loop starts and ends, at the body, and spread out opposite it.
+    const w = (2 * k) / count - 1;
+    const anomaly = start + Math.PI + Math.PI * Math.sign(w) * (1 - (1 - Math.abs(w)) ** 3);
+    return add(pointAt(k === 0 || k === count ? start : anomaly), shift);
   });
 }

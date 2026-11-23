@@ -3,15 +3,18 @@ import { customElement, property } from 'lit/decorators.js';
 import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import { currentLocale, type Locale } from '../i18n/localization.ts';
 import './language-switch.ts';
+import './view-switch.ts';
+import type { View } from './view-switch.ts';
 
 /**
  * @component The app's frame: a top bar with the name and the language switch, the
  * main view (slotted in by main.ts: the map now, the 3D scene later) and a footer
  * with the data's source and date.
  *
- * Properties: `locale`, the language showing now (passed to the switch);
- * `fetchedAt`, when the data was fetched (ISO 8601), if it has arrived.
- * Events: `locale-change` bubbles up from the switch.
+ * Properties: `locale`, the language showing now; `view`, the map or the 3D scene
+ * (both passed to their switches); `fetchedAt`, when the data was fetched (ISO 8601);
+ * `notice`, a short message for the visitor, if any.
+ * Events: `locale-change` and `view-change` bubble up from the switches.
  */
 @customElement('apsis-app')
 export class ApsisApp extends LitElement {
@@ -19,6 +22,10 @@ export class ApsisApp extends LitElement {
   @property() locale: Locale = 'es-AR';
   /** When the data shown was fetched from Horizons, ISO 8601. */
   @property() fetchedAt = '';
+  /** Which view is showing. */
+  @property() view: View = 'map';
+  /** A short message for the visitor, shown under the header. */
+  @property() notice = '';
 
   constructor() {
     super();
@@ -33,6 +40,15 @@ export class ApsisApp extends LitElement {
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
         env(safe-area-inset-left);
       box-sizing: border-box;
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+    }
+    .notice {
+      margin: 0 var(--space);
+      color: var(--color-muted);
+      font-size: 0.85rem;
     }
     header,
     footer {
@@ -82,13 +98,19 @@ export class ApsisApp extends LitElement {
   override render() {
     const icon = `${import.meta.env.BASE_URL}icon.svg`;
     return html`
-      <header>
-        <h1>
-          <img src=${icon} width="28" height="28" alt="" />APSIS
-          <span class="tagline">${msg('¿Dónde están ahora?', { id: 'tagline' })}</span>
-        </h1>
-        <language-switch .locale=${this.locale}></language-switch>
-      </header>
+      <div>
+        <header>
+          <h1>
+            <img src=${icon} width="28" height="28" alt="" />APSIS
+            <span class="tagline">${msg('¿Dónde están ahora?', { id: 'tagline' })}</span>
+          </h1>
+          <span class="controls">
+            <view-switch .view=${this.view}></view-switch>
+            <language-switch .locale=${this.locale}></language-switch>
+          </span>
+        </header>
+        <p class="notice" role="status">${this.notice}</p>
+      </div>
       <main><slot></slot></main>
       <footer>
         <span
