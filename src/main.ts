@@ -4,16 +4,19 @@
  * asked for. Storage, the clock, the address bar and the browser's language
  * preferences are touched only here (the edges, ADR 0001).
  *
- * Address parameters, for links and tests: `t=2026-12-03T16:15Z` (show that instant and
- * stop the clock), `view=3d` (start in 3D), `focus=neptune` (what the 3D camera orbits),
- * `backend=webgl2` (force the 3D fallback).
+ * Address parameters, for links and tests: `t=2026-12-03T16:15Z` (show that instant,
+ * paused; the address follows the instant as it moves), `play=day|week|month` (play
+ * at that speed, `-day` backwards), `view=3d` (start in 3D), `focus=neptune` (what the
+ * 3D camera orbits), `backend=webgl2` (force the 3D fallback).
  */
 import './ui/styles.css';
 import { pickLocale, setLocale, type Locale } from './i18n/localization.ts';
 import { RADIUS_KM, SATURN_RINGS_KM } from './core/bodies.ts';
 import { ROTATION } from './core/rotation.ts';
 import { bodyName } from './i18n/bodies.ts';
+import { SPEEDS, type Playback, type Speed } from './core/playback.ts';
 import { parseInstant, tdbSecondsFromUtcMs } from './core/time.ts';
+import { TimeController } from './time/controller.ts';
 import { loadLiveData, type LiveData } from './data/load.ts';
 import type { MapBody } from './map/solar-map.ts';
 import type { SolarScene } from './scene/solar-scene.ts';
@@ -23,8 +26,8 @@ import './map/solar-map.ts';
 import './ui/apsis-app.ts';
 
 const LOCALE_KEY = 'apsis.locale';
-/** How often "now" moves forward, in ms. Spacecraft move a few pixels a day on the map. */
-const CLOCK_TICK_MS = 10_000;
+/** How often, at most, the address bar follows the playing instant, in ms. */
+const ADDRESS_EVERY_MS = 500;
 /** Texture files (public/textures, credited in CREDITS.md), by body id. */
 const TEXTURES: Readonly<Record<string, string>> = {
   sun: '2k_sun.jpg',
@@ -77,15 +80,24 @@ app.addEventListener('true-scale-change', (event) => {
   else if (scene) scene.trueScale = value;
 });
 
-// `?t=…` shows that instant instead of now, and stops the clock.
-const fixedTime = parseInstant(params.get('t'));
-function showTime() {
-  const time = tdbSecondsFromUtcMs(fixedTime ?? Date.now());
-  map.time = time;
-  if (scene) scene.time = time;
+// The displayed instant: now, or `?t=…` paused there (ADR 0011, docs/guides/time.md).
+const time = new TimeController(parseInstant(params.get('t')), showTime);
+let addressWrittenAt = 0;
+
+/** Hands the instant to both views, and keeps `?t=` in the address bar in step. */
+function showTime(playback: Playback) {
+  const tdb = tdbSecondsFromUtcMs(playback.instantMs);
+  map.time = tdb;
+  if (scene) scene.time = tdb;
+  const now = performance.now();
+  if (playback.rate !== 0 && !playback.live && now - addressWrittenAt < ADDRESS_EVERY_MS) return;
+  addressWrittenAt = now;
+  const address = new URL(location.href);
+  if (playback.live) address.searchParams.delete('t');
+  else address.searchParams.set('t', new Date(playback.instantMs).toISOString().slice(0, 16) + 'Z');
+  history.replaceState(null, '', address);
 }
-showTime();
-if (fixedTime === null) setInterval(showTime, CLOCK_TICK_MS);
+showTime(time.playback);
 
 /**
  * Shows the map or the 3D view; the 3D code loads the first time it's needed.
@@ -181,7 +193,7 @@ function fillScene() {
   );
   scene.focus = params.get('focus') ?? 'sun';
   scene.trueScale = trueScale.scene;
-  showTime();
+  showTime(time.playback);
 }
 
 await showLocale(pickLocale(localStorage.getItem(LOCALE_KEY), navigator.languages));
@@ -200,6 +212,16 @@ try {
   map.bodies = bodies;
   map.status = 'ready';
   app.fetchedAt = data.index.fetchedAt;
+  // Playback stops at the edges of the data. The span's dates are TDB; ending two
+  // minutes early keeps clear of the last sample whatever the 69 s offset to UTC.
+  time.range = {
+    startMs: Date.parse(`${data.index.span.start}T00:00Z`),
+    endMs: Date.parse(`${data.index.span.stop}T00:00Z`) - 120_000,
+  };
+  // `?play=day` (or week, month; `-day` backwards) starts playing, until the slider exists.
+  const play = params.get('play');
+  const speed = play?.replace(/^-/, '') as Speed | undefined;
+  if (speed && speed in SPEEDS) time.play((play!.startsWith('-') ? -1 : 1) * SPEEDS[speed]);
   fillScene();
 } catch (error) {
   console.error(error);

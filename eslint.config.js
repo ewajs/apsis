@@ -35,6 +35,7 @@ export default [
         { type: 'map', pattern: 'src/map' },
         { type: 'ui', pattern: 'src/ui' },
         { type: 'i18n', pattern: 'src/i18n' },
+        { type: 'time', pattern: 'src/time' },
         // Last, so it only takes the files directly in src/ (main.ts) that no folder above claims.
         { type: 'app', pattern: 'src' },
         { type: 'scripts', pattern: 'scripts' },
@@ -69,9 +70,10 @@ export default [
             allow('ui', elements('ui', 'core', 'i18n')),
             allow('ui', packages('lit', 'lit/*', '@lit/localize')),
             allow('i18n', elements('i18n')),
+            allow('time', elements('time', 'core')),
             allow('i18n', packages('@lit/localize')),
             // main.ts wires the siblings together; they never import each other.
-            allow('app', elements('core', 'data', 'scene', 'map', 'ui', 'i18n')),
+            allow('app', elements('core', 'data', 'scene', 'map', 'ui', 'i18n', 'time')),
             // The data scripts share core's types and pure parsers, and run on Node.
             allow('scripts', elements('scripts', 'core')),
             allow('scripts', nodeBuiltins),

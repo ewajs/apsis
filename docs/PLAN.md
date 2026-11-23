@@ -72,7 +72,7 @@ now, without daily updates (ADR 0003).
 
 Shape: ADR 0011 (accepted 2026-11-23).
 
-- [ ] **3.1 The time controller.** One owner of the displayed instant and its rate in
+- [x] **3.1 The time controller.** One owner of the displayed instant and its rate in
       `main.ts`; `?t=` follows it. No UI yet beyond the address bar.
 - [ ] **3.2 The slider.** Play, pause, speed (real time, 1 day, 1 week, 1 month per
       second), direction, "now"; along the bottom, on phone and desktop. Within the live
