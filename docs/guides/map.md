@@ -40,7 +40,8 @@ above it, so its distance on the map (141 AU in the plane) is shorter than its r
 ## Two scales
 
 On a true (linear) scale, with Voyager 1 at the edge, everything inside Uranus's orbit
-collapses into the middle. The map's button switches to it on purpose: it shows why
+collapses into the middle. The scale switch at the bottom (`ui/scale-switch.ts`, shared
+with the 3D view; `main.ts` sets the map's `scale`) shows it on purpose: it shows why
 the default is logarithmic.
 
 The log scale places a body at a radius proportional to `log10(1 + d / 0.1 AU)`:

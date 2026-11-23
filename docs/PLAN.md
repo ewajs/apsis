@@ -61,7 +61,7 @@ those without one get `horizons: null` (ADR 0009).
 - [x] **2.3a Planets that turn.** Axial tilt and spin from the IAU rotation models, and
       Saturn's rings in its equatorial plane. **Verify:** the Sun overhead near longitude
       180° at Greenwich midnight, at the solstice latitude; textures never mirrored.
-- [ ] **2.3b The look.** Star and Milky Way background, the true-scale button in 3D.
+- [x] **2.3b The look.** Star and Milky Way background, the true-scale button in 3D.
       **Verify:** the owner reviews the look.
 
 ## M3 — Time (v0.3.0)

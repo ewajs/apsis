@@ -32,7 +32,8 @@ data/
 scripts/data/             Node + TS: Horizons client, catalogue validation, chunk writer
 src/
   core/                   pure: vector maths (math.ts), Horizons parsing, time scales,
-                          Hermite interpolation, frames and units, orbit ellipses,
+                          Hermite interpolation, frames (ecliptic, equatorial,
+                          galactic, scene) and units, orbit ellipses,
                           trails, label placement, rotation (IAU), distances and
                           light-time
   data/                   browser loading of the catalogue and chunks (fetch, cache)

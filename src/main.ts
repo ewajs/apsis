@@ -67,6 +67,16 @@ app.addEventListener('view-change', (event) => {
   void showView((event as CustomEvent<View>).detail);
 });
 
+/** Each view's own scale setting: log or true distances; enlarged or true sizes. */
+const trueScale: Record<View, boolean> = { map: false, scene: false };
+app.addEventListener('true-scale-change', (event) => {
+  const value = (event as CustomEvent<boolean>).detail;
+  trueScale[app.view] = value;
+  app.trueScale = value;
+  if (app.view === 'map') map.scale = value ? 'linear' : 'log';
+  else if (scene) scene.trueScale = value;
+});
+
 // `?t=…` shows that instant instead of now, and stops the clock.
 const fixedTime = parseInstant(params.get('t'));
 function showTime() {
@@ -83,6 +93,7 @@ if (fixedTime === null) setInterval(showTime, CLOCK_TICK_MS);
  */
 async function showView(view: View, notice = '') {
   app.view = view;
+  app.trueScale = trueScale[view];
   app.notice = notice;
   map.hidden = view !== 'map';
   sceneView.hidden = view !== 'scene';
@@ -109,6 +120,7 @@ function startScene(): Promise<SolarScene | undefined> {
         label: sceneLabel(),
         texturesBase: `${import.meta.env.BASE_URL}textures/`,
         backend: params.get('backend') === 'webgl2' ? 'webgl2' : 'auto',
+        sky: '2k_stars_milky_way.jpg',
       });
       sceneView.firstChild?.remove(); // the loading text
       sceneView.style.cssText = 'position:relative;display:grid;min-height:0';
@@ -168,6 +180,7 @@ function fillScene() {
     },
   );
   scene.focus = params.get('focus') ?? 'sun';
+  scene.trueScale = trueScale.scene;
   showTime();
 }
 

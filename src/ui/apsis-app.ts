@@ -3,6 +3,7 @@ import { customElement, property } from 'lit/decorators.js';
 import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import { currentLocale, type Locale } from '../i18n/localization.ts';
 import './language-switch.ts';
+import './scale-switch.ts';
 import './view-switch.ts';
 import type { View } from './view-switch.ts';
 
@@ -11,10 +12,12 @@ import type { View } from './view-switch.ts';
  * main view (slotted in by main.ts: the map now, the 3D scene later) and a footer
  * with the data's source and date.
  *
- * Properties: `locale`, the language showing now; `view`, the map or the 3D scene
- * (both passed to their switches); `fetchedAt`, when the data was fetched (ISO 8601);
- * `notice`, a short message for the visitor, if any.
- * Events: `locale-change` and `view-change` bubble up from the switches.
+ * Properties: `locale`, the language showing now; `view`, the map or the 3D scene;
+ * `trueScale`, whether that view shows true scale (all passed to their switches);
+ * `fetchedAt`, when the data was fetched (ISO 8601); `notice`, a short message for
+ * the visitor, if any.
+ * Events: `locale-change`, `view-change` and `true-scale-change` bubble up from the
+ * switches.
  */
 @customElement('apsis-app')
 export class ApsisApp extends LitElement {
@@ -24,6 +27,8 @@ export class ApsisApp extends LitElement {
   @property() fetchedAt = '';
   /** Which view is showing. */
   @property() view: View = 'map';
+  /** Whether the view showing is at true scale. */
+  @property({ type: Boolean }) trueScale = false;
   /** A short message for the visitor, shown under the header. */
   @property() notice = '';
 
@@ -85,6 +90,7 @@ export class ApsisApp extends LitElement {
       }
     }
     main {
+      position: relative;
       display: grid;
       min-height: 0;
     }
@@ -111,7 +117,10 @@ export class ApsisApp extends LitElement {
         </header>
         <p class="notice" role="status">${this.notice}</p>
       </div>
-      <main><slot></slot></main>
+      <main>
+        <slot></slot>
+        <scale-switch .view=${this.view} ?trueScale=${this.trueScale}></scale-switch>
+      </main>
       <footer>
         <span
           >${msg('Posiciones: JPL Horizons, NASA/JPL-Caltech.', { id: 'credit-horizons' })}</span

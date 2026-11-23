@@ -40,7 +40,8 @@ Uranus, which spin backwards, have a negative rate for W.
 
 All three are equatorial; our frame is ecliptic (ADR 0004), so each is turned about
 the x axis (the vernal equinox, which both frames share) by the obliquity of the
-ecliptic, 23.4392911°.
+ecliptic, 23.4392911° (`equatorialToEcliptic` in `core/frames.ts`, which also places
+the sky).
 
 The test that ties it together uses a recorded Horizons position of Earth at 23:58:51
 UTC on 29 December 2026: almost midnight at Greenwich, so the Sun must be overhead near

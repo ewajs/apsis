@@ -11,7 +11,7 @@
 import * as THREE from 'three/webgpu';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { position, type BodyKind, type Chunk } from '../core/ephemeris.ts';
-import { toScene } from '../core/frames.ts';
+import { galacticAxes, toScene } from '../core/frames.ts';
 import { stateFromChunks } from '../core/interpolate.ts';
 import { subtract, type Vector3 } from '../core/math.ts';
 import { orbitPathThrough, type OrbitalElements } from '../core/orbits.ts';
@@ -58,6 +58,8 @@ export type SceneOptions = {
   texturesBase: string;
   /** `webgl2` forces the fallback, as browser tests do; otherwise three.js picks. */
   backend?: 'auto' | 'webgl2';
+  /** The background's texture file: the Milky Way, in galactic coordinates. */
+  sky?: string;
 };
 
 /** Vertical field of view, in degrees. */
@@ -77,6 +79,10 @@ const ORBIT_POINTS = 360;
 /** A little light on the night sides, so planets don't vanish against space. */
 const AMBIENT_INTENSITY = 0.06;
 const SUN_INTENSITY = 2.5;
+/** The sky's distance from the camera: beyond everything drawn, inside the far plane. */
+const SKY_DISTANCE_KM = 500 * KM_PER_AU;
+/** How bright the sky is drawn, 0 to 1: dim, so names and orbits stay readable. */
+const SKY_BRIGHTNESS = 0.35;
 
 /** A body on screen: its sphere, and its orbit (planets) or trail (spacecraft). */
 type Drawn = { body: SceneBody; mesh: THREE.Mesh; orbit?: THREE.Line; trail?: THREE.Line };
@@ -104,6 +110,7 @@ export class SolarScene {
   #width = 1;
   #height = 1;
   #labels: LabelLayer;
+  #sky?: THREE.Mesh;
   #time = 0;
   #focus = 'sun';
   #trueScale = false;
@@ -144,6 +151,7 @@ export class SolarScene {
     this.#labels = new LabelLayer(options.container);
 
     this.#scene.add(new THREE.AmbientLight(0xffffff, AMBIENT_INTENSITY), this.#sunLight);
+    if (options.sky) this.#sky = this.#skyFor(options.sky);
     this.#sun = this.#add({ id: 'sun', kind: 'planet', name: '', radiusKm: 0, chunks: new Map() });
     // The Sun is the light, so it isn't lit: swap the standard material for a basic one.
     (this.#sun.mesh.material as THREE.Material).dispose();
@@ -218,7 +226,10 @@ export class SolarScene {
     this.#controls.minDistance = radius * 1.5;
   }
 
-  /** Whether bodies are drawn at true size only, with no minimum on screen (ADR 0005). */
+  /**
+   * Whether the Sun and the planets are drawn at true size only, with no minimum on
+   * screen (ADR 0005). Spacecraft keep their markers either way.
+   */
   set trueScale(value: boolean) {
     this.#trueScale = value;
   }
@@ -239,6 +250,11 @@ export class SolarScene {
     this.#observer.disconnect();
     this.#controls.dispose();
     for (const drawn of this.#drawn) this.#remove(drawn);
+    if (this.#sky) {
+      const material = this.#sky.material as THREE.MeshBasicMaterial;
+      material.map?.dispose();
+      material.dispose();
+    }
     this.#sphere.dispose();
     this.#labels.dispose();
     this.#renderer.dispose();
@@ -357,14 +373,18 @@ export class SolarScene {
       mesh.position.set(...toScene(subtract(at, origin)));
       const minimum = MINIMUM_PX[body.id === 'sun' ? 'sun' : body.kind];
       const distance = this.#camera.position.distanceTo(mesh.position);
+      // Spacecraft are markers, not bodies to scale (ADR 0005): true scale leaves them be.
+      const trueScale = this.#trueScale && body.kind !== 'spacecraft';
       mesh.scale.setScalar(
-        displayRadius(body.radiusKm, distance, FOV_DEG, this.#height, minimum, this.#trueScale),
+        displayRadius(body.radiusKm, distance, FOV_DEG, this.#height, minimum, trueScale),
       );
       if (redrawLines && body.rotation) this.#turn(mesh, body.rotation);
       if (redrawLines && orbit && body.orbit) this.#placeOrbit(orbit, body.orbit, at, origin);
       if (redrawLines && trail) this.#placeTrail(trail, body.chunks, origin);
     }
     this.#sunLight.position.copy(this.#sun.mesh.position);
+    // The sky moves with the camera, so it's always as far away: at infinity, in effect.
+    this.#sky?.position.copy(this.#camera.position);
     this.#placeLabels();
     this.#renderer.render(this.#scene, this.#camera);
   }
@@ -402,6 +422,34 @@ export class SolarScene {
       vertices.setXYZ(i, ...toScene(subtract(point, origin)));
     });
     vertices.needsUpdate = true;
+  }
+
+  /**
+   * The Milky Way behind everything: a sphere seen from inside, drawn first and never
+   * hiding anything. The texture is in galactic coordinates (the band along its middle,
+   * the galactic centre at its centre), so it's turned to put that band on the real
+   * galactic plane and its centre towards Sagittarius. It's artwork, not a star
+   * catalogue: individual stars aren't the real ones (docs/guides/scene.md).
+   */
+  #skyFor(file: string): THREE.Mesh {
+    const material = new THREE.MeshBasicMaterial({
+      side: THREE.BackSide,
+      depthWrite: false,
+      color: new THREE.Color(SKY_BRIGHTNESS, SKY_BRIGHTNESS, SKY_BRIGHTNESS),
+    });
+    const sky = new THREE.Mesh(this.#sphere, material);
+    sky.name = 'sky';
+    sky.renderOrder = -1;
+    sky.frustumCulled = false;
+    sky.scale.setScalar(SKY_DISTANCE_KM);
+    const { centre, north, east } = galacticAxes();
+    const [x, y, z] = sphereBasis({ pole: north, meridian: centre, east }).map(
+      (axis) => new THREE.Vector3(...axis),
+    ) as [THREE.Vector3, THREE.Vector3, THREE.Vector3];
+    sky.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
+    this.#loadTexture(sky, file);
+    this.#scene.add(sky);
+    return sky;
   }
 
   /** Tilts and spins a body's sphere to how it stands at the shown instant. */

@@ -118,3 +118,30 @@ test.describe('in a Spanish browser', () => {
     await expect(label('earth')).toHaveText('Earth');
   });
 });
+
+test('shows true sizes on request, keeping the spacecraft marked', async ({ page }, testInfo) => {
+  await page.goto(sceneAddress(testInfo.project.name));
+  await expect(page.locator('canvas[data-backend]')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(/Planets enlarged|Planetas agrandados/)).toBeVisible();
+  await page.getByRole('button', { name: /Show true sizes|Ver tamaños reales/ }).click();
+  await expect(page.getByText(/True sizes|Tamaños reales/)).toBeVisible();
+  // The planets shrink below a pixel; their names and the spacecraft's stay.
+  await expect(page.locator('[data-label="europa-clipper"]')).toHaveCSS('visibility', 'visible');
+  // Each view keeps its own setting: the map is still on its log scale.
+  await page.getByRole('button', { name: /2D map|Mapa en 2D/ }).click();
+  await expect(page.getByText(/logarithmic scale|escala logarítmica/)).toBeVisible();
+});
+
+test('draws the Milky Way behind everything', async ({ page }, testInfo) => {
+  await page.goto(sceneAddress(testInfo.project.name));
+  await expect(page.locator('canvas[data-backend]')).toBeVisible({ timeout: 20_000 });
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        performance
+          .getEntriesByType('resource')
+          .some((entry) => entry.name.endsWith('/textures/2k_stars_milky_way.jpg')),
+      ),
+    )
+    .toBe(true);
+});

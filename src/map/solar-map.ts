@@ -47,7 +47,8 @@ const RING_LABEL_CHAR_WIDTH = 5.6;
  * (docs/guides/map.md).
  *
  * Properties: `bodies` (what to draw), `time` (TDB seconds since J2000), `status`.
- * The scale (log or linear) is the map's own state, switched by its button.
+ * `scale` is set from outside (the shell's scale switch); the map keeps room for that
+ * switch at the bottom, or in the corners on wide screens.
  * Events: none yet.
  */
 @customElement('solar-map')
@@ -59,7 +60,8 @@ export class SolarMap extends LitElement {
   /** Whether the data has arrived. */
   @property() status: 'loading' | 'ready' | 'failed' = 'loading';
 
-  @state() private scale: MapScale = 'log';
+  /** How distances from the Sun are drawn. */
+  @property() scale: MapScale = 'log';
   @state() private size = { width: 0, height: 0 };
   #resize = new ResizeObserver(([entry]) => {
     if (entry) this.size = { width: entry.contentRect.width, height: entry.contentRect.height };
@@ -132,20 +134,15 @@ export class SolarMap extends LitElement {
     .label.spacecraft {
       fill: var(--color-craft);
     }
-    .corner {
+    .missing {
       position: absolute;
+      top: calc(var(--space) * 0.5);
       left: var(--space);
       right: var(--space);
-      bottom: calc(var(--space) * 0.5);
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
-      gap: var(--space);
-      pointer-events: none;
-    }
-    .note {
+      margin: 0;
       color: var(--color-muted);
       font-size: 0.8rem;
+      pointer-events: none;
     }
     .message {
       position: absolute;
@@ -155,21 +152,6 @@ export class SolarMap extends LitElement {
       padding: var(--space);
       text-align: center;
       color: var(--color-muted);
-    }
-    button {
-      pointer-events: auto;
-      min-height: 44px;
-      padding: 0 14px;
-      border: 1px solid var(--color-line);
-      border-radius: 999px;
-      background: var(--color-surface);
-      color: var(--color-text);
-      font: 600 0.8rem var(--font-ui);
-      cursor: pointer;
-    }
-    button:focus-visible {
-      outline: 2px solid var(--color-craft);
-      outline-offset: 2px;
     }
   `;
 
@@ -283,28 +265,14 @@ export class SolarMap extends LitElement {
             : nothing;
         })}
       </svg>
-      <div class="corner">
-        <span class="note">
-          ${
-            this.scale === 'log'
-              ? msg('Distancias en escala logarítmica', { id: 'map-scale-log-note' })
-              : msg('Distancias reales', { id: 'map-scale-linear-note' })
-          }
-          ${
-            missing.length > 0
-              ? html`<br />${msg('Sin datos para esta fecha:', { id: 'map-missing' })}
-                  ${missing.map((body) => this.#label(body)).join(', ')}`
-              : nothing
-          }
-        </span>
-        <button type="button" @click=${this.#toggleScale}>
-          ${
-            this.scale === 'log'
-              ? msg('Ver distancias reales', { id: 'map-scale-to-linear' })
-              : msg('Ver escala logarítmica', { id: 'map-scale-to-log' })
-          }
-        </button>
-      </div>
+      ${
+        missing.length > 0
+          ? html`<p class="missing">
+              ${msg('Sin datos para esta fecha:', { id: 'map-missing' })}
+              ${missing.map((body) => this.#label(body)).join(', ')}
+            </p>`
+          : nothing
+      }
     `;
   }
 
@@ -326,10 +294,6 @@ export class SolarMap extends LitElement {
       .map(([x, y]) => toPx(x, y))
       .map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`)
       .join(' ');
-  }
-
-  #toggleScale() {
-    this.scale = this.scale === 'log' ? 'linear' : 'log';
   }
 }
 

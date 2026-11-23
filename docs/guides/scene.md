@@ -58,8 +58,7 @@ drawn radius = max(true radius, 3.5 px × units per pixel)
 `displayRadius` does this per body, per frame, from the camera's distance. From 3 AU
 away, on a screen 800 px tall, one pixel spans about 465,000 km, so Earth is drawn
 about 250 times its size; up close it's drawn at its true size.
-That's the "minimum on-screen size" of ADR 0005; a true-scale switch (no minimum)
-exists in code (`trueScale`) and gets its button in 2.3.
+That's the "minimum on-screen size" of ADR 0005; the scale switch (below) turns it off.
 
 ## Orbits that pass through their planets
 
@@ -109,6 +108,28 @@ catalogue; `main.ts` renames them after a language switch (`setNames`).
 Each planet (and the Sun) is tilted and turned to how it stands at the shown instant,
 from the IAU rotation models, and Saturn's rings lie in its equatorial plane. See
 [rotation.md](rotation.md).
+
+## The sky
+
+Behind everything, Solar System Scope's Milky Way texture on a sphere seen from inside
+(`#skyFor`). It follows the camera, so it always looks infinitely far away, is drawn
+first without touching the depth buffer, and is dimmed (`SKY_BRIGHTNESS`) so names and
+orbits stay readable.
+
+The texture is in galactic coordinates: the Milky Way runs along its middle row and the
+galactic centre is its brightest spot, at its centre. `galacticAxes` (in
+`core/frames.ts`) gives the real directions of the galactic centre (in Sagittarius,
+5.6° south of the ecliptic) and of the galactic pole (the plane is tilted 60° to the
+ecliptic), and the sky sphere is turned to match. That's as far as it goes: no known
+bright star (Sirius, Canopus, Vega…) shows up where it should in either orientation of
+the image, so it's artwork, not a star catalogue, and the guide says so.
+
+## Scale
+
+The note and button at the bottom (`ui/scale-switch.ts`, shared with the map) switch
+the 3D view between planets enlarged to their minimum on-screen size and true sizes,
+where they shrink below a pixel and only their names show where they are. Spacecraft
+keep their markers either way. Each view remembers its own setting.
 
 ## Light and depth
 
