@@ -103,6 +103,9 @@ export class SolarMap extends LitElement {
       min-height: 0;
       overflow: hidden;
     }
+    :host([hidden]) {
+      display: none;
+    }
     svg {
       position: absolute;
       inset: 0;

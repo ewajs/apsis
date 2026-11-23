@@ -4,8 +4,8 @@ import embVectors from '../../tests/fixtures/horizons/emb-vectors.json';
 import marsElements from '../../tests/fixtures/horizons/mars-elements.json';
 import marsVectors from '../../tests/fixtures/horizons/mars-vectors.json';
 import { parseElements, parseVectors } from './horizons.ts';
-import { distance, length, radians } from './math.ts';
-import { orbitPath, orbitPoint } from './orbits.ts';
+import { distance, length, radians, type Vector3 } from './math.ts';
+import { orbitPath, orbitPathThrough, orbitPoint } from './orbits.ts';
 import { position } from './ephemeris.ts';
 import { KM_PER_AU } from './units.ts';
 
@@ -61,5 +61,36 @@ describe('orbitPath', () => {
     // 360 points around Mars's orbit are about 6 million km apart; the planet sits
     // between two of them, so within half that of the nearest.
     expect(nearest).toBeLessThan(3.5e6);
+  });
+});
+
+describe('orbitPathThrough', () => {
+  const elements = parseElements(marsElements);
+  // Mars a little off its osculating ellipse, as planets drift (up to ~60,000 km).
+  const onOrbit = orbitPoint(elements, radians(elements.trueAnomalyDeg));
+  const mars: Vector3 = [onOrbit[0] + 40_000, onOrbit[1] - 25_000, onOrbit[2] + 3_000];
+  const path = orbitPathThrough(elements, 360, mars);
+
+  it('starts and ends exactly at the body', () => {
+    expect(path[0]).toEqual(mars);
+    expect(path[360]).toEqual(mars);
+  });
+
+  it('is densest at the body, so the line never cuts across it', () => {
+    const step = (i: number) => Math.hypot(...path[i + 1]!.map((v, k) => v - path[i]![k]!));
+    // A few hundred km at most: a straight step that short stays inside any planet.
+    expect(step(0)).toBeLessThan(1_000);
+    expect(step(359)).toBeLessThan(1_000);
+    expect(step(180)).toBeGreaterThan(1e6); // the far side can be coarse
+  });
+
+  it('is the same ellipse, only shifted by the drift', () => {
+    const shift = Math.hypot(40_000, 25_000, 3_000);
+    for (const point of path) {
+      const r = Math.hypot(...point);
+      const { semiMajorAxisKm: a, eccentricity: e } = elements;
+      expect(r).toBeGreaterThan(a * (1 - e) - shift - 1);
+      expect(r).toBeLessThan(a * (1 + e) + shift + 1);
+    }
   });
 });

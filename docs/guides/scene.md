@@ -1,0 +1,105 @@
+# The 3D view
+
+The Sun, the planets and their orbits in three dimensions, at true scale with a minimum
+size on screen. Code: `src/scene/` (`solar-scene.ts`, `apparent-size.ts`),
+`src/core/frames.ts` (axes), `src/core/math.ts` (vectors), `orbitPathThrough` in
+`src/core/orbits.ts`, and the wiring in
+`src/main.ts`. Decisions: ADR 0001 (renderer), 0004 (frames, floating origin), 0005
+(scale).
+
+| The inner solar system                         | Earth up close                           | On a phone                        |
+| ---------------------------------------------- | ---------------------------------------- | --------------------------------- |
+| ![Inner planets and orbits](scene-desktop.png) | ![Earth with its orbit](scene-earth.png) | ![3D on a phone](scene-phone.png) |
+
+## Getting there
+
+The 2D map is the default. The **2D / 3D** switch in the header (or `?view=3d` in the
+address) shows the 3D view; `main.ts` imports `scene/solar-scene.ts` only then, so the
+page itself stays small (13 KB gzipped) and three.js (about 230 KB gzipped) loads on
+demand. If it can't start (an old device, a failed download), the map stays and a
+short notice says why.
+
+`SolarScene.create` makes a three.js `WebGPURenderer`, which uses WebGPU where the
+browser has it and falls back to WebGL 2 by itself. The canvas says which in
+`data-backend`. `?backend=webgl2` forces the fallback.
+
+## Units and axes
+
+Everything is in **kilometres**, from the data to the scene: no conversion to get
+wrong (ADR 0004). The ecliptic frame has z towards ecliptic north; three.js has y up.
+`toScene` maps `(x, y, z)` to `(x, z, −y)`, a rotation, so orbits keep turning the
+same way; nothing else knows about the difference.
+
+## The floating origin
+
+The GPU stores positions as 32-bit floats: about 7 significant digits. Neptune is 4.5
+billion km from the Sun, so a 32-bit position near it can only step by hundreds of km,
+and anything near Neptune would jitter between those steps.
+
+So the camera never looks at "the solar system": it looks at a **focus** (the Sun by
+default; `?focus=neptune` for now, the picker later). Every frame, `#frame()` works out
+each body's position in 64-bit JavaScript numbers, subtracts the focus's position
+(`subtract` from `core/math.ts`), and only then hands the result to three.js. Near the focus the numbers
+are small and precise; far away they're large and imprecise, but far away is also tiny
+on screen. `frames.test.ts` shows the difference: over a km lost near Neptune with
+absolute positions, under a centimetre with relative ones. The camera orbits the focus
+at the origin, which is why panning is off.
+
+## True scale with a minimum size
+
+Bodies are spheres of their true radius (`core/bodies.ts`), scaled up only when that
+would make them smaller than 7 px across on screen (12 px for the Sun):
+
+```text
+units per pixel at distance d = 2 · d · tan(fov / 2) / viewport height
+drawn radius = max(true radius, 3.5 px × units per pixel)
+```
+
+`displayRadius` does this per body, per frame, from the camera's distance. From 3 AU
+away, on a screen 800 px tall, one pixel spans about 465,000 km, so Earth is drawn
+about 250 times its size; up close it's drawn at its true size.
+That's the "minimum on-screen size" of ADR 0005; a true-scale switch (no minimum)
+exists in code (`trueScale`) and gets its button in 2.3.
+
+## Orbits that pass through their planets
+
+Drawing an orbit as evenly spaced points works from afar but fails up close, for two
+reasons:
+
+- **Chords.** 360 points around Neptune's orbit are 78 million km apart; a straight
+  segment between two of them strays up to about 170,000 km from the curve, seven
+  Neptune radii.
+- **Drift.** A planet wanders up to about 0.0004 AU (60,000 km) from one epoch's
+  osculating ellipse (ADR 0010).
+
+`orbitPathThrough(elements, count, position)` solves both: it starts and ends the loop
+at the planet, packs points densely there (from about 100 km apart at Mars to 2,400 km
+at Neptune: well inside the planet either way) and sparsely on the far side, and shifts the whole ellipse by the planet's drift, so it passes exactly
+through the planet. The shift is invisible at solar-system scale. The scene recomputes
+orbit lines only when the time or the focus changes, never per frame.
+
+## Light and depth
+
+A point light at the Sun lights the planets (no fall-off with distance: at these
+scales physical fall-off would leave Neptune black), with a faint ambient light so
+night sides don't vanish. The Sun itself is unlit (it _is_ the light). The renderer uses
+a **logarithmic depth buffer**, which keeps depth precise from a kilometre to a
+thousand AU on both backends.
+
+## Testing it
+
+`tests/e2e/scene.spec.ts` runs on four Playwright projects:
+
+| Project   | Browser                                | Backend it must get             |
+| --------- | -------------------------------------- | ------------------------------- |
+| `phone`   | Chromium, Pixel 7                      | WebGL 2 (forced)                |
+| `desktop` | Chromium                               | WebGL 2 (forced)                |
+| `iphone`  | WebKit, iPhone 13                      | WebGL 2 (WebKit's own fallback) |
+| `webgpu`  | Chromium's newer headless, SwiftShader | WebGPU                          |
+
+The default headless Chromium offers WebGPU but can't show its frames, so `phone` and
+`desktop` force the fallback, as gravitas does. The `webgpu` project uses the newer
+headless Chromium with a software GPU, which can. The tests check the backend, count
+Sun-coloured pixels in the middle, find Neptune up close, switch views, and check the
+fallback when the 3D code can't load. A software GPU says nothing about speed on a
+real phone; that needs a device.

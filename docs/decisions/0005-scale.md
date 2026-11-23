@@ -1,6 +1,7 @@
 # 0005. Scale
 
-- Status: Accepted; implementation in M2.
+- Status: Accepted; the minimum on-screen size implemented in 2.1 (7 px, 12 px for the
+  Sun); the true-scale button and spacecraft markers come in 2.2 and 2.3.
 - Date: 2026-11-22
 
 ## Decision

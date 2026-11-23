@@ -8,6 +8,11 @@ const background = '#070b14';
 
 export default defineConfig({
   base,
+  build: {
+    // The 3D view's chunk (three.js, ~230 KB gzipped) loads only when someone picks 3D;
+    // the page itself stays small. Warn only above that.
+    chunkSizeWarningLimit: 900,
+  },
   plugins: [
     // Installable and offline (ADR 0007). The precache is the app shell only; data will
     // be cached at runtime, so daily data deploys don't count as app updates.
@@ -40,7 +45,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
+        // The app shell and the planet textures (about 4 MB, ADR 0007).
+        globPatterns: ['**/*.{js,css,html,svg,png,jpg,webmanifest}'],
         // Data is cached as it's used, never precached: show the cached copy at once and
         // refresh it in the background (ADR 0007).
         runtimeCaching: [

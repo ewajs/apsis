@@ -24,4 +24,10 @@ export const templates = {
   'map-missing': 'No data for this date:',
   'map-scale-to-linear': 'Show true distances',
   'map-scale-to-log': 'Show log scale',
+  view: 'View',
+  'view-map': '2D map',
+  'view-scene': '3D view',
+  'scene-label': 'The Sun and the planets in 3D. Drag to turn, pinch or scroll to zoom.',
+  'scene-loading': 'Preparing the 3D view…',
+  'scene-failed': 'This device couldn’t show the 3D view. Carry on with the 2D map.',
 };
