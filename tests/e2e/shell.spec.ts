@@ -5,17 +5,17 @@ test.describe('in a Spanish browser', () => {
 
   test('speaks Spanish first', async ({ page }) => {
     await page.goto('./');
-    await expect(page.getByRole('heading', { name: '¿Dónde están ahora?' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /¿Dónde están ahora\?/ })).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'es-AR');
   });
 
   test('switches to English without reloading, and remembers it', async ({ page }) => {
     await page.goto('./');
-    await expect(page.getByRole('heading', { name: '¿Dónde están ahora?' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /¿Dónde están ahora\?/ })).toBeVisible();
     await page.evaluate(() => Object.assign(window, { sameDocument: true }));
 
     await page.getByRole('button', { name: 'English' }).click();
-    await expect(page.getByRole('heading', { name: 'Where are they now?' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Where are they now\?/ })).toBeVisible();
     await expect(page.getByRole('button', { name: 'English' })).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -24,7 +24,7 @@ test.describe('in a Spanish browser', () => {
     expect(await page.evaluate(() => 'sameDocument' in window)).toBe(true);
 
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'Where are they now?' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Where are they now\?/ })).toBeVisible();
   });
 });
 
@@ -33,7 +33,7 @@ test.describe('in an English browser', () => {
 
   test('speaks English first', async ({ page }) => {
     await page.goto('./');
-    await expect(page.getByRole('heading', { name: 'Where are they now?' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Where are they now\?/ })).toBeVisible();
   });
 });
 
@@ -49,7 +49,7 @@ test('is installable', async ({ page, request }) => {
   }
 });
 
-test('opens offline after the first visit', async ({ page, context }) => {
+test('opens offline after the first visit, map included', async ({ page, context }) => {
   await page.goto('./');
   // The service worker installs in the background; wait until it controls the page.
   await page.evaluate(async () => {
@@ -60,9 +60,13 @@ test('opens offline after the first visit', async ({ page, context }) => {
       );
     }
   });
+  // One visit through the service worker caches the data it loads.
+  await page.reload();
+  await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
   await context.setOffline(true);
   await page.reload();
   await expect(
-    page.getByRole('heading', { name: /¿Dónde están ahora\?|Where are they now\?/ }),
+    page.getByRole('heading', { name: /Dónde están ahora|Where are they now/ }),
   ).toBeVisible();
+  await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
 });

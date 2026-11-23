@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { TDB_MINUS_UTC_SECONDS, tdbSecondsFromUtcMs, utcMsFromTdbSeconds } from './time.ts';
+import {
+  parseInstant,
+  TDB_MINUS_UTC_SECONDS,
+  tdbSecondsFromUtcMs,
+  utcMsFromTdbSeconds,
+} from './time.ts';
 
 describe('UTC and TDB', () => {
   it('puts a Horizons sample time where the clock reads 69.184 s earlier', () => {
@@ -15,5 +20,18 @@ describe('UTC and TDB', () => {
 
   it('uses the offset since the 2017 leap second', () => {
     expect(TDB_MINUS_UTC_SECONDS).toBe(37 + 32.184);
+  });
+});
+
+describe('parseInstant', () => {
+  it('reads dates and date-times, in UTC', () => {
+    expect(parseInstant('2026-12-03')).toBe(Date.UTC(2026, 11, 3));
+    expect(parseInstant('2026-12-03T16:15Z')).toBe(Date.UTC(2026, 11, 3, 16, 15));
+  });
+
+  it('refuses anything else', () => {
+    for (const text of [null, '', 'tomorrow', '12/03/2026', '2026-13-45']) {
+      expect(parseInstant(text)).toBeNull();
+    }
   });
 });

@@ -32,12 +32,13 @@ unless they say to keep going. Each milestone ends with a `0.N.0` release.
 - [x] **1.3 Time and interpolation.** UTC → TDB, cubic Hermite, chunk lookup, "no data
       for this date". **Verify:** against Horizons samples between the daily ones,
       within a stated tolerance; a guide explains Hermite with a diagram.
-- [ ] **1.4 The 2D map.** SVG top-down view of the ecliptic: Sun, planets, spacecraft
-      and their trails, at the current instant, with optional log distance.
+- [x] **1.4 The 2D map.** SVG top-down view of the ecliptic: Sun, planets, spacecraft
+      and their trails, at the current instant, with optional log distance. Also brought
+      forward from 1.6: the data date in the footer.
       **Verify:** positions match Horizons for a chosen date; readable at 375×667.
 - [ ] **1.5 Planet orbits.** Osculating elements from Horizons, committed; ellipses
       drawn on the map. **Verify:** each planet's current position sits on its ellipse.
-- [ ] **1.6 Daily refresh.** Scheduled build, data date in the page, the 60-day
+- [ ] **1.6 Daily refresh.** Scheduled build, the 60-day
       mitigation (ADR 0008). **Verify:** a scheduled run deploys fresh data.
 
 Spacecraft to verify in 1.2 (the first five ship in M1, the rest in 4.3): BepiColombo,

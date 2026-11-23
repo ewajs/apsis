@@ -41,6 +41,15 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
+        // Data is cached as it's used, never precached: show the cached copy at once and
+        // refresh it in the background (ADR 0007).
+        runtimeCaching: [
+          {
+            urlPattern: /\/data\/.+\.json$/,
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'apsis-data' },
+          },
+        ],
       },
     }),
   ],

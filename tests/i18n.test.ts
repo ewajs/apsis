@@ -9,7 +9,7 @@ function sourceIds(): string[] {
     .filter((file) => file.endsWith('.ts') && !file.endsWith('.test.ts'));
   const ids = files.flatMap((file) => {
     const text = readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8');
-    return [...text.matchAll(/\bmsg\([\s\S]*?\{\s*id:\s*'([^']+)'\s*\}/g)].map((m) => m[1]!);
+    return [...text.matchAll(/\bmsg\([\s\S]*?\{\s*id:\s*'([^']+)'\s*,?\s*\}/g)].map((m) => m[1]!);
   });
   return [...new Set(ids)].sort();
 }
@@ -20,6 +20,9 @@ describe('English translations', () => {
   });
 
   it('are never empty', () => {
-    for (const text of Object.values(templates)) expect(text.trim()).not.toBe('');
+    for (const text of Object.values(templates)) {
+      const plain = typeof text === 'string' ? text : text.strings.join('');
+      expect(plain.trim()).not.toBe('');
+    }
   });
 });
