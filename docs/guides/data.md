@@ -4,9 +4,22 @@ How positions get from JPL Horizons to the app. Code: `scripts/data/`,
 `src/core/horizons.ts`, `src/core/ephemeris.ts`. Decisions: ADR 0002 (source),
 0003 (chunks), 0004 (frame, units, time).
 
+## Storage at a glance
+
+| Data                                     | Where                       | Written by             | How often                          | In git |
+| ---------------------------------------- | --------------------------- | ---------------------- | ---------------------------------- | ------ |
+| Catalogue (`data/catalogue.yaml`)        | repository                  | a person, in a PR      | when facts change                  | yes    |
+| Planet orbits (`data/orbits.json`)       | repository                  | `npm run data:orbits`  | once; again only to move the epoch | yes    |
+| Live positions (±60 days)                | `public/data/` → the deploy | `npm run data`, in CI  | every build: each push and weekly  | no     |
+| Archive (M3: past years, ended missions) | `data/archive/`             | `npm run data:archive` | once per file, never edited        | yes    |
+
+Live files are named by year, but each holds only the part of the window that falls in
+that year: today's `juno/2026.json` runs from late September to 31 December, and is
+rebuilt from scratch on the next build. Nothing accumulates, and git never sees it.
+
 ## What runs
 
-`npm run data` (and CI, before every build):
+`npm run data` (and CI, before every build, including the weekly scheduled one):
 
 1. reads and validates `data/catalogue.yaml` (`parseCatalogue`); any problem stops the
    run with the full list;

@@ -59,6 +59,14 @@ drawn and the UI says there is no data for that date.
 - **JSON first.** Binary typed arrays would be smaller and faster to load. JSON is
   readable and compresses well; switch if size or parse time becomes measurable.
 
+## Goal for the archive (M3)
+
+Agreed 2026-11-23: every mission's **whole history**, from launch to its end (or to
+now), without updating every day. The likely shape: the archive holds everything up to
+a cut-off (say, the end of last month), written once and never edited; the live
+window only covers the cut-off to a few weeks ahead; the cut-off moves occasionally.
+The browser doesn't tell the two apart. Settled when M3 starts.
+
 ## Measured (2026-11-22, step 1.3)
 
 Against Horizons' own hourly samples, daily samples with Hermite are within 0.07 km

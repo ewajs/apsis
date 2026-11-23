@@ -52,7 +52,8 @@ Before the first `npm run e2e`, install the browser (`npx playwright install chr
 and fetch data (`npm run data`): the map tests use what's in `public/data/`.
 
 CI runs `check`, `npm audit --omit=dev` (advisories in what ships), `data` and `build` on every
-PR; on `main` it then deploys that same build to Pages.
+PR; on `main` it then deploys that same build to Pages. A weekly schedule (Mondays)
+rebuilds and redeploys with fresh data (ADR 0008).
 
 ## Code
 

@@ -38,8 +38,9 @@ unless they say to keep going. Each milestone ends with a `0.N.0` release.
       **Verify:** positions match Horizons for a chosen date; readable at 375×667.
 - [x] **1.5 Planet orbits.** Osculating elements from Horizons, committed; ellipses
       drawn on the map. **Verify:** each planet's current position sits on its ellipse.
-- [ ] **1.6 Daily refresh.** Scheduled build, the 60-day
-      mitigation (ADR 0008). **Verify:** a scheduled run deploys fresh data.
+- [x] **1.6 Weekly refresh.** Scheduled build (weekly, not daily, agreed 2026-11-23), and
+      the recovery if GitHub's 60-day rule ever switches it off (ADR 0008). **Verify:** a scheduled run deploys
+      fresh data.
 
 Spacecraft to verify in 1.2 (the first five ship in M1, the rest in 4.3): BepiColombo,
 Hera, JUICE, Europa Clipper, Psyche, Juno, Lucy, Parker Solar Probe, Solar Orbiter,
@@ -57,6 +58,9 @@ those without one get `horizons: null` (ADR 0009).
       from the Sun, star background. **Verify:** the owner reviews the look.
 
 ## M3 — Time (v0.3.0)
+
+Goal (agreed 2026-11-23): every mission's whole history, from launch to its end or to
+now, without daily updates (ADR 0003).
 
 - [ ] **3.1 Time slider.** Forwards and backwards, play speeds, back to now.
 - [ ] **3.2 Archive and loading on demand.** `npm run data:archive`, committed
