@@ -58,8 +58,11 @@ those without one get `horizons: null` (ADR 0009).
 - [x] **2.2 Spacecraft.** Markers, labels with decluttering (HTML, sharing `placeLabels`
       with the map), trails. **Verify:** positions match the 2D map (both use the same
       interpolation and `trailPoints`); labels in both languages, apart, on every backend.
-- [ ] **2.3 True scale and polish.** True-scale setting, Saturn's rings, lighting
-      from the Sun, star background. **Verify:** the owner reviews the look.
+- [x] **2.3a Planets that turn.** Axial tilt and spin from the IAU rotation models, and
+      Saturn's rings in its equatorial plane. **Verify:** the Sun overhead near longitude
+      180° at Greenwich midnight, at the solstice latitude; textures never mirrored.
+- [ ] **2.3b The look.** Star and Milky Way background, the true-scale button in 3D.
+      **Verify:** the owner reviews the look.
 
 ## M3 — Time (v0.3.0)
 

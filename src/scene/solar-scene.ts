@@ -15,6 +15,7 @@ import { toScene } from '../core/frames.ts';
 import { stateFromChunks } from '../core/interpolate.ts';
 import { subtract, type Vector3 } from '../core/math.ts';
 import { orbitPathThrough, type OrbitalElements } from '../core/orbits.ts';
+import { bodyAxes, type RotationModel } from '../core/rotation.ts';
 import { TRAIL_DAYS, trailPoints } from '../core/trails.ts';
 import { KM_PER_AU } from '../core/units.ts';
 import {
@@ -25,6 +26,7 @@ import {
   unitsPerPixel,
 } from './apparent-size.ts';
 import { LabelLayer, type ScreenBody } from './label-layer.ts';
+import { sphereBasis } from './sphere-basis.ts';
 
 /** A body the scene can draw. */
 export type SceneBody = {
@@ -37,6 +39,10 @@ export type SceneBody = {
   /** File name in the textures folder, for bodies drawn as spheres. */
   texture?: string | undefined;
   orbit?: OrbitalElements | undefined;
+  /** How it's tilted and spins; without one it isn't turned. */
+  rotation?: RotationModel | undefined;
+  /** Rings in its equatorial plane, in km from its centre (Saturn). */
+  rings?: { innerKm: number; outerKm: number; texture: string } | undefined;
 };
 
 /** Which GPU interface draws the scene. */
@@ -169,11 +175,16 @@ export class SolarScene {
   /** The bodies to draw, replacing any before. The Sun is always there. */
   setBodies(
     bodies: readonly SceneBody[],
-    sun: { name: string; radiusKm: number; texture: string },
+    sun: { name: string; radiusKm: number; texture: string; rotation?: RotationModel },
   ): void {
     for (const drawn of this.#drawn.filter((d) => d !== this.#sun)) this.#remove(drawn);
     this.#drawn = [this.#sun];
-    this.#sun.body = { ...this.#sun.body, name: sun.name, radiusKm: sun.radiusKm };
+    this.#sun.body = {
+      ...this.#sun.body,
+      name: sun.name,
+      radiusKm: sun.radiusKm,
+      rotation: sun.rotation,
+    };
     this.#loadTexture(this.#sun.mesh, sun.texture);
     for (const body of bodies) this.#add(body);
     this.#controls.minDistance = sun.radiusKm * 1.5;
@@ -244,6 +255,7 @@ export class SolarScene {
     mesh.name = body.id;
     this.#scene.add(mesh);
     if (body.texture) this.#loadTexture(mesh, body.texture);
+    if (body.rings) mesh.add(this.#ringsFor(body.radiusKm, body.rings));
     const drawn: Drawn = { body, mesh };
     if (body.orbit) drawn.orbit = this.#line(ORBIT_POINTS + 1, this.#orbitColor, 0.45);
     if (body.kind === 'spacecraft') drawn.trail = this.#line(TRAIL_DAYS + 1, this.#craftColor, 0.6);
@@ -265,7 +277,40 @@ export class SolarScene {
     return line;
   }
 
+  /**
+   * A flat ring in the body's equatorial plane, as a child of its sphere, so it scales
+   * and turns with it. Sizes are in body radii (the sphere has radius 1). The texture
+   * is a radial strip: its left edge at the inner radius, its right at the outer.
+   */
+  #ringsFor(radiusKm: number, rings: NonNullable<SceneBody['rings']>): THREE.Mesh {
+    const [inner, outer] = [rings.innerKm / radiusKm, rings.outerKm / radiusKm];
+    const geometry = new THREE.RingGeometry(inner, outer, 128, 1);
+    const position = geometry.getAttribute('position') as THREE.BufferAttribute;
+    const uv = geometry.getAttribute('uv') as THREE.BufferAttribute;
+    for (let i = 0; i < position.count; i++) {
+      const r = Math.hypot(position.getX(i), position.getY(i));
+      uv.setXY(i, (r - inner) / (outer - inner), 0.5);
+    }
+    // RingGeometry lies in the xy plane; the sphere's equator is its xz plane.
+    geometry.rotateX(-Math.PI / 2);
+    const material = new THREE.MeshStandardMaterial({
+      roughness: 1,
+      metalness: 0,
+      transparent: true,
+      side: THREE.DoubleSide,
+    });
+    const ring = new THREE.Mesh(geometry, material);
+    this.#loadTexture(ring, rings.texture);
+    return ring;
+  }
+
   #remove({ mesh, orbit, trail }: Drawn): void {
+    for (const child of mesh.children) {
+      if (!(child instanceof THREE.Mesh)) continue;
+      child.geometry.dispose();
+      (child.material as THREE.MeshStandardMaterial).map?.dispose();
+      (child.material as THREE.Material).dispose();
+    }
     const material = mesh.material as THREE.MeshStandardMaterial;
     material.map?.dispose();
     material.dispose();
@@ -315,6 +360,7 @@ export class SolarScene {
       mesh.scale.setScalar(
         displayRadius(body.radiusKm, distance, FOV_DEG, this.#height, minimum, this.#trueScale),
       );
+      if (redrawLines && body.rotation) this.#turn(mesh, body.rotation);
       if (redrawLines && orbit && body.orbit) this.#placeOrbit(orbit, body.orbit, at, origin);
       if (redrawLines && trail) this.#placeTrail(trail, body.chunks, origin);
     }
@@ -356,6 +402,14 @@ export class SolarScene {
       vertices.setXYZ(i, ...toScene(subtract(point, origin)));
     });
     vertices.needsUpdate = true;
+  }
+
+  /** Tilts and spins a body's sphere to how it stands at the shown instant. */
+  #turn(mesh: THREE.Mesh, rotation: RotationModel): void {
+    const [x, y, z] = sphereBasis(bodyAxes(rotation, this.#time)).map(
+      (axis) => new THREE.Vector3(...axis),
+    ) as [THREE.Vector3, THREE.Vector3, THREE.Vector3];
+    mesh.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
   }
 
   /** A spacecraft's last `TRAIL_DAYS`, relative to the focus. */

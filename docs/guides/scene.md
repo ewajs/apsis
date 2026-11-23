@@ -104,6 +104,12 @@ no free spot hides; a label whose position hasn't changed isn't touched.
 Planet names come from `i18n/bodies.ts` (shared with the map), mission names from the
 catalogue; `main.ts` renames them after a language switch (`setNames`).
 
+## Tilt, spin and rings
+
+Each planet (and the Sun) is tilted and turned to how it stands at the shown instant,
+from the IAU rotation models, and Saturn's rings lie in its equatorial plane. See
+[rotation.md](rotation.md).
+
 ## Light and depth
 
 A point light at the Sun lights the planets (no fall-off with distance: at these

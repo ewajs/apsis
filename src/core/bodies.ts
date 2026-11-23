@@ -15,3 +15,9 @@ export const RADIUS_KM: Readonly<Record<string, number>> = {
   uranus: 25_362,
   neptune: 24_622,
 };
+
+/**
+ * Saturn's main rings, in km from its centre: from the inner edge of the C ring to the
+ * outer edge of the A ring (NASA Saturn fact sheet).
+ */
+export const SATURN_RINGS_KM = { inner: 74_658, outer: 136_775 } as const;

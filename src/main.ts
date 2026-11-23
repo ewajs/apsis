@@ -10,7 +10,8 @@
  */
 import './ui/styles.css';
 import { pickLocale, setLocale, type Locale } from './i18n/localization.ts';
-import { RADIUS_KM } from './core/bodies.ts';
+import { RADIUS_KM, SATURN_RINGS_KM } from './core/bodies.ts';
+import { ROTATION } from './core/rotation.ts';
 import { bodyName } from './i18n/bodies.ts';
 import { parseInstant, tdbSecondsFromUtcMs } from './core/time.ts';
 import { loadLiveData, type LiveData } from './data/load.ts';
@@ -149,8 +150,22 @@ function fillScene() {
       chunks: data!.chunks.get(body.id) ?? new Map(),
       texture: TEXTURES[body.id],
       orbit: data!.orbits.planets[body.id],
+      rotation: ROTATION[body.id],
+      rings:
+        body.id === 'saturn'
+          ? {
+              innerKm: SATURN_RINGS_KM.inner,
+              outerKm: SATURN_RINGS_KM.outer,
+              texture: '2k_saturn_ring_alpha.png',
+            }
+          : undefined,
     })),
-    { name: named.sun!, radiusKm: RADIUS_KM.sun!, texture: TEXTURES.sun! },
+    {
+      name: named.sun!,
+      radiusKm: RADIUS_KM.sun!,
+      texture: TEXTURES.sun!,
+      rotation: ROTATION.sun!,
+    },
   );
   scene.focus = params.get('focus') ?? 'sun';
   showTime();
