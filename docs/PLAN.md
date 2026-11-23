@@ -26,7 +26,7 @@ unless they say to keep going. Each milestone ends with a `0.N.0` release.
       recorded responses; `npm run data` fetches the planets and five spacecraft for
       the live window and writes chunks. **Verify:** chunks validate; a Horizons error
       fails the run with a clear message.
-- [ ] **1.2 Catalogue.** YAML schema and validation, five bilingual entries, and a
+- [x] **1.2 Catalogue.** YAML schema and validation, five bilingual entries, and a
       verification table in `docs/guides/data.md` for every candidate below: Horizons
       ID, coverage, status, source. **Verify:** a broken entry fails validation.
 - [ ] **1.3 Time and interpolation.** UTC → TDB, cubic Hermite, chunk lookup, "no data
