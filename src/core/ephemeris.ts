@@ -105,6 +105,18 @@ export function assertValidSamples(samples: readonly Sample[], label: string): v
 }
 
 /**
+ * Swaps a stretch of coarse samples for finer ones: every coarse sample within the fine
+ * samples' span is dropped, and the fine ones go in, in time order. This is how hourly
+ * samples around an encounter join a daily series (ADR 0011).
+ */
+export function mergeSamples(coarse: readonly Sample[], fine: readonly Sample[]): Sample[] {
+  const [first, last] = [fine[0], fine.at(-1)];
+  if (!first || !last) return [...coarse];
+  const outside = coarse.filter(([t]) => t < first[0] || t > last[0]);
+  return [...outside, ...fine].sort((a, b) => a[0] - b[0]);
+}
+
+/**
  * Splits a body's samples into yearly chunks. Each chunk also repeats the first sample
  * of the next year, so interpolating up to the end of a year needs only one file.
  * Samples must already be valid (see `assertValidSamples`).

@@ -136,3 +136,13 @@ test('keeps an archived year for offline, once seen', async ({ page, context }) 
   await page.reload();
   await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
 });
+
+test('samples close passes hourly', async ({ request }) => {
+  // Europa Clipper flies past Earth on 3 December 2026: hourly samples 3 days either side.
+  const chunk = await (await request.get('./data/live/europa-clipper/2026.json')).json();
+  const flyby = (Date.UTC(2026, 11, 3) / 1000 - 946_728_000) as number; // TDB-ish seconds
+  const near = (chunk.samples as number[][]).filter(([t]) => Math.abs(t! - flyby) < 2.5 * 86_400);
+  expect(near.length).toBeGreaterThan(100);
+  const gaps = near.slice(1).map(([t], i) => t! - near[i]![0]!);
+  expect(Math.max(...gaps)).toBe(3_600);
+});

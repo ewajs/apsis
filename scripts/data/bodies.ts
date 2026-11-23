@@ -14,6 +14,8 @@ export type Body = {
    * Earth–Moon barycentre every month (ADR 0010).
    */
   orbitId?: string;
+  /** Days of close passes (YYYY-MM-DD), sampled hourly around them (ADR 0011). */
+  encounters?: string[];
 };
 
 /** The planets: their centres, not their system barycentres (docs/guides/data.md). */
@@ -41,6 +43,7 @@ export function allBodies(missions: readonly Mission[]): Body[] {
               horizonsId: mission.horizons,
               kind: 'spacecraft' as const,
               ...(mission.coverage && { coverage: mission.coverage }),
+              encounters: mission.milestones.filter((m) => m.encounter).map((m) => m.date),
             },
           ],
     ),

@@ -24,11 +24,11 @@ import {
 import { ARCHIVE_DIR, archivedYears } from './archive-files.ts';
 import { allBodies, PLANETS } from './bodies.ts';
 import { readCatalogue } from './catalogue.ts';
-import { fetchSamples } from './horizons-client.ts';
+import { fetchWithEncounters } from './horizons-client.ts';
 
 /** Days of data ahead of today (and at least behind): how long the site stays right. */
 const LIVE_WINDOW_DAYS = 60;
-/** The step for every body until fine steps around encounters arrive (3.4). */
+/** The step for every body; encounters get hourly samples around them. */
 const STEP = '1d';
 
 const output = new URL('../../public/data/', import.meta.url);
@@ -75,7 +75,7 @@ try {
     let from = start;
     while (archived.includes(Number(from.slice(0, 4))))
       from = `${Number(from.slice(0, 4)) + 1}-01-01`;
-    const samples = await fetchSamples(body, from, stop, STEP);
+    const samples = await fetchWithEncounters(body, from, stop, STEP);
     const live = chunkByYear(samples, body).filter((chunk) => !archived.includes(chunk.year));
     console.log(
       `  ${body.id.padEnd(20)} archive ${archived.length} year(s), live ${live.length} chunk(s), ${samples.length} samples`,

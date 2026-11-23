@@ -80,6 +80,21 @@ describe('parseCatalogue', () => {
     ]);
   });
 
+  it('wants an exact day for an encounter', () => {
+    const entry = {
+      ...valid(),
+      milestones: [{ date: '2026-12', encounter: true, es: 'a', en: 'b' }],
+    };
+    expect(problemsOf([entry])).toEqual([
+      'entry 1 (juno): milestones[0] is an encounter, so its date needs a day (YYYY-MM-DD)',
+    ]);
+    const exact = {
+      ...valid(),
+      milestones: [{ date: '2026-12-02', encounter: true, es: 'a', en: 'b' }],
+    };
+    expect(problemsOf([exact])).toEqual([]);
+  });
+
   it('wants milestones in date order', () => {
     const entry = valid();
     entry.milestones.reverse();

@@ -41,7 +41,9 @@ goes missing (ADR 0011).
    run with the full list;
 2. takes the live window: from 1 January (or 60 days back, if earlier) to 60 days ahead,
    at a 1-day step, clipped to each spacecraft's coverage and skipping years already
-   archived;
+   archived; around each `encounter: true` milestone, hourly for 3 days either side
+   (`fetchWithEncounters`, which swaps those days' daily samples for hourly ones with
+   `mergeSamples`; the archive script does the same);
 3. asks Horizons, one body at a time, for state vectors: position and velocity of the
    body's centre relative to the Sun's centre, in the ecliptic J2000 frame, km and km/s;
 4. parses and validates each answer (`parseVectors`, `assertValidSamples`);

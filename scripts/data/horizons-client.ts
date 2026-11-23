@@ -2,7 +2,7 @@
  * Talking to Horizons from the data scripts: one request at a time, a generic
  * User-Agent, retries with backoff on 500/503 and network errors (ADR 0002).
  */
-import { assertValidSamples, type Sample } from '../../src/core/ephemeris.ts';
+import { assertValidSamples, mergeSamples, type Sample } from '../../src/core/ephemeris.ts';
 import { HORIZONS_API, parseVectors, vectorsQuery } from '../../src/core/horizons.ts';
 import type { Body } from './bodies.ts';
 
@@ -52,5 +52,40 @@ export async function fetchSamples(
   const query = vectorsQuery({ horizonsId: body.horizonsId, start, stop, step });
   const samples = parseVectors(await fetchJson(`${HORIZONS_API}?${new URLSearchParams(query)}`));
   assertValidSamples(samples, body.id);
+  return samples;
+}
+
+/** Days either side of an encounter sampled finely, and how finely. */
+export const ENCOUNTER_DAYS = 3;
+export const ENCOUNTER_STEP = '1h';
+
+const DAY_MS = 86_400_000;
+const shiftDays = (date: string, days: number) =>
+  new Date(Date.parse(`${date}T00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
+
+/**
+ * A body's samples at `step`, with hourly samples for `ENCOUNTER_DAYS` either side of
+ * each of its encounters that falls in the span (ADR 0011). Clipped like `fetchSamples`.
+ */
+export async function fetchWithEncounters(
+  body: Body,
+  start: string,
+  stop: string,
+  step: string,
+): Promise<Sample[]> {
+  let samples = await fetchSamples(body, start, stop, step);
+  for (const day of body.encounters ?? []) {
+    const from = shiftDays(day, -ENCOUNTER_DAYS);
+    const to = shiftDays(day, ENCOUNTER_DAYS);
+    if (to <= start || from >= stop) continue;
+    const fine = await fetchSamples(
+      body,
+      from < start ? start : from,
+      to > stop ? stop : to,
+      ENCOUNTER_STEP,
+    );
+    samples = mergeSamples(samples, fine);
+  }
+  if (samples.length > 0) assertValidSamples(samples, body.id);
   return samples;
 }

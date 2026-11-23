@@ -81,7 +81,7 @@ Shape: ADR 0011 (accepted 2026-11-23).
       window from 1 January, `data/archive/` and `data/live/` paths, loading years on
       demand, cache-first for the archive. 2025 archived for every body to prove it; the
       full history from launch is 3.5.
-- [ ] **3.4 Encounters.** `encounter: true` milestones get hourly samples ±3 days.
+- [x] **3.4 Encounters.** `encounter: true` milestones get hourly samples ±3 days.
 - [ ] **3.5 Cassini and the full history.** Cassini (1997–2017) and every catalogue
       mission archived from launch; planets from 1977.
 - [ ] **3.6 More ended missions.** Rosetta (a comet), Galileo, Dawn.

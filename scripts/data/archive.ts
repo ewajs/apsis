@@ -16,9 +16,9 @@ import { chunkByYear } from '../../src/core/ephemeris.ts';
 import { ARCHIVE_DIR } from './archive-files.ts';
 import { allBodies } from './bodies.ts';
 import { readCatalogue } from './catalogue.ts';
-import { fetchSamples } from './horizons-client.ts';
+import { fetchWithEncounters } from './horizons-client.ts';
 
-/** The archive's step; finer samples around encounters come with step 3.4. */
+/** The archive's step; encounters get hourly samples around them (`fetchWithEncounters`). */
 const STEP = '1d';
 
 const { values } = parseArgs({
@@ -50,7 +50,7 @@ try {
     for (let year = first; year <= last; year++) {
       const file = new URL(`${body.id}/${year}.json`, ARCHIVE_DIR);
       if (existsSync(file) && !values.force) continue;
-      const samples = await fetchSamples(body, `${year}-01-01`, `${year + 1}-01-01`, STEP);
+      const samples = await fetchWithEncounters(body, `${year}-01-01`, `${year + 1}-01-01`, STEP);
       const chunk = chunkByYear(samples, body).find((c) => c.year === year);
       if (!chunk || chunk.samples.length < 2) continue;
       mkdirSync(new URL('./', file), { recursive: true });
