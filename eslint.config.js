@@ -75,7 +75,7 @@ export default [
             allow('scripts', elements('scripts', 'core')),
             allow('scripts', nodeBuiltins),
             // Renders the icons in the pinned Playwright Chromium.
-            allow('scripts', packages('@playwright/test')),
+            allow('scripts', packages('@playwright/test', 'yaml')),
             {
               from: { file: { categories: 'test' } },
               allow: { to: packages('vitest') },

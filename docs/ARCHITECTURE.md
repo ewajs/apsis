@@ -26,7 +26,7 @@ redeploys the static site ([ADR 0008](decisions/0008-hosting-and-delivery.md)).
 
 ```
 data/
-  catalogue.yaml          hand-written missions, bilingual (ADR 0009)
+  catalogue.yaml          hand-written missions, bilingual (ADR 0009); validated by core/catalogue.ts
   archive/<body>/<year>.json   committed ephemeris chunks that never change
 scripts/data/             Node + TS: Horizons client, catalogue validation, chunk writer
 src/

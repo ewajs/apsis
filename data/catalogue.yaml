@@ -1,0 +1,104 @@
+# The missions Apsis shows (ADR 0009). Each entry is checked by `npm run data`.
+#
+# - Text is in Spanish (Argentina, voseo) and English; both are required.
+# - `horizons` is the JPL Horizons ID, quoted ("-61"), or null with `noEphemeris`.
+# - `coverage` is the span Horizons has data for (docs/guides/data.md says how to find it).
+# - Milestone dates can be a day, a month or a year: YYYY-MM-DD, YYYY-MM or YYYY.
+# - A pull request that changes facts links its sources.
+
+- id: juno
+  name: Juno
+  agency: NASA
+  launch: 2011-08-05
+  target: { es: Júpiter, en: Jupiter }
+  status: active
+  horizons: '-61'
+  coverage: { from: 2011-08-06, to: 2028-09-01 }
+  milestones:
+    - { date: 2016-07-05, es: Entra en órbita de Júpiter, en: Enters orbit around Jupiter }
+    - { date: 2021-06-07, es: Pasa cerca de Ganimedes, en: Flies past Ganymede }
+    - { date: 2022-09-29, es: Pasa cerca de Europa, en: Flies past Europa }
+    - { date: 2023-12-30, es: Pasa cerca de Ío, en: Flies past Io }
+  blurb:
+    es: Orbita Júpiter desde 2016 en órbitas polares muy alargadas. Estudia el interior del planeta, sus auroras y sus lunas.
+    en: Orbiting Jupiter since 2016 on long, polar orbits, studying the planet's interior, its auroras and its moons.
+  links: [https://science.nasa.gov/mission/juno/]
+
+- id: europa-clipper
+  name: Europa Clipper
+  agency: NASA
+  launch: 2024-10-14
+  target: { es: Europa (luna de Júpiter), en: Europa (moon of Jupiter) }
+  status: active
+  horizons: '-159'
+  coverage: { from: 2024-10-15, to: 2034-09-02 }
+  milestones:
+    - { date: 2025-03-01, es: Pasa por Marte para tomar impulso, en: Swings past Mars for a boost }
+    - {
+        date: 2026-12-03,
+        es: Pasa por la Tierra para tomar impulso,
+        en: Swings past Earth for a boost,
+      }
+    - { date: 2030-04, es: Llega a Júpiter, en: Arrives at Jupiter }
+  blurb:
+    es: Va camino a Júpiter para estudiar Europa, una luna con un océano bajo el hielo, y averiguar si tiene condiciones para la vida.
+    en: On its way to Jupiter to study Europa, a moon with an ocean under its ice, and to find out whether it could be habitable.
+  links: [https://science.nasa.gov/mission/europa-clipper/]
+
+- id: psyche
+  name: Psyche
+  agency: NASA
+  launch: 2023-10-13
+  target: { es: el asteroide Psyche, en: the asteroid Psyche }
+  status: active
+  horizons: '-255'
+  coverage: { from: 2023-10-14, to: 2029-02-24 }
+  milestones:
+    - { date: 2026-05-15, es: Pasa por Marte para tomar impulso, en: Swings past Mars for a boost }
+    - { date: '2029', es: Llega al asteroide Psyche, en: Arrives at the asteroid Psyche }
+  blurb:
+    es: Viaja con propulsión eléctrica hacia Psyche, un asteroide rico en metal que podría ser el núcleo de un planeta que nunca terminó de formarse.
+    en: Travelling on electric propulsion to Psyche, a metal-rich asteroid that may be the core of a planet that never finished forming.
+  links: [https://science.nasa.gov/mission/psyche/]
+
+- id: parker-solar-probe
+  name: Parker Solar Probe
+  agency: NASA
+  launch: 2018-08-12
+  target: { es: el Sol, en: the Sun }
+  status: active
+  horizons: '-96'
+  coverage: { from: 2018-08-13, to: 2029-12-31 }
+  milestones:
+    - { date: 2024-12-24, es: Récord de cercanía al Sol, en: Closest approach to the Sun on record }
+    - { date: 2026-12, es: Nueva pasada cercana al Sol, en: Another close pass by the Sun }
+  blurb:
+    es: La nave que más se acercó al Sol. Pasa a 6,1 millones de km de su superficie, a casi 700.000 km/h, adentro de la corona.
+    en: The spacecraft that has come closest to the Sun. It passes 6.1 million km from its surface at nearly 700,000 km/h, inside the corona.
+  links: [https://science.nasa.gov/mission/parker-solar-probe/]
+
+- id: voyager-1
+  name: Voyager 1
+  agency: NASA
+  launch: 1977-09-05
+  target: { es: el espacio interestelar, en: interstellar space }
+  status: active
+  horizons: '-31'
+  coverage: { from: 1977-09-06, to: 2099-12-31 }
+  milestones:
+    - { date: 1979-03-05, es: Pasa por Júpiter, en: Flies past Jupiter }
+    - { date: 1980-11-12, es: Pasa por Saturno, en: Flies past Saturn }
+    - {
+        date: 2012-08-25,
+        es: Sale de la burbuja del Sol al espacio interestelar,
+        en: Leaves the Sun's bubble for interstellar space,
+      }
+    - {
+        date: 2026-11-18,
+        es: Llega a un día luz de la Tierra,
+        en: Reaches one light-day from Earth,
+      }
+  blurb:
+    es: El objeto más lejano hecho por humanos. Pasó por Júpiter y Saturno y desde 2012 viaja por el espacio interestelar.
+    en: The most distant human-made object. It flew past Jupiter and Saturn, and since 2012 it has been in interstellar space.
+  links: [https://science.nasa.gov/mission/voyager/voyager-1/]
