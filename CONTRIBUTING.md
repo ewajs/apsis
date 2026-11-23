@@ -47,7 +47,8 @@ version `0.N.0` in `package.json` and a short release note in PLAN.md.
 | `npm run e2e`                             | Build, then the browser tests on a phone and a desktop       |
 | `npm run icons`                           | Redraw the icon and render its PNGs into `public/`           |
 
-Before the first `npm run e2e`, install the browser: `npx playwright install chromium`.
+Before the first `npm run e2e`, install the browser (`npx playwright install chromium`)
+and fetch data (`npm run data`): the map tests use what's in `public/data/`.
 
 CI runs `check`, `npm audit --omit=dev` (advisories in what ships), `data` and `build` on every
 PR; on `main` it then deploys that same build to Pages.

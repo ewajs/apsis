@@ -20,6 +20,11 @@ export function setLocale(locale: Locale): Promise<void> {
   return localization.setLocale(locale);
 }
 
+/** The language showing now, for formatting numbers and dates with `Intl`. */
+export function currentLocale(): Locale {
+  return localization.getLocale() as Locale;
+}
+
 /**
  * The locale for this visit: the one the visitor chose before, if valid; otherwise
  * Spanish for any Spanish browser language, English for anything else.

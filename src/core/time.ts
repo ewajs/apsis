@@ -28,3 +28,14 @@ export function tdbSecondsFromUtcMs(utcMs: number): number {
 export function utcMsFromTdbSeconds(tdbSeconds: number): number {
   return (tdbSeconds - TDB_MINUS_UTC_SECONDS + J2000_AS_UNIX_SECONDS) * 1000;
 }
+
+/**
+ * Reads an instant written as ISO 8601 (`2026-12-03T16:15Z`, or a bare date at 00:00
+ * UTC) into UTC ms since 1970, or `null` if it isn't one.
+ * @example parseInstant('2026-12-03') // Date.UTC(2026, 11, 3)
+ */
+export function parseInstant(text: string | null): number | null {
+  if (!text || !/^\d{4}-\d{2}-\d{2}/.test(text)) return null;
+  const ms = Date.parse(/^\d{4}-\d{2}-\d{2}$/.test(text) ? `${text}T00:00Z` : text);
+  return Number.isNaN(ms) ? null : ms;
+}
