@@ -108,4 +108,15 @@ missions; a link to fly a trajectory in gravitas.
 
 ## Releases
 
-None yet.
+### v0.1.0 — Data you can trust (2026-11-23)
+
+The first release: an installable, bilingual app showing where five deep-space
+missions are right now, on a 2D map of the solar system.
+
+- Positions for the planets and Juno, Europa Clipper, Psyche, Parker Solar Probe and
+  Voyager 1 from JPL Horizons, refreshed weekly, interpolated to the current instant
+  (cubic Hermite, measured against Horizons).
+- A map from above the ecliptic, on a log or a true scale, with planet orbits,
+  spacecraft trails and labels that avoid each other.
+- A hand-written bilingual mission catalogue, validated on every build.
+- Spanish (Argentina) and English; installs to the home screen and opens offline.
