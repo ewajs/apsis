@@ -35,11 +35,11 @@ src/
                           Hermite interpolation, frames (ecliptic, equatorial,
                           galactic, scene) and units, orbit ellipses,
                           trails, label placement, tap picking, rotation (IAU),
-                          distances and light-time
+                          distances, speed and light-time (the card's facts)
   data/                   browser loading: the catalogue, then years on demand
   scene/                  three.js: renderer, camera, bodies, markers, trails
   map/                    2D top-down SVG of the ecliptic plane
-  ui/                     Lit components (ADR 0012): the frame, the picker, view and
+  ui/                     Lit components (ADR 0012): the frame, the picker and card, view and
                           language switches, tool column, time dock, info panel; shared glass styles and icons;
                           styles.css holds the design tokens
   i18n/                   @lit/localize setup, locale modules, body names

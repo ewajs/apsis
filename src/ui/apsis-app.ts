@@ -1,4 +1,4 @@
-import { LitElement, css, html } from 'lit';
+import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
 import type { Playback, Range } from '../core/playback.ts';
@@ -13,6 +13,8 @@ import './time-slider.ts';
 import './view-switch.ts';
 import './view-tools.ts';
 import './body-picker.ts';
+import './mission-card.ts';
+import type { Card } from './mission-card.ts';
 import type { PickerEntry } from './body-picker.ts';
 
 /**
@@ -21,11 +23,12 @@ import type { PickerEntry } from './body-picker.ts';
  * it. Top: the name (on phones only for screen readers), the picker, then the view switch, the language and the info button; under
  * them, a notice when there is one. Right edge: the tool column. Bottom: the time dock.
  *
- * Properties: `locale`; `pickerEntries` and `selected`, for the picker; `view` (the
+ * Properties: `locale`; `pickerEntries` and `selected`, for the picker; `card`, the
+ * selection's card; `view` (the
  * map or the 3D scene); `trueScale` and `mapAtHome`
  * (for the tool column); `fetchedAt` and `version` (for the info panel); `notice`, a short message
  * for the visitor, if any; `playback` and `timeRange`, for the time dock.
- * Events: `body-select` from the picker; `locale-change`, `view-change`, `zoom-by`, `view-home` and
+ * Events: `body-select` from the picker and the card; `locale-change`, `view-change`, `zoom-by`, `view-home` and
  * `true-scale-change` bubble up from the switches and tools, and `time-play`, `time-pause`, `time-seek` and `time-live` from
  * the time dock.
  */
@@ -41,6 +44,8 @@ export class ApsisApp extends LitElement {
   @property({ attribute: false }) pickerEntries: PickerEntry[] = [];
   /** The selected body's id, if any. */
   @property() selected: string | null = null;
+  /** The selection's card, if anything is selected. */
+  @property({ attribute: false }) card: Card | undefined;
   /** Which view is showing. */
   @property() view: View = 'map';
   /** Whether the view showing is at true scale. */
@@ -143,6 +148,23 @@ export class ApsisApp extends LitElement {
       .notice:empty {
         visibility: hidden;
       }
+      mission-card {
+        position: absolute;
+        top: calc(var(--hud-top) + env(safe-area-inset-top));
+        left: calc(12px + env(safe-area-inset-left));
+        width: min(340px, calc(100% - 24px));
+        max-height: calc(100% - var(--hud-top) - var(--hud-bottom) - 12px);
+      }
+      /* On a phone, above the time dock, as short as it can be. */
+      @media (max-width: 600px) {
+        mission-card {
+          top: auto;
+          right: calc(12px + env(safe-area-inset-right));
+          bottom: calc(var(--hud-bottom) + env(safe-area-inset-bottom));
+          width: auto;
+          max-height: 55dvh;
+        }
+      }
       view-tools {
         position: absolute;
         right: calc(12px + env(safe-area-inset-right));
@@ -197,6 +219,7 @@ export class ApsisApp extends LitElement {
         ?trueScale=${this.trueScale}
         ?atHome=${this.mapAtHome}
       ></view-tools>
+      ${this.card ? html`<mission-card .card=${this.card}></mission-card>` : nothing}
       <time-slider
         class="glass dock"
         .playback=${this.playback}

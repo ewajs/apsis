@@ -22,6 +22,8 @@ import { parseInstant, tdbSecondsFromUtcMs } from './core/time.ts';
 import { TimeController } from './time/controller.ts';
 import { ChunkStore, loadCatalogue, type Catalogue } from './data/load.ts';
 import { instantWithData } from './core/catalogue.ts';
+import { factsAt } from './core/facts.ts';
+import { stateFromChunks } from './core/interpolate.ts';
 import { pickerEntries } from './ui/body-picker.ts';
 import { yearsToLoad } from './core/loading.ts';
 import type { MapBody } from './map/solar-map.ts';
@@ -76,6 +78,7 @@ app.addEventListener('locale-change', (event) => {
   void showLocale(locale).then(() => {
     scene?.setNames(names());
     fillPicker();
+    showCard();
   });
 });
 
@@ -120,6 +123,7 @@ function select(id: string | null, move: 'fly' | 'jump' | 'stay' = 'fly') {
   selected = id;
   app.selected = map.selected = id;
   scene?.select(id, move === 'fly');
+  showCard();
   if (id && move !== 'stay') map.centreOnSelection();
   const address = new URL(location.href);
   if (id) address.searchParams.set('focus', id);
@@ -131,6 +135,29 @@ app.addEventListener('body-select', (event) => {
   const id = (event as CustomEvent<string | null>).detail;
   select(id, event.target === map ? 'stay' : 'fly');
 });
+
+/** The selection's card at the displayed instant: its distances, speed and story. */
+function showCard() {
+  if (!selected || !data || !store) {
+    app.card = undefined;
+    return;
+  }
+  const tdb = tdbSecondsFromUtcMs(time.playback.instantMs);
+  const chunks = (id: string) => store!.chunks.get(id) ?? new Map();
+  const kind = selected === 'sun' ? 'sun' : data.index.bodies.find((b) => b.id === selected)?.kind;
+  if (!kind) return;
+  // The Sun sits still at the origin of heliocentric states.
+  const state =
+    kind === 'sun' ? ([tdb, 0, 0, 0, 0, 0, 0] as const) : stateFromChunks(chunks(selected), tdb);
+  app.card = {
+    id: selected,
+    kind,
+    name: names()[selected] ?? selected,
+    mission: data.missions.find((mission) => mission.id === selected),
+    facts: state ? factsAt(state, stateFromChunks(chunks('earth'), tdb)) : null,
+    instantMs: time.playback.instantMs,
+  };
+}
 
 /** The picker's list, in the language showing now. */
 function fillPicker() {
@@ -163,6 +190,7 @@ function showTime(playback: Playback) {
   map.time = tdb;
   if (scene) scene.time = tdb;
   app.playback = playback;
+  showCard();
   loadYearsFor(playback);
   const now = performance.now();
   if (playback.rate !== 0 && !playback.live && now - addressWrittenAt < ADDRESS_EVERY_MS) return;
@@ -183,6 +211,7 @@ function loadYearsFor(playback: Playback) {
     .then((arrived) => {
       if (!arrived) return;
       map.requestUpdate();
+      showCard();
       scene?.refresh();
     })
     .catch((error: unknown) => console.error(error))
@@ -314,6 +343,7 @@ try {
   if (selected) select(selected, 'jump');
   await store.ensure(yearsToLoad(time.playback.instantMs, time.playback.rate));
   map.status = 'ready';
+  showCard();
   app.fetchedAt = data.index.fetchedAt;
   // Playback runs from the first archived year to the end of the live data. The live
   // span's dates are TDB; ending two minutes early keeps clear of the last sample

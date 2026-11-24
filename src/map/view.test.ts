@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   centredOn,
+  CENTRING_ZOOM,
   fromScreen,
   HOME_VIEW,
   isHome,
@@ -66,5 +67,9 @@ describe('the map view', () => {
     expect(fromHome.centre.x).toBeCloseTo(0.3, 12);
     expect(fromHome.centre.y).toBeCloseTo(-0.4, 12);
     expect(centredOn(HOME_VIEW, { x: 0, y: 0 })).toEqual(HOME_VIEW);
+    // Near the edge it stops at CENTRING_ZOOM, as near the middle as that allows.
+    const voyager = centredOn(HOME_VIEW, { x: 0, y: -0.95 });
+    expect(voyager.zoom).toBe(CENTRING_ZOOM);
+    expect(voyager.centre.y).toBeCloseTo(-0.75, 12);
   });
 });

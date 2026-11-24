@@ -51,13 +51,17 @@ export function panBy(view: MapView, dx: number, dy: number, radius: number): Ma
   return clamp({ ...view, centre: { x: view.centre.x - dx / k, y: view.centre.y + dy / k } });
 }
 
+/** The most `centredOn` zooms in by itself: enough to bring the edge well into view. */
+export const CENTRING_ZOOM = 4;
+
 /**
  * `point` in the middle, zooming in only as far as that needs (the middle can stray
- * from the Sun by `1 − 1/zoom`); a closer zoom stays as it is.
+ * from the Sun by `1 − 1/zoom`), and at most to `CENTRING_ZOOM`: near the edge (Voyager)
+ * it goes as near the middle as that allows. A closer zoom stays as it is.
  */
 export function centredOn(view: MapView, point: MapPoint): MapView {
   const needed = 1 / Math.max(1e-9, 1 - Math.hypot(point.x, point.y));
-  return clamp({ zoom: Math.min(MAX_ZOOM, Math.max(view.zoom, needed)), centre: point });
+  return clamp({ zoom: Math.max(view.zoom, Math.min(CENTRING_ZOOM, needed)), centre: point });
 }
 
 /** Whether the view shows the whole disc, centred. */

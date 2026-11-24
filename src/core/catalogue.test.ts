@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { CatalogueError, instantWithData, parseCatalogue, type Mission } from './catalogue.ts';
+import {
+  CatalogueError,
+  instantWithData,
+  looseDateStart,
+  milestonesAround,
+  parseCatalogue,
+  type Mission,
+} from './catalogue.ts';
 
 const valid = () => ({
   id: 'juno',
@@ -126,5 +133,31 @@ describe('instantWithData', () => {
     const unknown: Mission = { ...cassini };
     delete unknown.coverage;
     expect(instantWithData(unknown, 0)).toBe(0);
+  });
+});
+
+describe('milestones around an instant', () => {
+  const milestones = [
+    { date: '2016-07-05', es: 'Llega', en: 'Arrives' },
+    { date: '2026-12', es: 'Algo', en: 'Something' },
+    { date: '2029', es: 'Otra', en: 'Another' },
+  ];
+
+  it('reads loose dates from their start', () => {
+    expect(looseDateStart('2029')).toBe(Date.UTC(2029, 0, 1));
+    expect(looseDateStart('2026-12')).toBe(Date.UTC(2026, 11, 1));
+    expect(looseDateStart('2016-07-05')).toBe(Date.UTC(2016, 6, 5));
+  });
+
+  it('finds the last and the next', () => {
+    expect(milestonesAround(milestones, Date.UTC(2020, 0, 1))).toEqual({
+      last: milestones[0],
+      next: milestones[1],
+    });
+    expect(milestonesAround(milestones, Date.UTC(2010, 0, 1))).toEqual({ next: milestones[0] });
+    expect(milestonesAround(milestones, Date.UTC(2030, 0, 1))).toEqual({ last: milestones[2] });
+    // A day's milestone has started from its midnight.
+    expect(milestonesAround(milestones, Date.UTC(2016, 6, 5)).last).toBe(milestones[0]);
+    expect(milestonesAround([], 0)).toEqual({});
   });
 });

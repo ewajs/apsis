@@ -19,8 +19,8 @@
   replaces the footer (credits, the data date, the version); a notice under them when
   there is something to say; along the right edge a tool column (zoom, the whole map,
   scale); at the bottom the time dock. The picker's list opens under the top row
-  (a popover); the mission card (4.2) floats too, a panel on desktop, a sheet on
-  phones.
+  (a popover); the mission card (4.2) floats too: top left on wide screens, above the
+  time dock on phones.
 - **The view knows the controls' room** through `--hud-top/right/bottom/left` in
   `styles.css`, and the map centres itself in what's left. On narrow screens the map
   uses the full width (the tool column floats over its edge); on short ones it runs up

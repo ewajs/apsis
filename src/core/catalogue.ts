@@ -172,3 +172,29 @@ export function instantWithData(mission: Mission, instantMs: number): number {
   const to = Date.parse(`${mission.coverage.to}T00:00Z`) - DAY_MS;
   return Math.min(to, Math.max(from, instantMs));
 }
+
+/**
+ * Where a loose date starts, in UTC ms: `'2029'` is 1 January 2029, `'2026-12'` is
+ * 1 December 2026.
+ */
+export function looseDateStart(date: LooseDate): number {
+  const [year = 0, month = 1, day = 1] = date.split('-').map(Number);
+  return Date.UTC(year, month - 1, day);
+}
+
+/**
+ * The milestones either side of an instant: the last that has started, and the first
+ * still to come. A loose date counts from its start ('2029' is past from 1 January).
+ * @example milestonesAround(juno.milestones, Date.UTC(2020, 0, 1)) // { last: 2016's arrival, next: 2021's Ganymede }
+ */
+export function milestonesAround(
+  milestones: readonly Milestone[],
+  instantMs: number,
+): { last?: Milestone; next?: Milestone } {
+  const next = milestones.findIndex((milestone) => looseDateStart(milestone.date) > instantMs);
+  const lastIndex = next === -1 ? milestones.length - 1 : next - 1;
+  return {
+    ...(lastIndex >= 0 && { last: milestones[lastIndex] }),
+    ...(next !== -1 && { next: milestones[next] }),
+  };
+}
