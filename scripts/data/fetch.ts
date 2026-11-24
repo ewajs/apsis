@@ -1,71 +1,39 @@
 /**
- * Fetches the live ephemeris window from JPL Horizons and writes it where the app
- * loads it: public/data/<body>/<year>.json, public/data/index.json, the validated
- * catalogue as public/data/catalogue.json, and the committed planet orbits
- * (data/orbits.json) as public/data/orbits.json (ADR 0002, 0003, 0009, 0010).
+ * Builds the data folder the app loads (ADR 0002, 0003, 0009, 0010, 0011):
+ *
+ * - `live/<body>/<year>.json`: fetched from JPL Horizons now, from the earlier of
+ *   1 January and 60 days ago, to 60 days ahead, skipping years already archived;
+ * - `archive/<body>/<year>.json`: copied from the committed `data/archive/`;
+ * - `index.json` (every body's years, and where each is), `catalogue.json` (validated)
+ *   and `orbits.json` (from `data/orbits.json`, validated).
+ *
  * The output is generated, never committed. Any failure exits non-zero, so a build
  * never ships partial data.
  *
  *   npm run data
  */
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { assertOrbitFile } from '../../src/core/orbit-file.ts';
 import {
-  assertValidSamples,
   chunkByYear,
+  chunkPath,
   DATA_FORMAT,
   type DataIndex,
+  type YearEntry,
 } from '../../src/core/ephemeris.ts';
-import { HORIZONS_API, parseVectors, vectorsQuery } from '../../src/core/horizons.ts';
-import { PLANETS, type Body } from './bodies.ts';
+import { ARCHIVE_DIR, archivedYears } from './archive-files.ts';
+import { allBodies, PLANETS } from './bodies.ts';
 import { readCatalogue } from './catalogue.ts';
+import { fetchWithEncounters } from './horizons-client.ts';
 
-/** Days of data either side of today: how long the site stays right without a refresh. */
+/** Days of data ahead of today (and at least behind): how long the site stays right. */
 const LIVE_WINDOW_DAYS = 60;
-/** The step for every body until fine steps around encounters arrive (M3). */
+/** The step for every body; encounters get hourly samples around them. */
 const STEP = '1d';
-/** Attempts per request, and the wait before the second (doubled each time). */
-const ATTEMPTS = 4;
-const FIRST_RETRY_MS = 2_000;
-// Generic and honest: what the client is and where it lives, nothing about who runs it.
-const USER_AGENT = 'apsis-data (+https://github.com/ewajs/apsis)';
 
 const output = new URL('../../public/data/', import.meta.url);
-
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-async function fetchJson(url: string): Promise<unknown> {
-  for (let attempt = 1; ; attempt++) {
-    try {
-      const response = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
-      // 500 and 503 mean Horizons is busy or down: worth another try. Anything else
-      // that isn't OK (400 bad request, 405) won't fix itself.
-      if (response.ok) return await response.json();
-      if (response.status !== 500 && response.status !== 503) {
-        throw new Error(`HTTP ${response.status}: ${(await response.text()).slice(0, 200)}`);
-      }
-      if (attempt >= ATTEMPTS) throw new Error(`HTTP ${response.status} after ${attempt} attempts`);
-    } catch (error) {
-      // Network errors (fetch rejects with TypeError) are retried too.
-      if (!(error instanceof TypeError) || attempt >= ATTEMPTS) throw error;
-    }
-    await sleep(FIRST_RETRY_MS * 2 ** (attempt - 1));
-  }
-}
-
-async function fetchBody(body: Body, start: string, stop: string) {
-  // Ask only for what Horizons has: a mission launched or ending inside the window.
-  if (body.coverage) {
-    if (body.coverage.from > start) start = body.coverage.from;
-    if (body.coverage.to < stop) stop = body.coverage.to;
-    if (start >= stop) return [];
-  }
-  const query = vectorsQuery({ horizonsId: body.horizonsId, start, stop, step: STEP });
-  const samples = parseVectors(await fetchJson(`${HORIZONS_API}?${new URLSearchParams(query)}`));
-  assertValidSamples(samples, body.id);
-  return chunkByYear(samples, body);
-}
+const DAY_MS = 86_400_000;
+const isoDate = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
 const orbits: unknown = JSON.parse(
   readFileSync(new URL('../../data/orbits.json', import.meta.url), 'utf8'),
@@ -82,31 +50,19 @@ const missions = (() => {
     process.exit(1);
   }
 })();
-const bodies: Body[] = [
-  ...PLANETS,
-  ...missions.flatMap((mission) =>
-    mission.horizons === null
-      ? []
-      : [
-          {
-            id: mission.id,
-            horizonsId: mission.horizons,
-            kind: 'spacecraft' as const,
-            ...(mission.coverage && { coverage: mission.coverage }),
-          },
-        ],
-  ),
-];
+const bodies = allBodies(missions);
 
-const now = new Date();
-const day = 86_400_000;
-const start = isoDate(new Date(now.getTime() - LIVE_WINDOW_DAYS * day));
-const stop = isoDate(new Date(now.getTime() + LIVE_WINDOW_DAYS * day));
+const now = Date.now();
+const thisYear = new Date(now).getUTCFullYear();
+// From 1 January, or 60 days back if that's earlier (in January, before last year is
+// archived, the last two months are still there).
+const start = isoDate(Math.min(Date.UTC(thisYear, 0, 1), now - LIVE_WINDOW_DAYS * DAY_MS));
+const stop = isoDate(now + LIVE_WINDOW_DAYS * DAY_MS);
 console.log(`Fetching ${bodies.length} bodies from Horizons, ${start} to ${stop}, step ${STEP}`);
 
 const index: DataIndex = {
   format: DATA_FORMAT,
-  fetchedAt: now.toISOString(),
+  fetchedAt: new Date(now).toISOString(),
   span: { start, stop },
   bodies: [],
 };
@@ -114,13 +70,25 @@ const files: [string, unknown][] = [];
 try {
   // One request at a time, to be polite to Horizons (ADR 0002).
   for (const body of bodies) {
-    const chunks = await fetchBody(body, start, stop);
-    const samples = chunks.reduce((sum, chunk) => sum + chunk.samples.length, 0);
-    console.log(`  ${body.id.padEnd(20)} ${chunks.length} chunk(s), ${samples} samples`);
-    if (chunks.length === 0) continue;
-    for (const chunk of chunks) files.push([`${body.id}/${chunk.year}.json`, chunk]);
+    const archived = archivedYears(body.id);
+    // Years already in the archive are never fetched again.
+    let from = start;
+    while (archived.includes(Number(from.slice(0, 4))))
+      from = `${Number(from.slice(0, 4)) + 1}-01-01`;
+    const samples = await fetchWithEncounters(body, from, stop, STEP);
+    const live = chunkByYear(samples, body).filter((chunk) => !archived.includes(chunk.year));
+    console.log(
+      `  ${body.id.padEnd(20)} archive ${archived.length} year(s), live ${live.length} chunk(s), ${samples.length} samples`,
+    );
+    const years: YearEntry[] = [
+      ...archived.map((year) => ({ year, archived: true })),
+      ...live.map((chunk) => ({ year: chunk.year, archived: false })),
+    ];
+    for (const chunk of live)
+      files.push([chunkPath(body.id, { year: chunk.year, archived: false }), chunk]);
+    if (years.length === 0) continue;
     const { id, horizonsId, kind } = body;
-    index.bodies.push({ id, horizonsId, kind, years: chunks.map((chunk) => chunk.year) });
+    index.bodies.push({ id, horizonsId, kind, years });
   }
 } catch (error) {
   console.error(`\nData fetch failed: ${error instanceof Error ? error.message : error}`);
@@ -129,6 +97,8 @@ try {
 
 // Everything fetched and valid: only now replace what was there.
 rmSync(output, { recursive: true, force: true });
+mkdirSync(output, { recursive: true });
+if (existsSync(ARCHIVE_DIR)) cpSync(ARCHIVE_DIR, new URL('archive/', output), { recursive: true });
 for (const [file, content] of [
   ...files,
   ['index.json', index] as const,
@@ -139,6 +109,10 @@ for (const [file, content] of [
   mkdirSync(new URL('./', url), { recursive: true });
   writeFileSync(url, JSON.stringify(content));
 }
+const archivedCount = index.bodies.reduce(
+  (n, b) => n + b.years.filter((y) => y.archived).length,
+  0,
+);
 console.log(
-  `Wrote ${files.length} chunks, index.json, catalogue.json and orbits.json to public/data/`,
+  `Wrote ${files.length} live chunks, ${archivedCount} archived, index.json, catalogue.json and orbits.json to public/data/`,
 );

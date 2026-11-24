@@ -47,9 +47,15 @@ export default defineConfig({
       workbox: {
         // The app shell and the planet textures (about 4 MB, ADR 0007).
         globPatterns: ['**/*.{js,css,html,svg,png,jpg,webmanifest}'],
-        // Data is cached as it's used, never precached: show the cached copy at once and
-        // refresh it in the background (ADR 0007).
+        // Data is cached as it's used, never precached (ADR 0007, 0011). Archived years
+        // never change: once fetched, always from the cache. Everything else in data/
+        // shows the cached copy at once and refreshes it in the background.
         runtimeCaching: [
+          {
+            urlPattern: /\/data\/archive\/.+\.json$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'apsis-archive' },
+          },
           {
             urlPattern: /\/data\/.+\.json$/,
             handler: 'StaleWhileRevalidate',

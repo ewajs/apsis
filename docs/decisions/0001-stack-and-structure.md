@@ -1,6 +1,6 @@
 # 0001. Stack and structure
 
-- Status: Accepted; implementation in step 0.2. Amended 2026-11-22: `WebGPURenderer`
+- Status: Accepted; implemented in step 0.2. Amended 2026-11-22: `WebGPURenderer`
   instead of `WebGLRenderer`, once AR became a handoff to the phone's own viewer.
 - Date: 2026-11-22
 

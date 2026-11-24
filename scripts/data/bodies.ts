@@ -1,3 +1,4 @@
+import type { Mission } from '../../src/core/catalogue.ts';
 import type { BodyKind } from '../../src/core/ephemeris.ts';
 
 /** A body whose ephemeris the data script fetches. */
@@ -13,6 +14,8 @@ export type Body = {
    * Earth–Moon barycentre every month (ADR 0010).
    */
   orbitId?: string;
+  /** Days of close passes (YYYY-MM-DD), sampled hourly around them (ADR 0011). */
+  encounters?: string[];
 };
 
 /** The planets: their centres, not their system barycentres (docs/guides/data.md). */
@@ -26,3 +29,23 @@ export const PLANETS: readonly Body[] = [
   { id: 'uranus', horizonsId: '799', kind: 'planet', orbitId: '7' },
   { id: 'neptune', horizonsId: '899', kind: 'planet', orbitId: '8' },
 ];
+
+/** Every body with an ephemeris: the planets, then the catalogue's missions in order. */
+export function allBodies(missions: readonly Mission[]): Body[] {
+  return [
+    ...PLANETS,
+    ...missions.flatMap((mission) =>
+      mission.horizons === null
+        ? []
+        : [
+            {
+              id: mission.id,
+              horizonsId: mission.horizons,
+              kind: 'spacecraft' as const,
+              ...(mission.coverage && { coverage: mission.coverage }),
+              encounters: mission.milestones.filter((m) => m.encounter).map((m) => m.date),
+            },
+          ],
+    ),
+  ];
+}

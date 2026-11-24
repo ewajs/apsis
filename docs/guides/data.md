@@ -1,21 +1,37 @@
 # The data pipeline
 
 How positions get from JPL Horizons to the app. Code: `scripts/data/`,
-`src/core/horizons.ts`, `src/core/ephemeris.ts`. Decisions: ADR 0002 (source),
-0003 (chunks), 0004 (frame, units, time).
+`src/core/horizons.ts`, `src/core/ephemeris.ts`, `src/core/loading.ts`,
+`src/data/load.ts`. Decisions: ADR 0002 (source), 0003 (chunks), 0004 (frame, units,
+time), 0011 (archive and loading).
 
 ## Storage at a glance
 
-| Data                                     | Where                       | Written by             | How often                          | In git |
-| ---------------------------------------- | --------------------------- | ---------------------- | ---------------------------------- | ------ |
-| Catalogue (`data/catalogue.yaml`)        | repository                  | a person, in a PR      | when facts change                  | yes    |
-| Planet orbits (`data/orbits.json`)       | repository                  | `npm run data:orbits`  | once; again only to move the epoch | yes    |
-| Live positions (±60 days)                | `public/data/` → the deploy | `npm run data`, in CI  | every build: each push and weekly  | no     |
-| Archive (M3: past years, ended missions) | `data/archive/`             | `npm run data:archive` | once per file, never edited        | yes    |
+| Data                                 | Where                                    | Written by             | How often                          | In git |
+| ------------------------------------ | ---------------------------------------- | ---------------------- | ---------------------------------- | ------ |
+| Catalogue (`data/catalogue.yaml`)    | repository                               | a person, in a PR      | when facts change                  | yes    |
+| Planet orbits (`data/orbits.json`)   | repository                               | `npm run data:orbits`  | once; again only to move the epoch | yes    |
+| Live positions (this year, +60 days) | `public/data/live/` → the deploy         | `npm run data`, in CI  | every build: each push and weekly  | no     |
+| Archive (complete past years)        | `data/archive/` → `public/data/archive/` | `npm run data:archive` | once per file, never edited        | yes    |
 
-Live files are named by year, but each holds only the part of the window that falls in
-that year: today's `juno/2026.json` runs from late September to 31 December, and is
-rebuilt from scratch on the next build. Nothing accumulates, and git never sees it.
+Both are one file per body per year. A live file holds the part of the live window in
+that year (from 1 January, or 60 days back if that's earlier, to 60 days ahead) and is
+rebuilt from scratch on every build; an archived file holds a whole year and never
+changes. A year in the archive is never fetched live again.
+
+### Archiving
+
+```sh
+npm run data:archive -- --year 2025              # every body, one year
+npm run data:archive -- --from 1977 --to 2025    # a span of years
+npm run data:archive -- --year 2025 --body juno  # one body
+```
+
+Each year runs from 1 January to the next 1 January, so the file ends with the next
+year's first sample, like every chunk. Years already archived are skipped (`--force`
+fetches them again); bodies are clipped to their coverage. **In January**, archive the
+year just ended: until then the live window still reaches 60 days back, so nothing
+goes missing (ADR 0011).
 
 ## What runs
 
@@ -23,16 +39,19 @@ rebuilt from scratch on the next build. Nothing accumulates, and git never sees 
 
 1. reads and validates `data/catalogue.yaml` (`parseCatalogue`); any problem stops the
    run with the full list;
-2. takes the live window: 60 days either side of today, at a 1-day step, clipped to
-   each spacecraft's coverage;
+2. takes the live window: from 1 January (or 60 days back, if earlier) to 60 days ahead,
+   at a 1-day step, clipped to each spacecraft's coverage and skipping years already
+   archived; around each `encounter: true` milestone, hourly for 3 days either side
+   (`fetchWithEncounters`, which swaps those days' daily samples for hourly ones with
+   `mergeSamples`; the archive script does the same);
 3. asks Horizons, one body at a time, for state vectors: position and velocity of the
    body's centre relative to the Sun's centre, in the ecliptic J2000 frame, km and km/s;
 4. parses and validates each answer (`parseVectors`, `assertValidSamples`);
 5. splits each body's samples into calendar-year chunks (`chunkByYear`);
-6. only if every body succeeded, replaces `public/data/` with the chunks,
-   `index.json`, `catalogue.json` (the validated catalogue, for the browser) and
-   `orbits.json` (the committed planet orbits, validated, ADR 0010). Vite copies `public/` into the build, so the app finds them under
-   `/apsis/data/`.
+6. only if every body succeeded, replaces `public/data/` with the live chunks, a copy
+   of `data/archive/`, `index.json`, `catalogue.json` (the validated catalogue, for the
+   browser) and `orbits.json` (the committed planet orbits, validated, ADR 0010). Vite
+   copies `public/` into the build, so the app finds them under `/apsis/data/`.
 
 A failure anywhere exits non-zero with Horizons' own message, leaves the previous
 `public/data/` as it was, and in CI stops the deployment. The live site keeps the last
@@ -61,13 +80,33 @@ into a `HorizonsError` carrying the message.
 ## The files
 
 ```text
-public/data/index.json          { format, fetchedAt, span, bodies: [{ id, horizonsId, kind, years }] }
-public/data/<body>/<year>.json  { format, body, horizonsId, year, samples: [[t, x, y, z, vx, vy, vz], …] }
+public/data/index.json                    { format: 2, fetchedAt, span, bodies: [{ id, horizonsId, kind, years: [{ year, archived }] }] }
+public/data/live/<body>/<year>.json       { format, body, horizonsId, year, samples: [[t, x, y, z, vx, vy, vz], …] }
+public/data/archive/<body>/<year>.json    the same, for a whole past year
 ```
 
-Each chunk also holds the first sample of the next year, so interpolating up to
-31 December 23:59 never needs a second file. Today's window is 13 bodies × 2 years,
-about 260 KB uncompressed.
+`chunkPath` (in `core/ephemeris.ts`) is the one place that turns a body and a year
+entry into a path, for the scripts and the browser alike. Each chunk also holds the
+first sample of the next year, so interpolating up to 31 December 23:59 never needs a
+second file. A body-year at a daily step is about 30 KB (14 KB gzipped).
+
+## Loading in the browser
+
+`loadCatalogue` fetches the index, the catalogue and the orbits. Right after an app
+update, the service worker may hand the new code an index in the previous format; then
+it fetches a fresh one (`index.json?format=2`, an address the cache hasn't seen).
+
+`ChunkStore` then loads years on demand. On every change of the shown instant,
+`main.ts` asks `yearsToLoad(instant, rate)` (pure, tested) which years it needs: the
+year shown, the previous one while a trail still reaches back across New Year, and the
+next or previous one within 60 days of a year's edge in the direction of play. The
+store fetches what it doesn't have yet into the very maps the views read, and the
+views redraw when it arrives (the map says nothing about "no data" while a year is on
+its way). Everything loaded stays for the visit.
+
+The service worker keeps **archived years cache-first** (they never change: after one
+visit they open instantly and offline) and the rest of `data/` stale-while-revalidate
+(ADR 0007).
 
 ## Bodies and IDs
 
@@ -95,6 +134,7 @@ catalogue so far; the rest are checked when they join it (step 4.3).
 
 | Mission            | ID     | Coverage in Horizons    | Status                        |
 | ------------------ | ------ | ----------------------- | ----------------------------- |
+| Cassini            | `-82`  | 1997-10-15 → 2017-09-15 | ended, in the catalogue (3.5) |
 | BepiColombo        | `-121` | 2018-10-20 → 2027-04-11 | to check (4.3)                |
 | Hera               | `-91`  | 2024-10-07 → 2027-01-13 | to check (4.3)                |
 | JUICE              | `-28`  | 2023-04-14 → 2031-07-21 | to check (4.3)                |

@@ -1,7 +1,7 @@
 import { LitElement, css, html, svg, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
-import type { BodyKind, Chunk } from '../core/ephemeris.ts';
+import { yearOf, type BodyKind, type Chunk } from '../core/ephemeris.ts';
 import { stateFromChunks } from '../core/interpolate.ts';
 import { trailPoints } from '../core/trails.ts';
 import { orbitPath, type OrbitalElements } from '../core/orbits.ts';
@@ -18,6 +18,8 @@ export type MapBody = {
   /** Shown next to the marker; planets get theirs from `bodyName`. */
   name: string;
   chunks: ReadonlyMap<number, Chunk>;
+  /** The years it has data for: outside them (before launch, after the end) it's simply absent. */
+  years: readonly number[];
   /** The orbit to draw, for planets (ADR 0010). */
   orbit?: OrbitalElements | undefined;
 };
@@ -59,6 +61,8 @@ export class SolarMap extends LitElement {
   @property({ type: Number }) time = 0;
   /** Whether the data has arrived. */
   @property() status: 'loading' | 'ready' | 'failed' = 'loading';
+  /** Whether more years are on their way: no "no data" note meanwhile. */
+  @property({ type: Boolean }) loadingYears = false;
 
   /** How distances from the Sun are drawn. */
   @property() scale: MapScale = 'log';
@@ -178,7 +182,13 @@ export class SolarMap extends LitElement {
       const now = stateFromChunks(body.chunks, this.time);
       return now ? [{ body, now }] : [];
     });
-    const missing = this.bodies.filter((body) => !shown.some((s) => s.body === body));
+    // Only bodies that should have data this year but don't at this instant (a gap, a
+    // coverage edge) are worth a mention; before launch or after the end they're simply
+    // not there yet, or any more.
+    const year = yearOf(this.time);
+    const missing = this.bodies.filter(
+      (body) => body.years.includes(year) && !shown.some((s) => s.body === body),
+    );
     // The linear map's edge: just past the farthest body shown.
     const edgeAu =
       Math.max(1, ...shown.map(({ now }) => Math.hypot(now[1], now[2]) / KM_PER_AU)) * 1.05;
@@ -266,12 +276,18 @@ export class SolarMap extends LitElement {
         })}
       </svg>
       ${
-        missing.length > 0
-          ? html`<p class="missing">
-              ${msg('Sin datos para esta fecha:', { id: 'map-missing' })}
-              ${missing.map((body) => this.#label(body)).join(', ')}
-            </p>`
-          : nothing
+        this.loadingYears
+          ? nothing
+          : shown.length === 0
+            ? html`<p class="missing">
+                ${msg('Sin datos para esta fecha.', { id: 'map-no-data' })}
+              </p>`
+            : missing.length > 0
+              ? html`<p class="missing">
+                  ${msg('Sin datos para esta fecha:', { id: 'map-missing' })}
+                  ${missing.map((body) => this.#label(body)).join(', ')}
+                </p>`
+              : nothing
       }
     `;
   }

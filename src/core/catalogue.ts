@@ -12,8 +12,12 @@ export type Localized = { es: string; en: string };
  */
 export type LooseDate = string;
 
-/** Something that happened or will happen to a mission. */
-export type Milestone = { date: LooseDate } & Localized;
+/**
+ * Something that happened or will happen to a mission. An `encounter` (a flyby, a
+ * perihelion, an arrival) gets hourly samples for three days either side, so close
+ * passes are drawn right (ADR 0011); it needs an exact day.
+ */
+export type Milestone = { date: LooseDate; encounter?: boolean } & Localized;
 
 /** One spacecraft, as the catalogue describes it. */
 export type Mission = {
@@ -117,8 +121,13 @@ export function parseCatalogue(data: unknown): Mission[] {
       entry.milestones.forEach((milestone: unknown, i) => {
         const key = `milestones[${i}]`;
         if (!isRecord(milestone)) return problem(`${key} must be a mapping`);
+        if (milestone.encounter !== undefined && typeof milestone.encounter !== 'boolean') {
+          problem(`${key}.encounter must be true or false`);
+        }
         if (typeof milestone.date !== 'string' || !LOOSE.test(milestone.date)) {
           problem(`${key}.date must be YYYY-MM-DD, YYYY-MM or YYYY`);
+        } else if (milestone.encounter === true && !DAY.test(milestone.date)) {
+          problem(`${key} is an encounter, so its date needs a day (YYYY-MM-DD)`);
         } else {
           if (milestone.date < previous) problem(`${key} is out of date order`);
           previous = milestone.date;

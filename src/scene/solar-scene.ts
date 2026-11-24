@@ -214,6 +214,11 @@ export class SolarScene {
     this.#time = value;
   }
 
+  /** Redraws orbits and trails on the next frame: call when new data has arrived. */
+  refresh(): void {
+    this.#linesDrawnFor = '';
+  }
+
   /** The id of the body the camera orbits ('sun' by default). */
   set focus(id: string) {
     const target = this.#drawn.find((drawn) => drawn.body.id === id);

@@ -19,7 +19,12 @@ added and corrected through pull requests:
   horizons: '-61' # Horizons ID, or null with `noEphemeris` saying why
   coverage: { from: 2011-08-06, to: 2028-09-01 } # from Horizons (docs/guides/data.md)
   milestones: # in date order; a day, a month or a year
-    - { date: 2016-07-05, es: Entra en órbita de Júpiter, en: Enters orbit around Jupiter }
+    - {
+        date: 2016-07-05,
+        encounter: true,
+        es: Entra en órbita de Júpiter,
+        en: Enters orbit around Jupiter,
+      }
   blurb: { es: …, en: … }
   links: [https://…]
 ```
@@ -35,6 +40,8 @@ added and corrected through pull requests:
 
 ## Reasons and alternatives
 
+- **`encounter: true`** on a milestone (a flyby, a perihelion, an arrival; it needs an
+  exact day) gets hourly samples for 3 days either side (ADR 0011, step 3.4).
 - **A list of milestones, not a next one.** With the time slider (M3), "next" depends
   on the displayed instant, not on today; a dated list serves both, and keeps history
   (Voyager 1's Saturn flyby) for the card. Dates can be as loose as the facts are:

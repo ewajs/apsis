@@ -1,6 +1,6 @@
 # 0002. Data source and pipeline
 
-- Status: Accepted; implementation in M1.
+- Status: Accepted; implemented in M1.
 - Date: 2026-11-22
 
 ## Decision

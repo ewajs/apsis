@@ -1,7 +1,6 @@
 # 0011. Every mission's history, and moving through time
 
-- Status: **Proposed** (2026-11-23), for the owner's review before M3 starts. Nothing
-  here is built.
+- Status: Accepted 2026-11-23, with the owner's answers below; implementation in M3.
 - Builds on ADR 0003 (chunks), 0007 (caching) and 0008 (delivery).
 
 ## Goal
@@ -40,6 +39,10 @@ archive. A monthly cut-off would mean editing archived files, or chunks by month
   flyby, a perihelion) get samples every hour for 3 days either side, fetched as a
   separate Horizons request and merged into the chunk (chunks already allow any step).
   At Parker's perihelion that takes the error from 200,000 km to well under 100 km.
+  **Measured (step 3.4):** Parker at its 2 December 2026 perihelion, 1.85 km at worst;
+  Europa Clipper at its 3 December Earth flyby (3,200 km from Earth), 815 km: invisible
+  at solar-system scale, but its path bends around Earth within the hour, so the local
+  Earth view (M5) still needs Earth-centred samples minutes apart.
 
 ### 3. Size
 
@@ -52,7 +55,9 @@ gzipped**.
 | Planets, 1977 → now (the Voyagers' launch)                  | ≈ 400      | ≈ 12 MB  | ≈ 6 MB               |
 | Encounter samples (≈ 40 encounters × 145 hourly samples)    | —          | ≈ 0.5 MB | small                |
 
-About 18 MB in the repository, once. **A visit loads only the years it shows:** about
+About 18 MB in the repository, once. **Measured after step 3.5:** 490 body-years (8
+planets × 49 years, Voyager 1 × 49, Cassini × 21, and the other missions from launch),
+14.9 MB raw, 6.9 MB gzipped. **A visit loads only the years it shows:** about
 18 chunks (8 planets and ~10 spacecraft) for one year, roughly 250 KB gzipped. Dragging
 the slider across fifty years would load more, but only what's looked at.
 
@@ -100,13 +105,16 @@ km, invisible).
 - **A database or a backend:** nothing here needs one; static files and the cache do
   the job.
 
-## Open questions for the owner
+## Decided (2026-11-23)
 
-1. **The year roll-over:** a manual command in January, as proposed, or a scheduled
-   workflow that opens the PR by itself?
-2. **How far back:** planets from 1977 (the Voyagers), or only where a mission in the
-   catalogue needs them (each mission's own span)? The second saves space but leaves
-   gaps.
-3. **Which ended missions join first:** Cassini (1997–2017) as planned; others you'd
-   like (Rosetta, Galileo, Dawn…), each only if Horizons has it.
-4. **The slider's default speeds:** 1 day, 1 week and 1 month per second?
+1. **The year roll-over is a manual command** (`npm run data:archive -- --year <last
+year>`) run in January; nothing breaks while it waits.
+2. **Planets go back to 1977**, so the slider never shows spacecraft without planets.
+3. **Ended missions:** Cassini first (3.5), then Rosetta, Galileo and Dawn (3.6), each
+   only with a Horizons ephemeris (all four have one: −82, −226, −77, −203).
+4. **Slider speeds:** real time, 1 day, 1 week and 1 month per second.
+
+Loading stays **one file per body per year**: the index lists each body's years, the
+browser fetches the year shown (plus the previous one while a trail reaches back
+across New Year, and the next one in the direction of play), keeps recent years in
+memory, and the service worker keeps archived years for good.

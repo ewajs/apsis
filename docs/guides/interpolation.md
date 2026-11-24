@@ -62,10 +62,14 @@ What that means:
 - **Everywhere but close encounters, daily samples are effectively exact.**
 - **Halving the step cuts the error about 16 times** (2⁴), as expected of a cubic
   method; the tests check this.
-- **Close encounters need finer samples.** Parker at perihelion (6.9 million km from
-  the Sun's centre) is 200,000 km off with daily samples: invisible in the
-  solar-system view, visible when zoomed on the Sun. A 6-hour step there brings it to
-  2,000 km. That's step 3.3's "fine step at encounters".
+- **Close encounters need finer samples,** and get them since step 3.4: milestones
+  marked `encounter: true` are sampled hourly for 3 days either side. Measured on the
+  live data: Parker at its 2 December 2026 perihelion within **1.85 km**; Europa
+  Clipper at its Earth flyby within **815 km** (its path bends around Earth within the
+  hour; the local Earth view will need minutes).
+- **Why they need it:** with daily samples, Parker at perihelion (6.9 million km from
+  the Sun's centre) is 200,000 km off; a 6-hour step brings that to 2,000 km, an hour
+  to under 2 km.
 - **Orbiters need their own data.** Juno whips around Jupiter in hours at perijove;
   even a 3-hour heliocentric step is 29,000 km off, more than a third of Jupiter's
   radius. Local views (M5) will fetch Jupiter-centred data at minutes-scale steps.

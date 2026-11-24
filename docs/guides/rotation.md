@@ -57,7 +57,7 @@ z = −east, each through `toScene`. Those three vectors are the columns of the 
 `#turn` gives the sphere. A test pins three.js's convention, and another checks that
 x × y = z, so a texture can never come out mirrored.
 
-Spheres turn when the shown time changes (every 10 s), like orbits and trails.
+Spheres turn when the shown time changes, like orbits and trails.
 
 ## Saturn's rings
 
