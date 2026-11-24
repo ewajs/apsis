@@ -135,6 +135,24 @@ missions; a link to fly a trajectory in gravitas.
 
 ## Releases
 
+### v0.4.0 — Pick one (2026-11-24)
+
+A new look, a map you can move around, and every mission one tap away.
+
+- The view fills the screen and the controls float over it in glass panels (ADR 0012);
+  the info panel holds the credits, the data date and the version.
+- A compact time dock: one row on a phone, a date that keeps still, speed and direction
+  in one menu.
+- The 2D map zooms and pans: wheel, pinch, double tap, drag, the keyboard and the tool
+  column's buttons.
+- Search for any mission or planet, or tap it on the map or in 3D: the map rings it and
+  brings it to the middle, the camera flies to it, and links keep it (`?focus=`). An
+  ended mission takes you to when it flew.
+- Its card: distance from the Sun and from Earth, how long a signal takes, speed, the
+  last and next milestones, what it's for and where to read more.
+- Six more missions, each from launch: New Horizons, BepiColombo (in orbit around
+  Mercury since 21 November 2026), James Webb, Galileo, Rosetta and Dawn. Twelve in all.
+
 ### v0.3.0 — Time (2026-11-23)
 
 Move through every mission's history, forwards and backwards.
