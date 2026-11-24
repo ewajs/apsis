@@ -57,7 +57,9 @@ gzipped**.
 
 About 18 MB in the repository, once. **Measured after step 3.5:** 490 body-years (8
 planets × 49 years, Voyager 1 × 49, Cassini × 21, and the other missions from launch),
-14.9 MB raw, 6.9 MB gzipped. **A visit loads only the years it shows:** about
+14.9 MB raw, 6.9 MB gzipped. **After step 4.4** (New Horizons, BepiColombo, James
+Webb, Galileo, Rosetta, Dawn): 563 body-years, 17.3 MB raw, 7.7 MB gzipped. **A visit
+loads only the years it shows:** about
 18 chunks (8 planets and ~10 spacecraft) for one year, roughly 250 KB gzipped. Dragging
 the slider across fifty years would load more, but only what's looked at.
 
@@ -110,8 +112,10 @@ km, invisible).
 1. **The year roll-over is a manual command** (`npm run data:archive -- --year <last
 year>`) run in January; nothing breaks while it waits.
 2. **Planets go back to 1977**, so the slider never shows spacecraft without planets.
-3. **Ended missions:** Cassini first (3.5), then Rosetta, Galileo and Dawn (3.6), each
-   only with a Horizons ephemeris (all four have one: −82, −226, −77, −203).
+3. **Ended missions:** Cassini first (3.5), then Rosetta, Galileo and Dawn (moved to
+   4.4), each only with a Horizons ephemeris (all four have one: −82, −226, −77, −203).
+   Coverage stops at the mission's end, even where Horizons predicts on (Dawn still
+   orbits Ceres, to 2043): an ended mission is drawn while it worked.
 4. **Slider speeds:** real time, 1 day, 1 week and 1 month per second.
 
 Loading stays **one file per body per year**: the index lists each body's years, the

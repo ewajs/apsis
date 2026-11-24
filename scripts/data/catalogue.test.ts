@@ -18,6 +18,9 @@ describe('data/catalogue.yaml', () => {
       'bepicolombo',
       'jwst',
       'cassini',
+      'galileo',
+      'rosetta',
+      'dawn',
     ]);
     for (const mission of missions) expect(mission.horizons).not.toBeNull();
   });

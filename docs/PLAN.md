@@ -100,7 +100,7 @@ The interface first (ADR 0012, direction A chosen 2026-11-23), then picking a mi
 - [x] **4.3 More kinds of journey.** JWST (parked at L2, Earth's neighbourhood),
       BepiColombo (Mercury), New Horizons (the Kuiper belt). The catalogue then grows one
       entry at a time, by PR: representative first, everything eventually.
-- [ ] **4.4 More ended missions.** Rosetta (a comet), Galileo, Dawn (moved from M3's 3.6
+- [x] **4.4 More ended missions.** Rosetta (a comet), Galileo, Dawn (moved from M3's 3.6
       at the v0.3.0 release; the archive they need is in place).
 
 ## M5 — Local views (v0.5.0)

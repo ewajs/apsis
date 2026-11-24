@@ -126,7 +126,7 @@ have negative IDs.
    is clipped to it, so a mission that launches or whose predictions end inside the
    live window still works.
 
-### The candidates, checked 2026-11-22 (and 2026-11-23 for those added in 4.3)
+### The candidates, checked 2026-11-22 (and 2026-11-23/24 for those added in 4.3 and 4.4)
 
 Coverage is what Horizons had on that date; predicted spans grow as missions update
 them. Status was checked against agency sources only for the missions in the
@@ -135,6 +135,9 @@ catalogue; the rest are checked when they join it, one pull request each.
 | Mission            | ID     | Coverage in Horizons    | Status                                                            |
 | ------------------ | ------ | ----------------------- | ----------------------------------------------------------------- |
 | Cassini            | `-82`  | 1997-10-15 → 2017-09-15 | ended, in the catalogue (3.5)                                     |
+| Galileo            | `-77`  | 1989-10-19 → 2003-09-30 | ended 2003-09-21, in the catalogue (4.4)                          |
+| Rosetta            | `-226` | 2004-03-02 → 2016-10-05 | ended 2016-09-30, in the catalogue (4.4)                          |
+| Dawn               | `-203` | 2007-09-27 → 2043-10-30 | ended 2018-11-01, in the catalogue (4.4); drawn until then        |
 | BepiColombo        | `-121` | 2018-10-20 → 2027-04-11 | active, in Mercury orbit since 2026-11-21, in the catalogue (4.3) |
 | Hera               | `-91`  | 2024-10-07 → 2027-01-13 | to check                                                          |
 | JUICE              | `-28`  | 2023-04-14 → 2031-07-21 | to check                                                          |
