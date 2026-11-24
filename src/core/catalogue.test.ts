@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CatalogueError, parseCatalogue } from './catalogue.ts';
+import { CatalogueError, instantWithData, parseCatalogue, type Mission } from './catalogue.ts';
 
 const valid = () => ({
   id: 'juno',
@@ -103,5 +103,28 @@ describe('parseCatalogue', () => {
 
   it('refuses something that is not a list', () => {
     expect(problemsOf({ juno: valid() })).toEqual(['the catalogue must be a list of missions']);
+  });
+});
+
+describe('instantWithData', () => {
+  const cassini = {
+    ...valid(),
+    coverage: { from: '1997-10-16', to: '2017-09-15' },
+  } as Mission;
+
+  it('keeps an instant the mission has data for', () => {
+    const instant = Date.UTC(2004, 6, 1, 3, 12);
+    expect(instantWithData(cassini, instant)).toBe(instant);
+  });
+
+  it('moves an instant after the end to a day before it, and one before launch to a day after', () => {
+    expect(instantWithData(cassini, Date.UTC(2026, 10, 23))).toBe(Date.UTC(2017, 8, 14));
+    expect(instantWithData(cassini, Date.UTC(1990, 0, 1))).toBe(Date.UTC(1997, 9, 17));
+  });
+
+  it('keeps the instant when the coverage isn’t known', () => {
+    const unknown: Mission = { ...cassini };
+    delete unknown.coverage;
+    expect(instantWithData(unknown, 0)).toBe(0);
   });
 });

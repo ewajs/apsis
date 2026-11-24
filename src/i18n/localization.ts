@@ -38,3 +38,11 @@ export function pickLocale(saved: string | null, languages: readonly string[]): 
   const first = languages[0]?.toLowerCase() ?? '';
   return first === 'es' || first.startsWith('es-') ? 'es-AR' : 'en';
 }
+
+/** Text written in both languages, as the catalogue has it (ADR 0009). */
+export type Bilingual = { readonly es: string; readonly en: string };
+
+/** The catalogue's text in the language showing now. */
+export function localized(text: Bilingual): string {
+  return currentLocale() === 'en' ? text.en : text.es;
+}

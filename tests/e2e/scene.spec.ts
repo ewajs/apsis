@@ -69,6 +69,24 @@ test('looks at Neptune up close without losing it (floating origin)', async ({
     .toBeGreaterThan(200);
 });
 
+test('flies to what you pick, and picks what you tap', async ({ page }, testInfo) => {
+  await page.goto(sceneAddress(testInfo.project.name));
+  await expect(page.locator('canvas[data-backend]')).toBeVisible({ timeout: 20_000 });
+  // The Sun sits in the middle at first: tapping there selects it.
+  const canvas = (await page.locator('canvas[data-backend]').boundingBox())!;
+  await page.mouse.click(canvas.x + canvas.width / 2, canvas.y + canvas.height / 2);
+  await expect(page).toHaveURL(/focus=sun/);
+
+  await page.getByRole('button', { name: /Find another|Buscar otro/ }).click();
+  await page.keyboard.type('neptun');
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/focus=neptune/);
+  await expect(page.locator('[data-label="neptune"]')).toHaveCSS('font-weight', '600');
+  await expect
+    .poll(() => countMiddlePixels(page, 'neptune'), { timeout: 10_000 })
+    .toBeGreaterThan(200);
+});
+
 test('switches between the map and the 3D view', async ({ page }, testInfo) => {
   const backend = FORCE_WEBGL.includes(testInfo.project.name) ? '&backend=webgl2' : '';
   await page.goto(`./?t=2026-11-23T12:00Z${backend}`);

@@ -6,8 +6,9 @@
  *
  * Address parameters, for links and tests: `t=2026-12-03T16:15Z` (show that instant,
  * paused; the address follows the instant as it moves), `play=day|week|month` (play
- * at that speed, `-day` backwards), `view=3d` (start in 3D), `focus=neptune` (what the
- * 3D camera orbits), `backend=webgl2` (force the 3D fallback).
+ * at that speed, `-day` backwards), `view=3d` (start in 3D), `focus=juno` (what's
+ * selected: the map rings it, the 3D camera orbits it; the address follows the
+ * selection), `backend=webgl2` (force the 3D fallback).
  */
 import '@fontsource-variable/inter';
 import '@fontsource-variable/space-grotesk';
@@ -20,6 +21,8 @@ import { SPEEDS, type Playback, type Speed } from './core/playback.ts';
 import { parseInstant, tdbSecondsFromUtcMs } from './core/time.ts';
 import { TimeController } from './time/controller.ts';
 import { ChunkStore, loadCatalogue, type Catalogue } from './data/load.ts';
+import { instantWithData } from './core/catalogue.ts';
+import { pickerEntries } from './ui/body-picker.ts';
 import { yearsToLoad } from './core/loading.ts';
 import type { MapBody } from './map/solar-map.ts';
 import type { SolarScene } from './scene/solar-scene.ts';
@@ -70,7 +73,10 @@ async function showLocale(locale: Locale) {
 app.addEventListener('locale-change', (event) => {
   const locale = (event as CustomEvent<Locale>).detail;
   localStorage.setItem(LOCALE_KEY, locale);
-  void showLocale(locale).then(() => scene?.setNames(names()));
+  void showLocale(locale).then(() => {
+    scene?.setNames(names());
+    fillPicker();
+  });
 });
 
 app.addEventListener('view-change', (event) => {
@@ -95,6 +101,46 @@ app.addEventListener('true-scale-change', (event) => {
   else if (scene) scene.trueScale = value;
   say(scaleNote(app.view, value));
 });
+
+/** The selected body ('sun', a planet, a mission), or none; `?focus=` in the address. */
+let selected: string | null = params.get('focus');
+
+/**
+ * Selects a body in every view, and the address follows. A mission picked at an instant
+ * it has no positions for (Cassini today) takes time to the nearest one it has.
+ * @param move Whether the views go to it: the 3D camera flies there, the map brings it
+ *   to the middle. A tap on the map selects in place; at start-up, it's simply there.
+ */
+function select(id: string | null, move: 'fly' | 'jump' | 'stay' = 'fly') {
+  const mission = id ? data?.missions.find((entry) => entry.id === id) : undefined;
+  if (mission) {
+    const instant = instantWithData(mission, time.playback.instantMs);
+    if (instant !== time.playback.instantMs) time.seek(instant);
+  }
+  selected = id;
+  app.selected = map.selected = id;
+  scene?.select(id, move === 'fly');
+  if (id && move !== 'stay') map.centreOnSelection();
+  const address = new URL(location.href);
+  if (id) address.searchParams.set('focus', id);
+  else address.searchParams.delete('focus');
+  history.replaceState(null, '', address);
+}
+app.addEventListener('body-select', (event) => {
+  // The picker's events reach here retargeted to the shell; the map's come from the map.
+  const id = (event as CustomEvent<string | null>).detail;
+  select(id, event.target === map ? 'stay' : 'fly');
+});
+
+/** The picker's list, in the language showing now. */
+function fillPicker() {
+  if (!data) return;
+  const planets = data.index.bodies.filter((body) => body.kind === 'planet');
+  app.pickerEntries = pickerEntries(
+    data.missions,
+    planets.map((body) => body.id),
+  );
+}
 
 // Zoom: the tool column's buttons act on whichever view is showing.
 app.addEventListener('zoom-by', (event) => {
@@ -183,6 +229,7 @@ function startScene(): Promise<SolarScene | undefined> {
         texturesBase: `${import.meta.env.BASE_URL}textures/`,
         backend: params.get('backend') === 'webgl2' ? 'webgl2' : 'auto',
         sky: '2k_stars_milky_way.jpg',
+        onPick: (id) => select(id),
       });
       sceneView.firstChild?.remove(); // the loading text
       sceneView.style.cssText = 'position:relative;display:grid;min-height:0';
@@ -241,7 +288,7 @@ function fillScene() {
       rotation: ROTATION.sun!,
     },
   );
-  scene.focus = params.get('focus') ?? 'sun';
+  scene.select(selected, false);
   scene.trueScale = trueScale.scene;
   showTime(time.playback);
 }
@@ -263,6 +310,8 @@ try {
     orbit: data!.orbits.planets[body.id],
   }));
   map.bodies = bodies;
+  fillPicker();
+  if (selected) select(selected, 'jump');
   await store.ensure(yearsToLoad(time.playback.instantMs, time.playback.rate));
   map.status = 'ready';
   app.fetchedAt = data.index.fetchedAt;

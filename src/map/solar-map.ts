@@ -9,8 +9,10 @@ import { KM_PER_AU } from '../core/units.ts';
 import { bodyName } from '../i18n/bodies.ts';
 import { currentLocale } from '../i18n/localization.ts';
 import { placeLabels, type LabelRequest } from '../core/labels.ts';
+import { pickAt, type ScreenMark } from '../core/pick.ts';
 import { LOG_RINGS_AU, mapPoint, radialFraction, type MapScale } from './projection.ts';
 import {
+  centredOn,
   HOME_VIEW,
   isHome,
   panBy,
@@ -57,6 +59,8 @@ const TAP_SLOP_PX = 8;
 const DOUBLE_TAP_MS = 300;
 /** How far an arrow key moves the map, in px. */
 const KEY_PAN_PX = 60;
+/** The selection's ring: this much outside its marker, in px. */
+const SELECTION_GAP = 5;
 /** The zoom step of a double tap and the + and − keys. */
 const ZOOM_STEP = 2;
 
@@ -66,12 +70,14 @@ const ZOOM_STEP = 2;
  * (docs/guides/map.md).
  *
  * Properties: `bodies` (what to draw), `time` (TDB seconds since J2000), `status`,
- * `scale` (log or true distances; changing it shows the whole map again). The map fits
- * in the room the floating controls leave (`--hud-*`).
+ * `scale` (log or true distances; changing it shows the whole map again), `selected`
+ * (ringed, its label placed first; `centreOnSelection` brings it to the middle). The map
+ * fits in the room the floating controls leave (`--hud-*`).
  *
  * Moving around: drag to pan; wheel, pinch or double tap to zoom; with the map
  * focused, arrows, + and − and 0. `zoomBy` and `goHome` serve the tool column.
- * Events: `map-view-change` (detail: whether the whole map shows, centred).
+ * Events: `map-view-change` (detail: whether the whole map shows, centred);
+ * `body-select` (detail: the id of the body tapped).
  */
 @customElement('solar-map')
 export class SolarMap extends LitElement {
@@ -86,6 +92,8 @@ export class SolarMap extends LitElement {
 
   /** How distances from the Sun are drawn. */
   @property() scale: MapScale = 'log';
+  /** The selected body's id ('sun', a planet, a mission), if any. */
+  @property() selected: string | null = null;
   @state() private size = { width: 0, height: 0, insets: { top: 0, right: 0, bottom: 0, left: 0 } };
   /** The zoom and the point in the middle (`map/view.ts`). */
   @state() private view: MapView = HOME_VIEW;
@@ -94,6 +102,10 @@ export class SolarMap extends LitElement {
   /** How far the current press has moved, to tell a tap from a drag. */
   #travel = 0;
   #lastTap = { at: -Infinity, x: 0, y: 0 };
+  /** Where each body was drawn last, around the middle of the free area, for taps. */
+  #marks: ScreenMark[] = [];
+  /** Whether to bring the selection to the middle once it has a position. */
+  #centreOnSelection = false;
   #resize = new ResizeObserver(([entry]) => {
     if (!entry) return;
     // The floating controls' room at each edge (--hud-* in styles.css): the map fits in
@@ -143,10 +155,28 @@ export class SolarMap extends LitElement {
     this.view = HOME_VIEW;
   }
 
+  /**
+   * Brings the selected body to the middle, zooming in only as far as that needs
+   * (`centredOn`); waits for its position if it has none yet.
+   */
+  centreOnSelection(): void {
+    this.#centreOnSelection = true;
+    this.requestUpdate();
+  }
+
   override willUpdate(changed: Map<PropertyKey, unknown>) {
     // Log and true distances put everything elsewhere: a close-up of one is meaningless
     // in the other.
     if (changed.has('scale') && changed.get('scale') !== undefined) this.view = HOME_VIEW;
+    if (this.#centreOnSelection && this.selected) {
+      const { shown, edgeAu } = this.#positions();
+      const now = shown.find(({ body }) => body.id === this.selected)?.now;
+      if (now || this.selected === 'sun') {
+        this.#centreOnSelection = false;
+        const point = now ? mapPoint(now[1], now[2], this.scale, edgeAu) : { x: 0, y: 0 };
+        this.view = centredOn(this.view, point);
+      }
+    }
   }
 
   override updated(changed: Map<PropertyKey, unknown>) {
@@ -223,6 +253,14 @@ export class SolarMap extends LitElement {
     .label.spacecraft {
       fill: var(--color-craft);
     }
+    .label.selected {
+      font-weight: 600;
+    }
+    .selection {
+      fill: none;
+      stroke: var(--color-text);
+      stroke-width: 1.5;
+    }
     .missing {
       position: absolute;
       bottom: calc(var(--hud-bottom) + 8px);
@@ -260,10 +298,7 @@ export class SolarMap extends LitElement {
     if (radius <= 0) return nothing;
     const view = this.view;
 
-    const shown = this.bodies.flatMap((body) => {
-      const now = stateFromChunks(body.chunks, this.time);
-      return now ? [{ body, now }] : [];
-    });
+    const { shown, edgeAu } = this.#positions();
     // Only bodies that should have data this year but don't at this instant (a gap, a
     // coverage edge) are worth a mention; before launch or after the end they're simply
     // not there yet, or any more.
@@ -271,27 +306,36 @@ export class SolarMap extends LitElement {
     const missing = this.bodies.filter(
       (body) => body.years.includes(year) && !shown.some((s) => s.body === body),
     );
-    // The linear map's edge: just past the farthest body shown.
-    const edgeAu =
-      Math.max(1, ...shown.map(({ now }) => Math.hypot(now[1], now[2]) / KM_PER_AU)) * 1.05;
     const toPx = (xKm: number, yKm: number) =>
       toScreen(view, mapPoint(xKm, yKm, this.scale, edgeAu), radius);
     const sun = toScreen(view, { x: 0, y: 0 }, radius);
     const scaled = radius * view.zoom;
 
-    const markers = shown.map(({ body, now }) => ({ body, ...toPx(now[1], now[2]) }));
-    // Spacecraft labels first: they're what the app is about.
+    const markers = shown.map(({ body, now }) => ({
+      body,
+      ...toPx(now[1], now[2]),
+      radius: body.kind === 'planet' ? PLANET_RADIUS : CRAFT_RADIUS,
+    }));
+    this.#marks = [
+      { id: 'sun', ...sun, radius: SUN_RADIUS },
+      ...markers.map(({ body, x, y, radius }) => ({ id: body.id, x, y, radius })),
+    ];
+    // The selection's label first, then the spacecraft's: they're what the app is about.
+    const rank = (body: MapBody) =>
+      body.id === this.selected ? 2 : body.kind === 'spacecraft' ? 1 : 0;
     const requests: LabelRequest[] = [...markers]
-      .sort((a, b) => Number(b.body.kind === 'spacecraft') - Number(a.body.kind === 'spacecraft'))
-      .map(({ body, x, y }) => ({
+      .sort((a, b) => rank(b.body) - rank(a.body))
+      .map(({ body, x, y, radius }) => ({
         id: body.id,
         x,
         y,
-        radius: body.kind === 'planet' ? PLANET_RADIUS : CRAFT_RADIUS,
+        // The selection's label keeps clear of its ring.
+        radius: body.id === this.selected ? radius + SELECTION_GAP : radius,
         width: this.#label(body).length * LABEL_CHAR_WIDTH,
         height: LABEL_HEIGHT,
       }));
     requests.unshift({ id: 'sun', ...sun, radius: SUN_RADIUS, width: 0, height: 0 });
+    const ringed = this.#marks.find(({ id }) => id === this.selected);
 
     const number = new Intl.NumberFormat(currentLocale());
     const au = msg('UA', { id: 'unit-au' });
@@ -359,17 +403,23 @@ export class SolarMap extends LitElement {
           <title>${bodyName('sun')}</title>
         </circle>
         ${markers.map(
-          ({ body, x, y }) => svg`<g data-body=${body.id}>
-            <circle class=${body.kind} cx=${x} cy=${y}
-              r=${body.kind === 'planet' ? PLANET_RADIUS : CRAFT_RADIUS}></circle>
+          ({ body, x, y, radius }) => svg`<g data-body=${body.id}>
+            <circle class=${body.kind} cx=${x} cy=${y} r=${radius}></circle>
             <title>${this.#label(body)}</title>
           </g>`,
         )}
+        ${
+          ringed
+            ? svg`<circle class="selection" data-selected=${ringed.id} cx=${ringed.x} cy=${ringed.y}
+              r=${ringed.radius + SELECTION_GAP}></circle>`
+            : nothing
+        }
         ${markers.map(({ body }) => {
           const box = labels.get(body.id);
+          const selected = body.id === this.selected ? 'selected' : '';
           return box
-            ? svg`<text class="label ${body.kind}" x=${box.left} y=${box.top + LABEL_HEIGHT - 3}
-                aria-hidden="true">${this.#label(body)}</text>`
+            ? svg`<text class="label ${body.kind} ${selected}" x=${box.left}
+                y=${box.top + LABEL_HEIGHT - 3} aria-hidden="true">${this.#label(body)}</text>`
             : nothing;
         })}
       </svg>
@@ -403,6 +453,17 @@ export class SolarMap extends LitElement {
     };
     const centre = { x: insets.left + free.width / 2, y: insets.top + free.height / 2 };
     return { free, centre, radius: Math.min(free.width, free.height) / 2 - MARGIN };
+  }
+
+  /** The bodies with a position now, and the linear map's edge: just past the farthest. */
+  #positions() {
+    const shown = this.bodies.flatMap((body) => {
+      const now = stateFromChunks(body.chunks, this.time);
+      return now ? [{ body, now }] : [];
+    });
+    const edgeAu =
+      Math.max(1, ...shown.map(({ now }) => Math.hypot(now[1], now[2]) / KM_PER_AU)) * 1.05;
+    return { shown, edgeAu };
   }
 
   /** A client position as a screen point: px from the middle of the free area. */
@@ -452,9 +513,16 @@ export class SolarMap extends LitElement {
       tap.at - last.at < DOUBLE_TAP_MS &&
       Math.hypot(tap.x - last.x, tap.y - last.y) < 2 * TAP_SLOP_PX;
     this.#lastTap = double ? { at: -Infinity, x: 0, y: 0 } : tap;
+    const local = this.#local(tap.x, tap.y);
+    const picked = pickAt(this.#marks, local.x, local.y);
+    if (picked) {
+      this.dispatchEvent(
+        new CustomEvent<string>('body-select', { detail: picked, bubbles: true, composed: true }),
+      );
+    }
     if (double) {
       const { radius } = this.#layout();
-      this.view = zoomAt(this.view, ZOOM_STEP, this.#local(tap.x, tap.y), radius);
+      this.view = zoomAt(this.view, ZOOM_STEP, local, radius);
     }
   }
 

@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { fromScreen, HOME_VIEW, isHome, MAX_ZOOM, panBy, toScreen, zoomAt } from './view.ts';
+import {
+  centredOn,
+  fromScreen,
+  HOME_VIEW,
+  isHome,
+  MAX_ZOOM,
+  panBy,
+  toScreen,
+  zoomAt,
+} from './view.ts';
 
 const R = 300;
 
@@ -44,5 +53,18 @@ describe('the map view', () => {
     expect(panBy(HOME_VIEW, 500, 500, R)).toEqual(HOME_VIEW);
     const far = panBy({ zoom: 4, centre: { x: 0, y: 0 } }, -1e6, 0, R);
     expect(far.centre.x).toBeCloseTo(0.75, 12);
+  });
+
+  it('centres on a point, zooming in only as far as that needs', () => {
+    const earth = { x: 0.3, y: -0.4 };
+    expect(centredOn({ zoom: 8, centre: { x: 0, y: 0 } }, earth)).toEqual({
+      zoom: 8,
+      centre: earth,
+    });
+    const fromHome = centredOn(HOME_VIEW, earth);
+    expect(fromHome.zoom).toBeCloseTo(2, 12);
+    expect(fromHome.centre.x).toBeCloseTo(0.3, 12);
+    expect(fromHome.centre.y).toBeCloseTo(-0.4, 12);
+    expect(centredOn(HOME_VIEW, { x: 0, y: 0 })).toEqual(HOME_VIEW);
   });
 });

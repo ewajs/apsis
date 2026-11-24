@@ -13,7 +13,8 @@ installs and works offline. Code: `src/main.ts`, `src/ui/`, `src/i18n/`,
 The look is "Glass" (ADR 0012, after gravitas): the view (map or 3D) fills the screen
 and every control floats over it.
 
-- `apsis-app` lays them out: the name top left; `view-switch`, `language-switch` and the
+- `apsis-app` lays them out: the name top left, then the picker
+  ([selection.md](selection.md); on phones the picker alone); `view-switch`, `language-switch` and the
   info button top right; a notice (`role="status"`) under them; `view-tools` (the tool
   column: zoom in and out, back to the whole map on the map, the scale) on the right
   edge; the time dock at the bottom; `info-panel` (a native modal

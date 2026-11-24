@@ -157,3 +157,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isDay(value: unknown): value is string {
   return typeof value === 'string' && DAY.test(value);
 }
+
+const DAY_MS = 86_400_000;
+
+/**
+ * The instant nearest `instantMs` (UTC ms) that the mission has positions for: itself
+ * when it's inside the coverage, or else a day inside its nearer end, clear of the last
+ * sample. A mission without a known coverage keeps the instant.
+ * @example instantWithData(cassini, Date.UTC(2026, 0, 1)) // 2017-09-14, its last day
+ */
+export function instantWithData(mission: Mission, instantMs: number): number {
+  if (!mission.coverage) return instantMs;
+  const from = Date.parse(`${mission.coverage.from}T00:00Z`) + DAY_MS;
+  const to = Date.parse(`${mission.coverage.to}T00:00Z`) - DAY_MS;
+  return Math.min(to, Math.max(from, instantMs));
+}

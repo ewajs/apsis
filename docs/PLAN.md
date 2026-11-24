@@ -94,7 +94,7 @@ The interface first (ADR 0012, direction A chosen 2026-11-23), then picking a mi
 - [x] **4.0b The time dock.** Compact, one row on phones, a fixed-width date.
 - [x] **4.0c Moving around the 2D map.** Zoom (wheel, pinch, buttons), pan, recentre.
 
-- [ ] **4.1 Picker and selection.** List, search, selection, camera flies to it.
+- [x] **4.1 Picker and selection.** List, search, selection, camera flies to it.
 - [ ] **4.2 Mission card.** Distance from Earth, light-time, speed, next milestone,
       blurb, links.
 - [ ] **4.3 More kinds of journey.** JWST (parked at L2, Earth's neighbourhood),

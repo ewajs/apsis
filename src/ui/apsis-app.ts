@@ -12,17 +12,20 @@ import './language-switch.ts';
 import './time-slider.ts';
 import './view-switch.ts';
 import './view-tools.ts';
+import './body-picker.ts';
+import type { PickerEntry } from './body-picker.ts';
 
 /**
  * @component The app's frame (the Glass look, after gravitas): the view (slotted in by
  * main.ts: the map or the 3D scene) fills the screen, and everything else floats over
- * it. Top: the name, then the view switch, the language and the info button; under
+ * it. Top: the name (on phones only for screen readers), the picker, then the view switch, the language and the info button; under
  * them, a notice when there is one. Right edge: the tool column. Bottom: the time dock.
  *
- * Properties: `locale`; `view` (the map or the 3D scene); `trueScale` and `mapAtHome`
+ * Properties: `locale`; `pickerEntries` and `selected`, for the picker; `view` (the
+ * map or the 3D scene); `trueScale` and `mapAtHome`
  * (for the tool column); `fetchedAt` and `version` (for the info panel); `notice`, a short message
  * for the visitor, if any; `playback` and `timeRange`, for the time dock.
- * Events: `locale-change`, `view-change`, `zoom-by`, `view-home` and
+ * Events: `body-select` from the picker; `locale-change`, `view-change`, `zoom-by`, `view-home` and
  * `true-scale-change` bubble up from the switches and tools, and `time-play`, `time-pause`, `time-seek` and `time-live` from
  * the time dock.
  */
@@ -34,6 +37,10 @@ export class ApsisApp extends LitElement {
   @property() fetchedAt = '';
   /** The app's version, as in package.json. */
   @property() version = '';
+  /** Everything the picker lists. */
+  @property({ attribute: false }) pickerEntries: PickerEntry[] = [];
+  /** The selected body's id, if any. */
+  @property() selected: string | null = null;
   /** Which view is showing. */
   @property() view: View = 'map';
   /** Whether the view showing is at true scale. */
@@ -97,7 +104,20 @@ export class ApsisApp extends LitElement {
         letter-spacing: normal;
         color: var(--color-muted);
       }
+      body-picker {
+        flex: 0 1 auto;
+        min-width: 0;
+      }
+      /* A phone's top row is for the picker; the name stays for screen readers. */
       @media (max-width: 600px) {
+        h1 {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          overflow: hidden;
+          clip-path: inset(50%);
+        }
         .tagline {
           position: absolute;
           width: 1px;
@@ -157,6 +177,7 @@ export class ApsisApp extends LitElement {
           <img src=${icon} width="26" height="26" alt="" />APSIS
           <span class="tagline">${msg('¿Dónde están ahora?', { id: 'tagline' })}</span>
         </h1>
+        <body-picker .entries=${this.pickerEntries} .selected=${this.selected}></body-picker>
         <span class="spacer"></span>
         <view-switch .view=${this.view}></view-switch>
         <language-switch .locale=${this.locale}></language-switch>
