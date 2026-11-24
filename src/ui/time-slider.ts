@@ -1,5 +1,6 @@
 import { LitElement, css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { live } from 'lit/directives/live.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
 import { SPEEDS, type Playback, type Range, type Speed } from '../core/playback.ts';
 import { currentLocale } from '../i18n/localization.ts';
@@ -107,7 +108,7 @@ export class TimeSlider extends LitElement {
     const playback = this.playback;
     const ready = playback !== undefined && this.range !== undefined;
     const playingNow = playback !== undefined && playback.rate !== 0 && !playback.live;
-    const live = playback?.live ?? false;
+    const following = playback?.live ?? false;
     const speeds: [Speed, string][] = [
       ['realTime', msg('Tiempo real', { id: 'speed-real-time' })],
       ['day', msg('1 día/s', { id: 'speed-day' })],
@@ -154,7 +155,7 @@ export class TimeSlider extends LitElement {
         </select>
         <button
           type="button"
-          aria-pressed=${live}
+          aria-pressed=${following}
           ?disabled=${!ready}
           @click=${() => this.#emit('time-live')}
         >
@@ -167,7 +168,7 @@ export class TimeSlider extends LitElement {
         min=${this.range?.startMs ?? 0}
         max=${this.range?.endMs ?? 1}
         step="60000"
-        .value=${String(playback?.instantMs ?? 0)}
+        .value=${live(String(playback?.instantMs ?? 0))}
         ?disabled=${!ready}
         @input=${this.#seek}
       />

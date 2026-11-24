@@ -9,6 +9,8 @@
  * at that speed, `-day` backwards), `view=3d` (start in 3D), `focus=neptune` (what the
  * 3D camera orbits), `backend=webgl2` (force the 3D fallback).
  */
+import '@fontsource-variable/inter';
+import '@fontsource-variable/space-grotesk';
 import './ui/styles.css';
 import { pickLocale, setLocale, type Locale } from './i18n/localization.ts';
 import { RADIUS_KM, SATURN_RINGS_KM } from './core/bodies.ts';
@@ -21,12 +23,14 @@ import { ChunkStore, loadCatalogue, type Catalogue } from './data/load.ts';
 import { yearsToLoad } from './core/loading.ts';
 import type { MapBody } from './map/solar-map.ts';
 import type { SolarScene } from './scene/solar-scene.ts';
-import { sceneFailed, sceneLabel, sceneLoading } from './ui/messages.ts';
+import { scaleNote, sceneFailed, sceneLabel, sceneLoading } from './ui/messages.ts';
 import type { View } from './ui/view-switch.ts';
 import './map/solar-map.ts';
 import './ui/apsis-app.ts';
 
 const LOCALE_KEY = 'apsis.locale';
+/** How long a passing notice (the scale just chosen) stays, in ms. */
+const NOTICE_MS = 3_000;
 /** How often, at most, the address bar follows the playing instant, in ms. */
 const ADDRESS_EVERY_MS = 500;
 /** Texture files (public/textures, credited in CREDITS.md), by body id. */
@@ -44,6 +48,7 @@ const TEXTURES: Readonly<Record<string, string>> = {
 
 const params = new URLSearchParams(location.search);
 const app = document.createElement('apsis-app');
+app.version = __APP_VERSION__;
 const map = document.createElement('solar-map');
 const sceneView = document.createElement('div');
 sceneView.style.cssText =
@@ -74,12 +79,21 @@ app.addEventListener('view-change', (event) => {
 
 /** Each view's own scale setting: log or true distances; enlarged or true sizes. */
 const trueScale: Record<View, boolean> = { map: false, scene: false };
+let noticeTimer: ReturnType<typeof setTimeout> | undefined;
+/** Says something briefly under the top controls. */
+function say(text: string) {
+  clearTimeout(noticeTimer);
+  app.notice = text;
+  noticeTimer = setTimeout(() => (app.notice = ''), NOTICE_MS);
+}
+
 app.addEventListener('true-scale-change', (event) => {
   const value = (event as CustomEvent<boolean>).detail;
   trueScale[app.view] = value;
   app.trueScale = value;
   if (app.view === 'map') map.scale = value ? 'linear' : 'log';
   else if (scene) scene.trueScale = value;
+  say(scaleNote(app.view, value));
 });
 
 // The displayed instant: now, or `?t=…` paused there (ADR 0011, docs/guides/time.md).

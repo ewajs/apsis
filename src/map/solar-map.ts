@@ -28,10 +28,6 @@ export type MapBody = {
 const ORBIT_POINTS = 240;
 /** Empty space around the outermost ring, in px. */
 const MARGIN = 22;
-/** Room kept free at the bottom for the scale note and button, in px. */
-const CONTROLS_HEIGHT = 60;
-/** Width each bottom corner needs beside the map circle to hold the controls instead. */
-const CONTROLS_SIDE_WIDTH = 190;
 /** Marker radii in px. */
 const SUN_RADIUS = 7;
 const PLANET_RADIUS = 4.5;
@@ -66,9 +62,23 @@ export class SolarMap extends LitElement {
 
   /** How distances from the Sun are drawn. */
   @property() scale: MapScale = 'log';
-  @state() private size = { width: 0, height: 0 };
+  @state() private size = { width: 0, height: 0, insets: { top: 0, right: 0, bottom: 0, left: 0 } };
   #resize = new ResizeObserver(([entry]) => {
-    if (entry) this.size = { width: entry.contentRect.width, height: entry.contentRect.height };
+    if (!entry) return;
+    // The floating controls' room at each edge (--hud-* in styles.css): the map fits in
+    // what's left.
+    const style = getComputedStyle(this);
+    const inset = (edge: string) => parseFloat(style.getPropertyValue(`--hud-${edge}`)) || 0;
+    this.size = {
+      width: entry.contentRect.width,
+      height: entry.contentRect.height,
+      insets: {
+        top: inset('top'),
+        right: inset('right'),
+        bottom: inset('bottom'),
+        left: inset('left'),
+      },
+    };
   });
 
   constructor() {
@@ -140,9 +150,9 @@ export class SolarMap extends LitElement {
     }
     .missing {
       position: absolute;
-      top: calc(var(--space) * 0.5);
+      bottom: calc(var(--hud-bottom) + 8px);
       left: var(--space);
-      right: var(--space);
+      right: var(--hud-right);
       margin: 0;
       color: var(--color-muted);
       font-size: 0.8rem;
@@ -170,12 +180,15 @@ export class SolarMap extends LitElement {
         })}
       </p>`;
     }
-    const { width, height } = this.size;
-    // The map is centred above the controls, unless the screen is wide enough for the
-    // controls to sit in the corners beside the circle (desktop, a phone on its side).
-    const roomy = width >= height + 2 * CONTROLS_SIDE_WIDTH;
-    const mapHeight = roomy ? height : height - CONTROLS_HEIGHT;
-    const radius = Math.min(width, mapHeight) / 2 - MARGIN;
+    const { width, height, insets } = this.size;
+    // The map is centred in the space the floating controls leave free; SVG coordinates
+    // have their origin at that centre, in CSS px.
+    const free = {
+      width: width - insets.left - insets.right,
+      height: height - insets.top - insets.bottom,
+    };
+    const centre = { x: insets.left + free.width / 2, y: insets.top + free.height / 2 };
+    const radius = Math.min(free.width, free.height) / 2 - MARGIN;
     if (radius <= 0) return nothing;
 
     const shown = this.bodies.flatMap((body) => {
@@ -225,7 +238,7 @@ export class SolarMap extends LitElement {
     }));
     const labels = placeLabels(
       requests,
-      { left: -width / 2, top: -mapHeight / 2, width, height: mapHeight },
+      { left: -free.width / 2, top: -free.height / 2, width: free.width, height: free.height },
       rings.map(({ text, y }) => ({
         left: 0,
         top: y - RING_LABEL_HEIGHT,
@@ -236,7 +249,7 @@ export class SolarMap extends LitElement {
 
     return html`
       <svg
-        viewBox="${-width / 2} ${-mapHeight / 2} ${width} ${height}"
+        viewBox="${-centre.x} ${-centre.y} ${width} ${height}"
         role="img"
         aria-label=${msg('El sistema solar visto desde arriba, con las naves y sus trayectorias.', {
           id: 'map-label',

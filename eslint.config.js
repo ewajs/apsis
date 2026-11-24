@@ -74,6 +74,8 @@ export default [
             allow('i18n', packages('@lit/localize')),
             // main.ts wires the siblings together; they never import each other.
             allow('app', elements('core', 'data', 'scene', 'map', 'ui', 'i18n', 'time')),
+            // Self-hosted typefaces: their CSS and font files only.
+            allow('app', packages('@fontsource-variable/*')),
             // The data scripts share core's types and pure parsers, and run on Node.
             allow('scripts', elements('scripts', 'core')),
             allow('scripts', nodeBuiltins),

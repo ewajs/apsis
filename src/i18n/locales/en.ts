@@ -47,4 +47,11 @@ export const templates = {
   'time-speed': 'Speed',
   'time-now': 'Now',
   'time-instant': 'Date shown',
+  close: 'Close',
+  'info-open': 'About Apsis',
+  'info-about':
+    'Where deep-space missions are, and where they were: on a map or in a 3D solar system, from 1977 to two months ahead.',
+  'info-sources': 'Where it all comes from',
+  'credit-textures': 'Textures: Solar System Scope, CC BY 4.0, based on NASA data.',
+  'info-code': 'Open source',
 };

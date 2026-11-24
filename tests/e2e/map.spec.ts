@@ -17,7 +17,9 @@ test('shows the Sun, every planet and every spacecraft with data now', async ({ 
     await expect(map.locator(`[data-body="${body.id}"] circle.${body.kind}`)).toBeAttached();
   }
   await expect(map.locator('[data-body="cassini"]')).toHaveCount(0);
-  await expect(page.getByText(/Datos del \d/)).toBeVisible();
+  // The data date lives in the info panel.
+  await page.getByRole('button', { name: 'Acerca de Apsis' }).click();
+  await expect(page.getByRole('dialog').getByText(/Datos del \d/)).toBeVisible();
 });
 
 test('puts Earth where Horizons says it is', async ({ page, request }) => {
@@ -39,13 +41,13 @@ test('puts Earth where Horizons says it is', async ({ page, request }) => {
   expect(Math.atan2(-cy, cx)).toBeCloseTo(Math.atan2(y!, x!), 6);
 });
 
-test('switches between log and true distances', async ({ page }) => {
+test('switches between log and true distances, and says which', async ({ page }) => {
   await page.goto('./');
-  await expect(page.getByText('Distancias en escala logarítmica')).toBeVisible();
+  await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
   await page.getByRole('button', { name: 'Ver distancias reales' }).click();
-  await expect(page.getByText('Distancias reales', { exact: true })).toBeVisible();
+  await expect(page.getByRole('status')).toHaveText('Distancias reales');
   await page.getByRole('button', { name: 'Ver escala logarítmica' }).click();
-  await expect(page.getByText('Distancias en escala logarítmica')).toBeVisible();
+  await expect(page.getByRole('status')).toHaveText('Distancias en escala logarítmica');
 });
 
 test('says when a date has no data, instead of guessing', async ({ page }) => {

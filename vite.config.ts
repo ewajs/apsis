@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
@@ -6,8 +7,11 @@ const base = '/apsis/';
 /** --color-bg in src/ui/styles.css: the splash screen and the browser's bars. */
 const background = '#070b14';
 
+const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
+
 export default defineConfig({
   base,
+  define: { __APP_VERSION__: JSON.stringify(version) },
   build: {
     // The 3D view's chunk (three.js, ~230 KB gzipped) loads only when someone picks 3D;
     // the page itself stays small. Warn only above that.
@@ -46,7 +50,11 @@ export default defineConfig({
       },
       workbox: {
         // The app shell and the planet textures (about 4 MB, ADR 0007).
-        globPatterns: ['**/*.{js,css,html,svg,png,jpg,webmanifest}'],
+        // Fonts: only the Latin files (Spanish and English need nothing else).
+        globPatterns: [
+          '**/*.{js,css,html,svg,png,jpg,webmanifest}',
+          '**/*-latin-wght-normal-*.woff2',
+        ],
         // Data is cached as it's used, never precached (ADR 0007, 0011). Archived years
         // never change: once fetched, always from the cache. Everything else in data/
         // shows the cached copy at once and refreshes it in the background.
