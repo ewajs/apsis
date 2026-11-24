@@ -64,20 +64,23 @@ most twice a second while playing, minute precision), so any moment can be share
 reloaded; following now, `t` disappears. `?play=day` (or `week`, `month`; `-day`
 backwards) starts playing from the link.
 
-## The time bar
+## The time dock
 
-`<time-slider>` sits between the view and the footer: one row on a desktop; on a
-phone, the buttons on one row and the slider and date below. It shows and emits, and
-owns nothing but its own choice of speed and direction; `main.ts` turns its intents
-into controller calls.
+`<time-slider>` floats at the bottom of the view (ADR 0012): full width on a phone,
+centred on a desktop. It shows and emits, and owns nothing but the pace you chose;
+`main.ts` turns its intents into controller calls.
 
-- **Direction** (→ / ←) and **play / pause** (▶ / ❚❚): play uses the chosen speed and
-  direction; changing either while playing takes effect at once.
-- **Speed**, a native `<select>`: real time, 1 day, 1 week or 1 month per second.
-- **Ahora / Now**, pressed while following the clock.
-- **The slider**, a native `<input type="range">` over the span with data, a minute
-  per step: keyboard and screen readers work out of the box. Dragging pauses at the
-  dragged instant.
-- **The date and time**, in the visitor's language and time zone (`Intl`).
+- **The scrubber**, a native `<input type="range">` styled thin, over the span with
+  data, a minute per step: keyboard and screen readers work out of the box. Dragging
+  pauses at the dragged instant. A small Sun-coloured mark shows today on it.
+- **Play / pause**, plays at the chosen pace.
+- **The date**: "23 nov 2026 · 20:32" (`formatInstant` in `ui/format.ts`): day, short
+  month, year and 24-hour time in that order in both languages, in the visitor's time
+  zone, with even-width digits and its own reserved width, so nothing around it moves
+  as it plays. Above it, a small "En vivo / Reproduciendo / Pausado".
+- **The pace**, one native `<select>` under a chip for speed and direction together:
+  ← 1 mes/s, ← 1 semana/s, ← 1 día/s, Tiempo real, 1 día/s, 1 semana/s, 1 mes/s.
+  Changing it while playing takes effect at once.
+- **Ahora / Now**, highlighted while following the clock.
 
 The controls are disabled until the data (and so its span) has arrived.
