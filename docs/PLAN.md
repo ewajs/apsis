@@ -84,7 +84,6 @@ Shape: ADR 0011 (accepted 2026-11-23).
 - [x] **3.4 Encounters.** `encounter: true` milestones get hourly samples ±3 days.
 - [x] **3.5 Cassini and the full history.** Cassini (1997–2017) and every catalogue
       mission archived from launch; planets from 1977.
-- [ ] **3.6 More ended missions.** Rosetta (a comet), Galileo, Dawn.
 
 ## M4 — Pick one (v0.4.0)
 
@@ -94,6 +93,8 @@ Shape: ADR 0011 (accepted 2026-11-23).
 - [ ] **4.3 More kinds of journey.** JWST (parked at L2, Earth's neighbourhood),
       BepiColombo (Mercury), New Horizons (the Kuiper belt). The catalogue then grows one
       entry at a time, by PR: representative first, everything eventually.
+- [ ] **4.4 More ended missions.** Rosetta (a comet), Galileo, Dawn (moved from M3's 3.6
+      at the v0.3.0 release; the archive they need is in place).
 
 ## M5 — Local views (v0.5.0)
 
@@ -126,6 +127,18 @@ SPICE for missions Horizons lacks; major moons; Earth-centred view for near-Eart
 missions; a link to fly a trajectory in gravitas.
 
 ## Releases
+
+### v0.3.0 — Time (2026-11-23)
+
+Move through every mission's history, forwards and backwards.
+
+- A time bar: play and pause, forwards or backwards, at real time or a day, a week or a
+  month per second; "now"; and a slider from 1977 to two months ahead. Links keep the
+  moment (`?t=`).
+- Every planet since 1977 and every mission since launch, including Cassini
+  (1997–2017), loaded a year at a time as you go, and kept offline once seen.
+- Close passes (flybys, perihelia, arrivals) sampled hourly: Parker's perihelion now
+  drawn within 2 km.
 
 ### v0.2.0 — The 3D scene (2026-11-23)
 
