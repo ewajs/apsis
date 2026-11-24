@@ -161,3 +161,14 @@ describe('milestones around an instant', () => {
     expect(milestonesAround([], 0)).toEqual({});
   });
 });
+
+describe('bilingual text', () => {
+  it('rejects anything but es and en, as an unquoted comma in YAML would leave', () => {
+    const entry = valid();
+    // `{ es: el punto L2, más allá, en: … }` parses to this.
+    (entry.target as Record<string, unknown>)['más allá'] = null;
+    expect(problemsOf([entry])).toEqual([
+      'entry 1 (juno): target has unexpected más allá (a comma in unquoted text?)',
+    ]);
+  });
+});

@@ -126,29 +126,30 @@ have negative IDs.
    is clipped to it, so a mission that launches or whose predictions end inside the
    live window still works.
 
-### The candidates, checked 2026-11-22
+### The candidates, checked 2026-11-22 (and 2026-11-23 for those added in 4.3)
 
 Coverage is what Horizons had on that date; predicted spans grow as missions update
 them. Status was checked against agency sources only for the missions in the
-catalogue so far; the rest are checked when they join it (step 4.3).
+catalogue; the rest are checked when they join it, one pull request each.
 
-| Mission            | ID     | Coverage in Horizons    | Status                        |
-| ------------------ | ------ | ----------------------- | ----------------------------- |
-| Cassini            | `-82`  | 1997-10-15 → 2017-09-15 | ended, in the catalogue (3.5) |
-| BepiColombo        | `-121` | 2018-10-20 → 2027-04-11 | to check (4.3)                |
-| Hera               | `-91`  | 2024-10-07 → 2027-01-13 | to check (4.3)                |
-| JUICE              | `-28`  | 2023-04-14 → 2031-07-21 | to check (4.3)                |
-| Europa Clipper     | `-159` | 2024-10-14 → 2034-09-03 | active, in the catalogue      |
-| Psyche             | `-255` | 2023-10-13 → 2029-02-24 | active, in the catalogue      |
-| Juno               | `-61`  | 2011-08-05 → 2028-09-02 | active, in the catalogue      |
-| Lucy               | `-49`  | 2021-10-16 → 2033-03-13 | to check (4.3)                |
-| Parker Solar Probe | `-96`  | 2018-08-12 → 2030-01-01 | active, in the catalogue      |
-| Solar Orbiter      | `-144` | 2020-02-10 → 2030-11-20 | to check (4.3)                |
-| New Horizons       | `-98`  | 2006-01-19 → 2050-01-01 | to check (4.3)                |
-| Voyager 1          | `-31`  | 1977-09-05 → 2100-01-01 | active, in the catalogue      |
-| Voyager 2          | `-32`  | 1977-08-20 → 2100-01-01 | to check (4.3)                |
-| MMX                | `-239` | 2026-10-19 → 2026-12-21 | launched Oct 2026; short span |
-| Tianwen-2          | none   | not in Horizons         | joins with `horizons: null`   |
+| Mission            | ID     | Coverage in Horizons    | Status                                                            |
+| ------------------ | ------ | ----------------------- | ----------------------------------------------------------------- |
+| Cassini            | `-82`  | 1997-10-15 → 2017-09-15 | ended, in the catalogue (3.5)                                     |
+| BepiColombo        | `-121` | 2018-10-20 → 2027-04-11 | active, in Mercury orbit since 2026-11-21, in the catalogue (4.3) |
+| Hera               | `-91`  | 2024-10-07 → 2027-01-13 | to check                                                          |
+| JUICE              | `-28`  | 2023-04-14 → 2031-07-21 | to check                                                          |
+| Europa Clipper     | `-159` | 2024-10-14 → 2034-09-03 | active, in the catalogue                                          |
+| Psyche             | `-255` | 2023-10-13 → 2029-02-24 | active, in the catalogue                                          |
+| Juno               | `-61`  | 2011-08-05 → 2028-09-02 | active, in the catalogue                                          |
+| Lucy               | `-49`  | 2021-10-16 → 2033-03-13 | to check                                                          |
+| Parker Solar Probe | `-96`  | 2018-08-12 → 2030-01-01 | active, in the catalogue                                          |
+| Solar Orbiter      | `-144` | 2020-02-10 → 2030-11-20 | to check                                                          |
+| New Horizons       | `-98`  | 2006-01-19 → 2050-01-01 | active, in the catalogue (4.3)                                    |
+| James Webb (JWST)  | `-170` | 2021-12-25 → 2031-11-16 | active, in the catalogue (4.3)                                    |
+| Voyager 1          | `-31`  | 1977-09-05 → 2100-01-01 | active, in the catalogue                                          |
+| Voyager 2          | `-32`  | 1977-08-20 → 2100-01-01 | to check                                                          |
+| MMX                | `-239` | 2026-10-19 → 2026-12-21 | launched Oct 2026; short span                                     |
+| Tianwen-2          | none   | not in Horizons         | joins with `horizons: null`                                       |
 
 Notes:
 

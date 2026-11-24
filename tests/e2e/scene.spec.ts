@@ -154,17 +154,19 @@ test('shows true sizes on request, keeping the spacecraft marked', async ({ page
 test('zooms from the tool column', async ({ page }, testInfo) => {
   await page.goto(sceneAddress(testInfo.project.name));
   await expect(page.locator('canvas[data-backend]')).toBeVisible({ timeout: 20_000 });
-  const label = (id: string) => page.locator(`[data-label="${id}"]`);
-  await expect(label('earth')).toHaveCSS('visibility', 'visible');
-  const apart = async () => {
-    const [sun, earth] = [
-      (await label('sun').boundingBox())!,
-      (await label('earth').boundingBox())!,
-    ];
-    return Math.hypot(earth.x - sun.x, earth.y - sun.y);
-  };
+  // Venus: no spacecraft beside it to take its label's place (James Webb sits by Earth).
+  // A hidden label keeps its last place, so only a visible one is measured. One call:
+  // software WebGL draws a few frames a second, and each call waits for one.
+  const apart = () =>
+    page.evaluate(() => {
+      const label = (id: string) => document.querySelector(`[data-label="${id}"]`)!;
+      if (getComputedStyle(label('venus')).visibility !== 'visible') return -1;
+      const [sun, venus] = [label('sun'), label('venus')].map((e) => e.getBoundingClientRect());
+      return Math.hypot(venus!.x - sun!.x, venus!.y - sun!.y);
+    });
+  await expect.poll(apart).toBeGreaterThan(0);
   const start = await apart();
-  // Half the distance to the Sun: Earth looks farther from it (by perspective, not
+  // Half the distance to the Sun: Venus looks farther from it (by perspective, not
   // exactly twice).
   await page.getByRole('button', { name: /Zoom in|Acercar/ }).click();
   await expect.poll(apart).toBeGreaterThan(start * 1.3);

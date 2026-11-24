@@ -97,7 +97,7 @@ The interface first (ADR 0012, direction A chosen 2026-11-23), then picking a mi
 - [x] **4.1 Picker and selection.** List, search, selection, camera flies to it.
 - [x] **4.2 Mission card.** Distance from Earth, light-time, speed, next milestone,
       blurb, links.
-- [ ] **4.3 More kinds of journey.** JWST (parked at L2, Earth's neighbourhood),
+- [x] **4.3 More kinds of journey.** JWST (parked at L2, Earth's neighbourhood),
       BepiColombo (Mercury), New Horizons (the Kuiper belt). The catalogue then grows one
       entry at a time, by PR: representative first, everything eventually.
 - [ ] **4.4 More ended missions.** Rosetta (a comet), Galileo, Dawn (moved from M3's 3.6

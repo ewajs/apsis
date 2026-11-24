@@ -74,12 +74,21 @@ export function parseCatalogue(data: unknown): Mission[] {
     const text = (key: string) => {
       if (typeof entry[key] !== 'string' || entry[key].trim() === '') problem(`${key} is required`);
     };
-    const localized = (value: unknown, key: string) => {
+    /**
+     * Text in both languages. Anything else in it is a mistake: in YAML's `{ … }` form an
+     * unquoted comma ends the text, and what followed becomes a key of its own.
+     * @param also Other keys the object may have (a milestone's date).
+     */
+    const localized = (value: unknown, key: string, also: readonly string[] = []) => {
       if (!isRecord(value)) return problem(`${key} needs es and en`);
       for (const lang of ['es', 'en']) {
         if (typeof value[lang] !== 'string' || value[lang].trim() === '') {
           problem(`${key}.${lang} is missing`);
         }
+      }
+      const stray = Object.keys(value).filter((k) => !['es', 'en', ...also].includes(k));
+      if (stray.length > 0) {
+        problem(`${key} has unexpected ${stray.join(', ')} (a comma in unquoted text?)`);
       }
     };
 
@@ -132,7 +141,7 @@ export function parseCatalogue(data: unknown): Mission[] {
           if (milestone.date < previous) problem(`${key} is out of date order`);
           previous = milestone.date;
         }
-        localized(milestone, key);
+        localized(milestone, key, ['date', 'encounter']);
       });
     }
 
