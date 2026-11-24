@@ -133,6 +133,31 @@ test('shows true sizes on request, keeping the spacecraft marked', async ({ page
   ).toBeVisible();
 });
 
+test('zooms from the tool column', async ({ page }, testInfo) => {
+  await page.goto(sceneAddress(testInfo.project.name));
+  await expect(page.locator('canvas[data-backend]')).toBeVisible({ timeout: 20_000 });
+  const label = (id: string) => page.locator(`[data-label="${id}"]`);
+  await expect(label('earth')).toHaveCSS('visibility', 'visible');
+  const apart = async () => {
+    const [sun, earth] = [
+      (await label('sun').boundingBox())!,
+      (await label('earth').boundingBox())!,
+    ];
+    return Math.hypot(earth.x - sun.x, earth.y - sun.y);
+  };
+  const start = await apart();
+  // Half the distance to the Sun: Earth looks farther from it (by perspective, not
+  // exactly twice).
+  await page.getByRole('button', { name: /Zoom in|Acercar/ }).click();
+  await expect.poll(apart).toBeGreaterThan(start * 1.3);
+  await page.getByRole('button', { name: /Zoom out|Alejar/ }).click();
+  await expect.poll(apart).toBeLessThan(start * 1.2);
+  // Going back to the whole map is for the map only.
+  await expect(
+    page.getByRole('button', { name: /Show the whole map|Ver todo el mapa/ }),
+  ).toHaveCount(0);
+});
+
 test('draws the Milky Way behind everything', async ({ page }, testInfo) => {
   await page.goto(sceneAddress(testInfo.project.name));
   await expect(page.locator('canvas[data-backend]')).toBeVisible({ timeout: 20_000 });

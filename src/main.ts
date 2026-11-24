@@ -96,6 +96,17 @@ app.addEventListener('true-scale-change', (event) => {
   say(scaleNote(app.view, value));
 });
 
+// Zoom: the tool column's buttons act on whichever view is showing.
+app.addEventListener('zoom-by', (event) => {
+  const factor = (event as CustomEvent<number>).detail;
+  if (app.view === 'map') map.zoomBy(factor);
+  else scene?.zoomBy(factor);
+});
+app.addEventListener('view-home', () => map.goHome());
+map.addEventListener('map-view-change', (event) => {
+  app.mapAtHome = (event as CustomEvent<boolean>).detail;
+});
+
 // The displayed instant: now, or `?t=…` paused there (ADR 0011, docs/guides/time.md).
 const time = new TimeController(parseInstant(params.get('t')), showTime);
 let addressWrittenAt = 0;

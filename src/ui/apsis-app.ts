@@ -19,11 +19,11 @@ import './view-tools.ts';
  * it. Top: the name, then the view switch, the language and the info button; under
  * them, a notice when there is one. Right edge: the tool column. Bottom: the time dock.
  *
- * Properties: `locale`; `view` (the map or the 3D scene); `trueScale` (for the tool
- * column); `fetchedAt` and `version` (for the info panel); `notice`, a short message
+ * Properties: `locale`; `view` (the map or the 3D scene); `trueScale` and `mapAtHome`
+ * (for the tool column); `fetchedAt` and `version` (for the info panel); `notice`, a short message
  * for the visitor, if any; `playback` and `timeRange`, for the time dock.
- * Events: `locale-change`, `view-change` and `true-scale-change` bubble up from the
- * switches and tools, and `time-play`, `time-pause`, `time-seek` and `time-live` from
+ * Events: `locale-change`, `view-change`, `zoom-by`, `view-home` and
+ * `true-scale-change` bubble up from the switches and tools, and `time-play`, `time-pause`, `time-seek` and `time-live` from
  * the time dock.
  */
 @customElement('apsis-app')
@@ -38,6 +38,8 @@ export class ApsisApp extends LitElement {
   @property() view: View = 'map';
   /** Whether the view showing is at true scale. */
   @property({ type: Boolean }) trueScale = false;
+  /** Whether the map shows all of itself, centred. */
+  @property({ type: Boolean }) mapAtHome = true;
   /** A short message for the visitor, shown under the top controls. */
   @property() notice = '';
   /** Where time is and how it moves, for the time dock. */
@@ -169,7 +171,11 @@ export class ApsisApp extends LitElement {
         </button>
       </div>
       <p class="glass pill notice" role="status">${this.notice}</p>
-      <view-tools .view=${this.view} ?trueScale=${this.trueScale}></view-tools>
+      <view-tools
+        .view=${this.view}
+        ?trueScale=${this.trueScale}
+        ?atHome=${this.mapAtHome}
+      ></view-tools>
       <time-slider
         class="glass dock"
         .playback=${this.playback}

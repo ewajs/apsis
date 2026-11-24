@@ -31,8 +31,18 @@ export const glass = css`
     cursor: pointer;
     transition: background var(--dur-fast);
   }
-  .icon-button:hover {
+  /* Only where there's a real hover: on touch screens it would stick after a tap. */
+  @media (hover: hover) {
+    .icon-button:hover:not(:disabled) {
+      background: var(--glass-press);
+    }
+  }
+  .icon-button:active:not(:disabled) {
     background: var(--glass-press);
+  }
+  .icon-button:disabled {
+    opacity: 0.4;
+    cursor: default;
   }
   .icon-button[aria-pressed='true'] {
     color: var(--color-craft);

@@ -1,15 +1,24 @@
 import { LitElement, css, html, svg, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
-import { yearOf, type BodyKind, type Chunk } from '../core/ephemeris.ts';
+import { position, yearOf, type BodyKind, type Chunk, type Sample } from '../core/ephemeris.ts';
 import { stateFromChunks } from '../core/interpolate.ts';
 import { trailPoints } from '../core/trails.ts';
-import { orbitPath, type OrbitalElements } from '../core/orbits.ts';
+import { orbitPath, orbitPathThrough, type OrbitalElements } from '../core/orbits.ts';
 import { KM_PER_AU } from '../core/units.ts';
 import { bodyName } from '../i18n/bodies.ts';
 import { currentLocale } from '../i18n/localization.ts';
 import { placeLabels, type LabelRequest } from '../core/labels.ts';
 import { LOG_RINGS_AU, mapPoint, radialFraction, type MapScale } from './projection.ts';
+import {
+  HOME_VIEW,
+  isHome,
+  panBy,
+  toScreen,
+  zoomAt,
+  type MapView,
+  type ScreenPoint,
+} from './view.ts';
 
 /** A body the map can draw. */
 export type MapBody = {
@@ -38,16 +47,31 @@ const LABEL_CHAR_WIDTH = 6.6;
 /** The rings' own labels: 10 px text. */
 const RING_LABEL_HEIGHT = 11;
 const RING_LABEL_CHAR_WIDTH = 5.6;
+/** On true distances, a ring at a round distance (1, 10, 100 AU) shows once it's this big. */
+const MIN_RING_PX = 40;
+/** A mouse wheel's scroll, in px, that doubles the zoom; a trackpad pinch, faster. */
+const WHEEL_PX_PER_DOUBLING = 300;
+const PINCH_PX_PER_DOUBLING = 100;
+/** A tap moves less than this, in px; two taps this close in time zoom in. */
+const TAP_SLOP_PX = 8;
+const DOUBLE_TAP_MS = 300;
+/** How far an arrow key moves the map, in px. */
+const KEY_PAN_PX = 60;
+/** The zoom step of a double tap and the + and − keys. */
+const ZOOM_STEP = 2;
 
 /**
  * @component The 2D map: the solar system from above the ecliptic, with the Sun,
  * planets and their orbits, spacecraft and their trails at one instant
  * (docs/guides/map.md).
  *
- * Properties: `bodies` (what to draw), `time` (TDB seconds since J2000), `status`.
- * `scale` is set from outside (the shell's scale switch); the map keeps room for that
- * switch at the bottom, or in the corners on wide screens.
- * Events: none yet.
+ * Properties: `bodies` (what to draw), `time` (TDB seconds since J2000), `status`,
+ * `scale` (log or true distances; changing it shows the whole map again). The map fits
+ * in the room the floating controls leave (`--hud-*`).
+ *
+ * Moving around: drag to pan; wheel, pinch or double tap to zoom; with the map
+ * focused, arrows, + and − and 0. `zoomBy` and `goHome` serve the tool column.
+ * Events: `map-view-change` (detail: whether the whole map shows, centred).
  */
 @customElement('solar-map')
 export class SolarMap extends LitElement {
@@ -63,6 +87,13 @@ export class SolarMap extends LitElement {
   /** How distances from the Sun are drawn. */
   @property() scale: MapScale = 'log';
   @state() private size = { width: 0, height: 0, insets: { top: 0, right: 0, bottom: 0, left: 0 } };
+  /** The zoom and the point in the middle (`map/view.ts`). */
+  @state() private view: MapView = HOME_VIEW;
+  /** The pointers down on the map, by id, in client px: one pans, two pinch. */
+  #pointers = new Map<number, ScreenPoint>();
+  /** How far the current press has moved, to tell a tap from a drag. */
+  #travel = 0;
+  #lastTap = { at: -Infinity, x: 0, y: 0 };
   #resize = new ResizeObserver(([entry]) => {
     if (!entry) return;
     // The floating controls' room at each edge (--hud-* in styles.css): the map fits in
@@ -96,6 +127,39 @@ export class SolarMap extends LitElement {
     super.disconnectedCallback();
   }
 
+  /** Whether the whole map shows, centred on the Sun. */
+  get atHome(): boolean {
+    return isHome(this.view);
+  }
+
+  /** Zooms about the middle of the map: 2 is twice as close. */
+  zoomBy(factor: number): void {
+    const { radius } = this.#layout();
+    this.view = zoomAt(this.view, factor, { x: 0, y: 0 }, radius);
+  }
+
+  /** Shows the whole map again, centred on the Sun. */
+  goHome(): void {
+    this.view = HOME_VIEW;
+  }
+
+  override willUpdate(changed: Map<PropertyKey, unknown>) {
+    // Log and true distances put everything elsewhere: a close-up of one is meaningless
+    // in the other.
+    if (changed.has('scale') && changed.get('scale') !== undefined) this.view = HOME_VIEW;
+  }
+
+  override updated(changed: Map<PropertyKey, unknown>) {
+    if (!changed.has('view')) return;
+    this.dispatchEvent(
+      new CustomEvent<boolean>('map-view-change', {
+        detail: isHome(this.view),
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
   static override styles = css`
     :host {
       position: relative;
@@ -111,6 +175,17 @@ export class SolarMap extends LitElement {
       inset: 0;
       width: 100%;
       height: 100%;
+      /* The map handles drags and pinches itself; the page doesn't scroll or zoom. */
+      touch-action: none;
+      user-select: none;
+      cursor: grab;
+      outline: none;
+    }
+    svg:active {
+      cursor: grabbing;
+    }
+    svg:focus-visible {
+      box-shadow: inset 0 0 0 2px var(--color-craft);
     }
     .ring {
       fill: none;
@@ -180,16 +255,10 @@ export class SolarMap extends LitElement {
         })}
       </p>`;
     }
-    const { width, height, insets } = this.size;
-    // The map is centred in the space the floating controls leave free; SVG coordinates
-    // have their origin at that centre, in CSS px.
-    const free = {
-      width: width - insets.left - insets.right,
-      height: height - insets.top - insets.bottom,
-    };
-    const centre = { x: insets.left + free.width / 2, y: insets.top + free.height / 2 };
-    const radius = Math.min(free.width, free.height) / 2 - MARGIN;
+    const { width, height } = this.size;
+    const { free, centre, radius } = this.#layout();
     if (radius <= 0) return nothing;
+    const view = this.view;
 
     const shown = this.bodies.flatMap((body) => {
       const now = stateFromChunks(body.chunks, this.time);
@@ -205,11 +274,10 @@ export class SolarMap extends LitElement {
     // The linear map's edge: just past the farthest body shown.
     const edgeAu =
       Math.max(1, ...shown.map(({ now }) => Math.hypot(now[1], now[2]) / KM_PER_AU)) * 1.05;
-    const toPx = (xKm: number, yKm: number) => {
-      const point = mapPoint(xKm, yKm, this.scale, edgeAu);
-      // SVG's y grows downwards; the ecliptic's +y is up on the map.
-      return { x: point.x * radius, y: -point.y * radius };
-    };
+    const toPx = (xKm: number, yKm: number) =>
+      toScreen(view, mapPoint(xKm, yKm, this.scale, edgeAu), radius);
+    const sun = toScreen(view, { x: 0, y: 0 }, radius);
+    const scaled = radius * view.zoom;
 
     const markers = shown.map(({ body, now }) => ({ body, ...toPx(now[1], now[2]) }));
     // Spacecraft labels first: they're what the app is about.
@@ -223,24 +291,31 @@ export class SolarMap extends LitElement {
         width: this.#label(body).length * LABEL_CHAR_WIDTH,
         height: LABEL_HEIGHT,
       }));
-    requests.unshift({ id: 'sun', x: 0, y: 0, radius: SUN_RADIUS, width: 0, height: 0 });
+    requests.unshift({ id: 'sun', ...sun, radius: SUN_RADIUS, width: 0, height: 0 });
 
     const number = new Intl.NumberFormat(currentLocale());
     const au = msg('UA', { id: 'unit-au' });
+    const edgeRing = { au: Math.round(edgeAu / 1.05), r: 1 / 1.05 };
     const rings = (
       this.scale === 'log'
         ? LOG_RINGS_AU.map((ringAu) => ({ au: ringAu, r: radialFraction(ringAu, 'log', 1) }))
-        : [{ au: Math.round(edgeAu / 1.05), r: 1 / 1.05 }]
+        : [
+            // Round distances appear as you zoom in, well inside the edge's own ring.
+            ...LOG_RINGS_AU.map((ringAu) => ({ au: ringAu, r: ringAu / edgeAu })).filter(
+              ({ r }) => r * scaled >= MIN_RING_PX && r < edgeRing.r * 0.8,
+            ),
+            edgeRing,
+          ]
     ).map((ring) => ({
       ...ring,
       text: `${number.format(ring.au)} ${au}`,
-      y: -ring.r * radius - 3,
+      y: sun.y - ring.r * scaled - 3,
     }));
     const labels = placeLabels(
       requests,
       { left: -free.width / 2, top: -free.height / 2, width: free.width, height: free.height },
       rings.map(({ text, y }) => ({
-        left: 0,
+        left: sun.x,
         top: y - RING_LABEL_HEIGHT,
         width: text.length * RING_LABEL_CHAR_WIDTH + 6,
         height: RING_LABEL_HEIGHT + 2,
@@ -251,19 +326,27 @@ export class SolarMap extends LitElement {
       <svg
         viewBox="${-centre.x} ${-centre.y} ${width} ${height}"
         role="img"
+        tabindex="0"
+        @pointerdown=${this.#down}
+        @pointermove=${this.#move}
+        @pointerup=${this.#up}
+        @pointercancel=${this.#cancel}
+        @wheel=${{ handleEvent: (event: WheelEvent) => this.#wheel(event), passive: false }}
+        @keydown=${this.#key}
         aria-label=${msg('El sistema solar visto desde arriba, con las naves y sus trayectorias.', {
           id: 'map-label',
         })}
       >
         ${rings.map(
           ({ r, text, y }) =>
-            svg`<circle class="ring" r=${r * radius}></circle>
-              <text class="ring-label" x="3" y=${y}>${text}</text>`,
+            svg`<circle class="ring" cx=${sun.x} cy=${sun.y} r=${r * scaled}></circle>
+              <text class="ring-label" x=${sun.x + 3} y=${y}>${text}</text>`,
         )}
         ${this.bodies.map((body) =>
           body.orbit
             ? svg`<polyline class="orbit" data-orbit=${body.id}
-                points=${this.#orbit(body.orbit, toPx)}></polyline>`
+                points=${this.#orbit(body.orbit, toPx, shown.find((s) => s.body === body)?.now)}>
+              </polyline>`
             : nothing,
         )}
         ${markers
@@ -272,7 +355,9 @@ export class SolarMap extends LitElement {
             ({ body }) =>
               svg`<polyline class="trail" points=${this.#trail(body, toPx)}></polyline>`,
           )}
-        <circle class="sun" r=${SUN_RADIUS}><title>${bodyName('sun')}</title></circle>
+        <circle class="sun" cx=${sun.x} cy=${sun.y} r=${SUN_RADIUS}>
+          <title>${bodyName('sun')}</title>
+        </circle>
         ${markers.map(
           ({ body, x, y }) => svg`<g data-body=${body.id}>
             <circle class=${body.kind} cx=${x} cy=${y}
@@ -305,6 +390,106 @@ export class SolarMap extends LitElement {
     `;
   }
 
+  /**
+   * Where the map goes: centred in the room the floating controls leave free. SVG
+   * coordinates have their origin at that centre, in CSS px; `radius` is the disc's at
+   * zoom 1.
+   */
+  #layout() {
+    const { width, height, insets } = this.size;
+    const free = {
+      width: width - insets.left - insets.right,
+      height: height - insets.top - insets.bottom,
+    };
+    const centre = { x: insets.left + free.width / 2, y: insets.top + free.height / 2 };
+    return { free, centre, radius: Math.min(free.width, free.height) / 2 - MARGIN };
+  }
+
+  /** A client position as a screen point: px from the middle of the free area. */
+  #local(clientX: number, clientY: number): ScreenPoint {
+    const box = this.getBoundingClientRect();
+    const { centre } = this.#layout();
+    return { x: clientX - box.left - centre.x, y: clientY - box.top - centre.y };
+  }
+
+  #down(event: PointerEvent) {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    (event.currentTarget as Element).setPointerCapture(event.pointerId);
+    this.#pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (this.#pointers.size === 1) this.#travel = 0;
+  }
+
+  #move(event: PointerEvent) {
+    if (!this.#pointers.has(event.pointerId)) return;
+    const before = [...this.#pointers.values()];
+    this.#pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const after = [...this.#pointers.values()];
+    const { radius } = this.#layout();
+    const [a0, b0] = before as [ScreenPoint, ScreenPoint?];
+    const [a1, b1] = after as [ScreenPoint, ScreenPoint?];
+    if (!b0 || !b1) {
+      // One finger or the mouse: what's under it follows it.
+      this.#travel += Math.hypot(a1.x - a0.x, a1.y - a0.y);
+      this.view = panBy(this.view, a1.x - a0.x, a1.y - a0.y, radius);
+      return;
+    }
+    // Two fingers: zoom by how much they spread, about the point between them, and
+    // follow that point as it moves.
+    this.#travel = Infinity;
+    const middle0 = this.#local((a0.x + b0.x) / 2, (a0.y + b0.y) / 2);
+    const middle1 = this.#local((a1.x + b1.x) / 2, (a1.y + b1.y) / 2);
+    const spread = Math.hypot(a1.x - b1.x, a1.y - b1.y) / Math.hypot(a0.x - b0.x, a0.y - b0.y);
+    const zoomed = zoomAt(this.view, spread, middle0, radius);
+    this.view = panBy(zoomed, middle1.x - middle0.x, middle1.y - middle0.y, radius);
+  }
+
+  #up(event: PointerEvent) {
+    if (!this.#pointers.delete(event.pointerId)) return;
+    if (this.#pointers.size > 0 || this.#travel > TAP_SLOP_PX) return;
+    const tap = { at: event.timeStamp, x: event.clientX, y: event.clientY };
+    const last = this.#lastTap;
+    const double =
+      tap.at - last.at < DOUBLE_TAP_MS &&
+      Math.hypot(tap.x - last.x, tap.y - last.y) < 2 * TAP_SLOP_PX;
+    this.#lastTap = double ? { at: -Infinity, x: 0, y: 0 } : tap;
+    if (double) {
+      const { radius } = this.#layout();
+      this.view = zoomAt(this.view, ZOOM_STEP, this.#local(tap.x, tap.y), radius);
+    }
+  }
+
+  #cancel(event: PointerEvent) {
+    this.#pointers.delete(event.pointerId);
+    this.#travel = Infinity;
+  }
+
+  #wheel(event: WheelEvent) {
+    event.preventDefault();
+    // Browsers send trackpad pinches as wheel events with Ctrl held.
+    const unit = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : 1;
+    const perDoubling = event.ctrlKey ? PINCH_PX_PER_DOUBLING : WHEEL_PX_PER_DOUBLING;
+    const factor = 2 ** ((-event.deltaY * unit) / perDoubling);
+    const { radius } = this.#layout();
+    this.view = zoomAt(this.view, factor, this.#local(event.clientX, event.clientY), radius);
+  }
+
+  #key(event: KeyboardEvent) {
+    const { radius } = this.#layout();
+    const pan: Record<string, [number, number]> = {
+      ArrowLeft: [KEY_PAN_PX, 0],
+      ArrowRight: [-KEY_PAN_PX, 0],
+      ArrowUp: [0, KEY_PAN_PX],
+      ArrowDown: [0, -KEY_PAN_PX],
+    };
+    const move = pan[event.key];
+    if (move) this.view = panBy(this.view, move[0], move[1], radius);
+    else if (event.key === '+' || event.key === '=') this.zoomBy(ZOOM_STEP);
+    else if (event.key === '-') this.zoomBy(1 / ZOOM_STEP);
+    else if (event.key === '0') this.goHome();
+    else return;
+    event.preventDefault();
+  }
+
   #label(body: MapBody): string {
     return body.kind === 'planet' ? bodyName(body.id) : body.name;
   }
@@ -317,9 +502,19 @@ export class SolarMap extends LitElement {
       .join(' ');
   }
 
-  /** A planet's whole orbit, projected like everything else. */
-  #orbit(orbit: OrbitalElements, toPx: (x: number, y: number) => { x: number; y: number }): string {
-    return orbitPath(orbit, ORBIT_POINTS)
+  /**
+   * A planet's whole orbit, projected like everything else: through the planet when it's
+   * shown (`orbitPathThrough`), so close up it still sits on its line.
+   */
+  #orbit(
+    orbit: OrbitalElements,
+    toPx: (x: number, y: number) => { x: number; y: number },
+    now: Sample | undefined,
+  ): string {
+    const path = now
+      ? orbitPathThrough(orbit, ORBIT_POINTS, position(now))
+      : orbitPath(orbit, ORBIT_POINTS);
+    return path
       .map(([x, y]) => toPx(x, y))
       .map(({ x, y }) => `${x.toFixed(1)},${y.toFixed(1)}`)
       .join(' ');

@@ -15,7 +15,8 @@ and every control floats over it.
 
 - `apsis-app` lays them out: the name top left; `view-switch`, `language-switch` and the
   info button top right; a notice (`role="status"`) under them; `view-tools` (the tool
-  column) on the right edge; the time dock at the bottom; `info-panel` (a native modal
+  column: zoom in and out, back to the whole map on the map, the scale) on the right
+  edge; the time dock at the bottom; `info-panel` (a native modal
   `<dialog>`: credits, data date, version) on demand.
 - Shared styles are in `ui/glass.ts` (`.glass` panels, `.pill`s, `.icon-button`s), icons
   in `ui/icons.ts`; colours, fonts and the glass come from tokens in `styles.css`, with

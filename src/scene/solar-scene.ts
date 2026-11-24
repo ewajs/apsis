@@ -232,6 +232,16 @@ export class SolarScene {
   }
 
   /**
+   * Moves the camera `factor` times closer to the focus (2 halves the distance), within
+   * the limits a pinch or the wheel have.
+   */
+  zoomBy(factor: number): void {
+    const { minDistance, maxDistance } = this.#controls;
+    const distance = this.#camera.position.length() / factor;
+    this.#camera.position.setLength(THREE.MathUtils.clamp(distance, minDistance, maxDistance));
+  }
+
+  /**
    * Whether the Sun and the planets are drawn at true size only, with no minimum on
    * screen (ADR 0005). Spacecraft keep their markers either way.
    */

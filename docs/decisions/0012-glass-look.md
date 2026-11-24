@@ -15,8 +15,8 @@
 - **Where things go:** top left the name; top right the view switch, the language
   (a small `ES ▾` pill over a native select) and an "i" for the info panel, which
   replaces the footer (credits, the data date, the version); a notice under them when
-  there is something to say; along the right edge a tool column (scale; zoom from
-  4.0c); at the bottom the time dock. The mission list and card (M4) float too: a
+  there is something to say; along the right edge a tool column (zoom, the whole map,
+  scale); at the bottom the time dock. The mission list and card (M4) float too: a
   panel on desktop, a sheet on phones.
 - **The view knows the controls' room** through `--hud-top/right/bottom/left` in
   `styles.css`, and the map centres itself in what's left. On narrow screens the map
