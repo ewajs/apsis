@@ -22,6 +22,7 @@ export const templates = {
   'map-scale-log-note': 'Distances on a logarithmic scale',
   'map-scale-linear-note': 'True distances',
   'map-missing': 'No data for this date:',
+  'map-no-data': 'No data for this date.',
   'map-scale-to-linear': 'Show true distances',
   'map-scale-to-log': 'Show log scale',
   view: 'View',

@@ -6,7 +6,7 @@ describe('data/catalogue.yaml', () => {
     expect(() => readCatalogue()).not.toThrow();
   });
 
-  it('has a public ephemeris for every mission shown in M1', () => {
+  it('has a public ephemeris for every mission in it so far', () => {
     const missions = readCatalogue();
     expect(missions.map((m) => m.id)).toEqual([
       'juno',
@@ -14,6 +14,7 @@ describe('data/catalogue.yaml', () => {
       'psyche',
       'parker-solar-probe',
       'voyager-1',
+      'cassini',
     ]);
     for (const mission of missions) expect(mission.horizons).not.toBeNull();
   });

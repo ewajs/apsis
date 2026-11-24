@@ -234,6 +234,7 @@ try {
     kind: body.kind,
     name: data!.missions.find((mission) => mission.id === body.id)?.name ?? body.id,
     chunks: store!.chunks.get(body.id) ?? new Map(),
+    years: body.years.map((entry) => entry.year),
     orbit: data!.orbits.planets[body.id],
   }));
   map.bodies = bodies;

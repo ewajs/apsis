@@ -134,6 +134,7 @@ catalogue so far; the rest are checked when they join it (step 4.3).
 
 | Mission            | ID     | Coverage in Horizons    | Status                        |
 | ------------------ | ------ | ----------------------- | ----------------------------- |
+| Cassini            | `-82`  | 1997-10-15 → 2017-09-15 | ended, in the catalogue (3.5) |
 | BepiColombo        | `-121` | 2018-10-20 → 2027-04-11 | to check (4.3)                |
 | Hera               | `-91`  | 2024-10-07 → 2027-01-13 | to check (4.3)                |
 | JUICE              | `-28`  | 2023-04-14 → 2031-07-21 | to check (4.3)                |

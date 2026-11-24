@@ -146,3 +146,12 @@ test('samples close passes hourly', async ({ request }) => {
   const gaps = near.slice(1).map(([t], i) => t! - near[i]![0]!);
   expect(Math.max(...gaps)).toBe(3_600);
 });
+
+test('goes back to Cassini at Saturn and Voyager 1 at Jupiter', async ({ page }) => {
+  await page.goto('./?t=2010-06-01T00:00Z');
+  await expect(page.locator('solar-map [data-body="cassini"]')).toBeAttached();
+  await expect(page.locator('solar-map [data-body="juno"]')).toHaveCount(0);
+  await page.goto('./?t=1979-03-05T12:00Z');
+  await expect(page.locator('solar-map [data-body="voyager-1"]')).toBeAttached();
+  await expect(page.locator('solar-map [data-body="cassini"]')).toHaveCount(0);
+});

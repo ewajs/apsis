@@ -130,3 +130,52 @@
     es: El objeto más lejano hecho por humanos. Pasó por Júpiter y Saturno y desde 2012 viaja por el espacio interestelar.
     en: The most distant human-made object. It flew past Jupiter and Saturn, and since 2012 it has been in interstellar space.
   links: [https://science.nasa.gov/mission/voyager/voyager-1/]
+
+- id: cassini
+  name: Cassini
+  agency: NASA / ESA / ASI
+  launch: 1997-10-15
+  target: { es: Saturno, en: Saturn }
+  status: ended
+  horizons: '-82'
+  coverage: { from: 1997-10-16, to: 2017-09-15 }
+  milestones:
+    - {
+        date: 1998-04-26,
+        encounter: true,
+        es: Pasa por Venus para tomar impulso,
+        en: Swings past Venus for a boost,
+      }
+    - {
+        date: 1999-06-24,
+        encounter: true,
+        es: Pasa otra vez por Venus,
+        en: Swings past Venus again,
+      }
+    - {
+        date: 1999-08-18,
+        encounter: true,
+        es: Pasa por la Tierra para tomar impulso,
+        en: Swings past Earth for a boost,
+      }
+    - { date: 2000-12-30, encounter: true, es: Pasa por Júpiter, en: Flies past Jupiter }
+    - {
+        date: 2004-07-01,
+        encounter: true,
+        es: Entra en órbita de Saturno,
+        en: Enters orbit around Saturn,
+      }
+    - {
+        date: 2005-01-14,
+        es: Su sonda Huygens se posa en Titán,
+        en: Its Huygens probe lands on Titan,
+      }
+    - {
+        date: 2017-09-15,
+        es: Termina la misión zambulléndose en Saturno,
+        en: Ends its mission by plunging into Saturn,
+      }
+  blurb:
+    es: Estudió Saturno, sus anillos y sus lunas durante 13 años. Descubrió géiseres en Encélado y dejó la sonda Huygens en Titán. Terminó zambulléndose en el planeta para no contaminar sus lunas.
+    en: Studied Saturn, its rings and its moons for 13 years. It found geysers on Enceladus and set the Huygens probe down on Titan, then ended by plunging into the planet so as not to contaminate its moons.
+  links: [https://science.nasa.gov/mission/cassini/]

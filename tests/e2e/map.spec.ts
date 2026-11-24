@@ -8,13 +8,15 @@ const index = JSON.parse(
 
 test.use({ locale: 'es-AR' });
 
-test('shows the Sun, every planet and every spacecraft with data', async ({ page }) => {
+test('shows the Sun, every planet and every spacecraft with data now', async ({ page }) => {
   await page.goto('./');
   const map = page.locator('solar-map');
   await expect(map.locator('circle.sun')).toBeAttached();
-  for (const body of index.bodies) {
+  // Everything with data now (a live year); ended missions such as Cassini are absent.
+  for (const body of index.bodies.filter((b) => b.years.some((y) => !y.archived))) {
     await expect(map.locator(`[data-body="${body.id}"] circle.${body.kind}`)).toBeAttached();
   }
+  await expect(map.locator('[data-body="cassini"]')).toHaveCount(0);
   await expect(page.getByText(/Datos del \d/)).toBeVisible();
 });
 
@@ -47,9 +49,21 @@ test('switches between log and true distances', async ({ page }) => {
 });
 
 test('says when a date has no data, instead of guessing', async ({ page }) => {
-  await page.goto('./?t=1990-01-01');
-  await expect(page.getByText('Sin datos para esta fecha:')).toBeVisible();
+  // Before any data (the archive starts in 1977).
+  await page.goto('./?t=1970-01-01');
+  await expect(page.getByText('Sin datos para esta fecha.')).toBeVisible();
   await expect(page.locator('solar-map [data-body]')).toHaveCount(0);
+});
+
+test('leaves out missions outside their own years, without calling it missing data', async ({
+  page,
+}) => {
+  // In 1990 there are planets and Voyager 1, but no Juno or Cassini yet: not a gap.
+  await page.goto('./?t=1990-06-01');
+  await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
+  await expect(page.locator('solar-map [data-body="voyager-1"]')).toBeAttached();
+  await expect(page.locator('solar-map [data-body="juno"]')).toHaveCount(0);
+  await expect(page.getByText(/Sin datos para esta fecha/)).toHaveCount(0);
 });
 
 test('fits a phone held either way', async ({ page }) => {

@@ -55,7 +55,9 @@ gzipped**.
 | Planets, 1977 → now (the Voyagers' launch)                  | ≈ 400      | ≈ 12 MB  | ≈ 6 MB               |
 | Encounter samples (≈ 40 encounters × 145 hourly samples)    | —          | ≈ 0.5 MB | small                |
 
-About 18 MB in the repository, once. **A visit loads only the years it shows:** about
+About 18 MB in the repository, once. **Measured after step 3.5:** 490 body-years (8
+planets × 49 years, Voyager 1 × 49, Cassini × 21, and the other missions from launch),
+14.9 MB raw, 6.9 MB gzipped. **A visit loads only the years it shows:** about
 18 chunks (8 planets and ~10 spacecraft) for one year, roughly 250 KB gzipped. Dragging
 the slider across fifty years would load more, but only what's looked at.
 

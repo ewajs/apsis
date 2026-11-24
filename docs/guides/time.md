@@ -9,6 +9,16 @@ playing forwards and backwards. Code: `src/core/playback.ts` (pure),
 | ---------------------------------- | -------------------------------------- |
 | ![Time bar, phone](time-phone.png) | ![Time bar, desktop](time-desktop.png) |
 
+## Going back
+
+The archive holds every planet from 1977 and every mission in the catalogue from
+launch (Cassini from 1997 to its end in 2017), so the slider reaches back to
+1 January 1977.
+
+| 5 March 1979: Voyager 1 at Jupiter              | 1 July 2004: Cassini arrives at Saturn               |
+| ----------------------------------------------- | ---------------------------------------------------- |
+| ![Voyager 1 at Jupiter, 1979](history-1979.png) | ![Cassini arrives at Saturn, 2004](history-2004.png) |
+
 ## One owner
 
 Every view takes the instant as an input (`time` on the map and the scene, in TDB

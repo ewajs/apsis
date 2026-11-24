@@ -24,8 +24,10 @@ All three at `?t=2026-11-23T12:00Z`.
    [time.md](time.md)): `?t=2026-12-03T16:15Z` in the address shows that instant,
    paused, and `?play=day` plays from there.
 3. For each body, `<solar-map>` asks `stateFromChunks` for the state at `time`. A body
-   without data at that instant isn't drawn, and the map lists it as "no data for this
-   date". Nothing is ever placed by guesswork.
+   without data at that instant isn't drawn; nothing is ever placed by guesswork. A
+   body outside its own years (before launch, after its end) is simply absent; one
+   that should have data that year but doesn't at that instant is listed as "no data
+   for this date"; and with nothing at all to draw, the map says so.
 4. `mapPoint` turns each position into a point on the map (below), labels are placed
    (`placeLabels`), and Lit renders the SVG.
 
