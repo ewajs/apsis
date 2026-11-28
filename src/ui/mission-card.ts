@@ -26,6 +26,12 @@ export type Card = {
   model?: ModelEntry | undefined;
   /** Whether the 3D view is close up to the model. */
   closeUp: boolean;
+  /**
+   * How this phone shows the model in AR (its own viewer, ADR 0014): a link that opens
+   * Android's Scene Viewer, or Quick Look on an iPhone (the model is converted first,
+   * so a button); none elsewhere.
+   */
+  ar?: { viewer: 'scene-viewer'; href: string } | { viewer: 'quick-look' } | undefined;
 };
 
 /**
@@ -36,7 +42,8 @@ export type Card = {
  *
  * Properties: `card` (see `Card`).
  * Events: `body-select` with `null` when closed (closing clears the selection);
- * `close-up` (detail: whether to go close up to the model, or back out).
+ * `close-up` (detail: whether to go close up to the model, or back out); `ar-view`
+ * (show the model in the room in Quick Look; Scene Viewer is a plain link).
  */
 @customElement('mission-card')
 export class MissionCard extends LitElement {
@@ -125,6 +132,18 @@ export class MissionCard extends LitElement {
         background: var(--color-craft);
         border-color: transparent;
         color: var(--color-bg);
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .actions .close-up {
+        flex: 1;
+        margin-top: 0;
+      }
+      a.close-up {
+        text-decoration: none;
       }
       .credit {
         margin: 12px 0 0;
@@ -261,18 +280,38 @@ export class MissionCard extends LitElement {
       }
       ${
         card.model
-          ? html`<button
-              type="button"
-              class="close-up"
-              aria-pressed=${card.closeUp}
-              @click=${() => this.#closeUp(!card.closeUp)}
-            >
+          ? html`<div class="actions">
+              <button
+                type="button"
+                class="close-up"
+                aria-pressed=${card.closeUp}
+                @click=${() => this.#closeUp(!card.closeUp)}
+              >
+                ${
+                  card.closeUp
+                    ? msg('Volver a su vecindario', { id: 'card-close-up-out' })
+                    : msg('Ver la nave de cerca', { id: 'card-close-up' })
+                }
+              </button>
               ${
-                card.closeUp
-                  ? msg('Volver a su vecindario', { id: 'card-close-up-out' })
-                  : msg('Ver la nave de cerca', { id: 'card-close-up' })
+                card.ar?.viewer === 'scene-viewer'
+                  ? html`<a class="close-up" href=${card.ar.href}>
+                      ${msg('En tu casa (RA)', { id: 'card-ar' })}
+                    </a>`
+                  : card.ar?.viewer === 'quick-look'
+                    ? html`<button
+                        type="button"
+                        class="close-up"
+                        @click=${() =>
+                          this.dispatchEvent(
+                            new CustomEvent('ar-view', { bubbles: true, composed: true }),
+                          )}
+                      >
+                        ${msg('En tu casa (RA)', { id: 'card-ar' })}
+                      </button>`
+                    : nothing
               }
-            </button>`
+            </div>`
           : nothing
       }
       ${

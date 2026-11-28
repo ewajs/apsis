@@ -23,6 +23,7 @@ import { TimeController } from './time/controller.ts';
 import { ChunkStore, loadCatalogue, loadModels, type Catalogue } from './data/load.ts';
 import { instantWithData } from './core/catalogue.ts';
 import { factsAt } from './core/facts.ts';
+import { sceneViewerUrl } from './core/ar.ts';
 import { stateFromChunks } from './core/interpolate.ts';
 import { pickerEntries } from './ui/body-picker.ts';
 import { yearsToLoad } from './core/loading.ts';
@@ -72,6 +73,32 @@ void modelsLoading.then((loaded) => {
 });
 /** Whether the 3D camera is close up to the selected spacecraft's model. */
 let closeUp = false;
+
+/**
+ * Which AR viewer this phone has (ADR 0014): Quick Look on an iPhone or iPad (Safari
+ * says so through `rel="ar"`), Scene Viewer on Android; none elsewhere. `?ar=` forces
+ * one, for tests.
+ */
+const arViewer = ((): 'quick-look' | 'scene-viewer' | null => {
+  const forced = params.get('ar');
+  if (forced === 'quick-look' || forced === 'scene-viewer') return forced;
+  if (document.createElement('a').relList.supports('ar')) return 'quick-look';
+  return /android/i.test(navigator.userAgent) ? 'scene-viewer' : null;
+})();
+
+/** The AR copy of a spacecraft's model, as an absolute URL (AR viewers fetch it themselves). */
+function arUrl(file: string): string {
+  return new URL(`ar/${file}`, new URL(modelsBase, location.href)).href;
+}
+
+// The card's "En tu casa" on an iPhone: the AR copy, converted to USDZ, in Quick Look.
+app.addEventListener('ar-view', () => {
+  const model = models.find((entry) => entry.id === selected);
+  if (!model) return;
+  void import('./scene/ar-export.ts')
+    .then(({ openInQuickLook }) => openInQuickLook(arUrl(model.file)))
+    .catch((error: unknown) => console.error(error));
+});
 let store: ChunkStore | undefined;
 let scene: SolarScene | undefined;
 let sceneStarting: Promise<SolarScene | undefined> | undefined;
@@ -160,15 +187,24 @@ function showCard() {
   // The Sun sits still at the origin of heliocentric states.
   const state =
     kind === 'sun' ? ([tdb, 0, 0, 0, 0, 0, 0] as const) : stateFromChunks(chunks(selected), tdb);
+  const name = names()[selected] ?? selected;
+  const model = models.find((entry) => entry.id === selected);
   app.card = {
     id: selected,
     kind,
-    name: names()[selected] ?? selected,
+    name,
     mission: data.missions.find((mission) => mission.id === selected),
     facts: state ? factsAt(state, stateFromChunks(chunks('earth'), tdb)) : null,
     instantMs: time.playback.instantMs,
-    model: models.find((model) => model.id === selected),
+    model,
     closeUp,
+    ar: !model
+      ? undefined
+      : arViewer === 'scene-viewer'
+        ? { viewer: 'scene-viewer', href: sceneViewerUrl(arUrl(model.file), name, location.href) }
+        : arViewer === 'quick-look'
+          ? { viewer: 'quick-look' }
+          : undefined,
   };
 }
 

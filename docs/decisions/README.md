@@ -19,3 +19,4 @@ not silently contradicted by code.
 | [0010](0010-planet-orbits.md)                      | Planet orbits from osculating elements, fetched once and committed    |
 | [0012](0012-glass-look.md)                         | The Glass look: the view fills the screen, controls float             |
 | [0013](0013-spacecraft-models.md)                  | Spacecraft models: NASA's or ours, one body frame, Meshopt            |
+| [0014](0014-ar.md)                                 | AR: the phone's own viewers, an AR copy of each model                 |

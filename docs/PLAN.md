@@ -132,7 +132,7 @@ The owner's priority: models and AR first, and they should look stunning (up to 
 
 ## M6 — AR (v0.6.0)
 
-- [ ] **6.1 A spacecraft in your room.** Hand the model to the phone's AR viewer at real
+- [x] **6.1 A spacecraft in your room.** Hand the model to the phone's AR viewer at real
       size: Scene Viewer on Android (GLB), Quick Look on iPhone (USDZ, made with
       three.js's exporter).
 - [ ] **6.2 A tabletop solar system.** The scene at the shown instant as a snapshot,
