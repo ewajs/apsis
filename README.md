@@ -11,7 +11,7 @@ installable web app (PWA) in Spanish (Argentina) and English, hosted on GitHub P
 An _apsis_ is one of the two extreme points of an orbit: the closest and the
 farthest from the body it goes around.
 
-**Status:** v0.7.0. Where 21 missions are and have been, from 1977 to two months
+**Status:** v0.7.1. Where 21 missions are and have been, from 1977 to two months
 ahead, on a 2D map or in a 3D solar system; search for one or tap it, read its card, dive
 to the spacecraft itself, and on a phone see it in your room, or the whole solar system
 on your table, in AR. Close up: orbiters on their orbits around Jupiter, Saturn, Mercury
