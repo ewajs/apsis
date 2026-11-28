@@ -193,6 +193,21 @@ SPICE for missions Horizons lacks; a link to fly a trajectory in gravitas.
 
 ## Releases
 
+### v0.7.0 — Close-ups (2026-11-28)
+
+Down to the planets, their moons and what orbits them.
+
+- Orbiters on their real orbits around their planet: Juno's long loops and Galileo's around Jupiter,
+  Cassini's around Saturn, BepiColombo at Mercury, and six Mars orbiters (MRO, MAVEN,
+  Mars Express, TGO, Odyssey, Hope), from daily orbital elements, and said so.
+- Eleven moons, from our Moon to Charon, each on its orbit and with its map; Pluto,
+  Ceres, Vesta, Psyche, Didymos, comet 67P and Arrokoth.
+- The ISS, Hubble and Tiangong around Earth, from CelesTrak's data of the day: an
+  approximate orbit, labelled so, with height, speed and the time a turn takes. NASA's
+  ISS and Hubble models up close.
+- The card folds into a pill, keeping the selection, so nothing hides the spacecraft;
+  it folds by itself on a close-up.
+
 ### v0.6.0 — AR (2026-11-28)
 
 Apsis in your room, through the phone's own AR.
