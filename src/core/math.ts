@@ -42,6 +42,12 @@ export function length(v: Vector3): number {
   return Math.hypot(v[0], v[1], v[2]);
 }
 
+/** `v` scaled to length 1; the zero vector stays zero. */
+export function normalize(v: Vector3): Vector3 {
+  const n = length(v);
+  return n === 0 ? [0, 0, 0] : scale(v, 1 / n);
+}
+
 /** The distance between two points. */
 export function distance(a: Vector3, b: Vector3): number {
   return length(subtract(a, b));

@@ -10,3 +10,4 @@ playwright-report/
 .claude/worktrees/
 dev-dist/
 public/data/
+.cache/

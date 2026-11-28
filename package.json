@@ -23,10 +23,14 @@
     "icons": "node scripts/icons.ts",
     "data": "node scripts/data/fetch.ts",
     "data:orbits": "node scripts/data/orbits.ts",
-    "data:archive": "node scripts/data/archive.ts"
+    "data:archive": "node scripts/data/archive.ts",
+    "models": "node scripts/models/models.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
     "@playwright/test": "1.64.1",
     "@types/node": "24.19.2",
     "@types/three": "0.187.0",
@@ -34,6 +38,7 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-import-resolver-typescript": "4.4.5",
     "eslint-plugin-boundaries": "7.4.1",
+    "meshoptimizer": "^1.3.0",
     "prettier": "3.10.1",
     "typescript": "6.0.3",
     "typescript-eslint": "8.73.0",

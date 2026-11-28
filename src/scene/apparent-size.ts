@@ -35,3 +35,33 @@ export function displayRadius(
   const minimum = (minDiameterPx / 2) * unitsPerPixel(distance, fovDeg, viewportHeightPx);
   return Math.max(trueRadius, minimum);
 }
+
+/**
+ * How many CSS px a length spans on screen at `distance` (same units for both).
+ * @example apparentPx(0.02, 1, 45, 800) // a 20 m spacecraft 1 km away: ≈ 19 px
+ */
+export function apparentPx(
+  length: number,
+  distance: number,
+  fovDeg: number,
+  viewportHeightPx: number,
+): number {
+  return length / unitsPerPixel(distance, fovDeg, viewportHeightPx);
+}
+
+/**
+ * Whether a spacecraft's model should replace its marker: once the model, at true
+ * size, spans more on screen than the marker does. Below that it would be a speck.
+ */
+export function modelShows(lengthKm: number, distanceKm: number, fovDeg: number, heightPx: number) {
+  return apparentPx(lengthKm, distanceKm, fovDeg, heightPx) >= CRAFT_MIN_DIAMETER_PX;
+}
+
+/**
+ * The camera's near plane for a camera `distanceKm` from what it looks at: a thousandth
+ * of that, between 1 mm and 1 km. Close to a spacecraft it must be millimetres; across
+ * the solar system 1 km keeps the depth buffer comfortable (with its logarithmic depth).
+ */
+export function nearPlaneKm(distanceKm: number): number {
+  return Math.min(1, Math.max(1e-6, distanceKm / 1000));
+}

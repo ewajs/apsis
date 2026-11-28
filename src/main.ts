@@ -20,7 +20,7 @@ import { bodyName } from './i18n/bodies.ts';
 import { SPEEDS, type Playback, type Speed } from './core/playback.ts';
 import { parseInstant, tdbSecondsFromUtcMs } from './core/time.ts';
 import { TimeController } from './time/controller.ts';
-import { ChunkStore, loadCatalogue, type Catalogue } from './data/load.ts';
+import { ChunkStore, loadCatalogue, loadModels, type Catalogue } from './data/load.ts';
 import { instantWithData } from './core/catalogue.ts';
 import { factsAt } from './core/facts.ts';
 import { stateFromChunks } from './core/interpolate.ts';
@@ -62,6 +62,16 @@ sceneView.hidden = true;
 app.append(map, sceneView);
 
 let data: Catalogue | undefined;
+/** The spacecraft models there are (ADR 0013), fetched once at start-up. */
+const modelsBase = `${import.meta.env.BASE_URL}models/`;
+const modelsLoading = loadModels(modelsBase);
+let models: Awaited<typeof modelsLoading> = [];
+void modelsLoading.then((loaded) => {
+  models = loaded;
+  showCard();
+});
+/** Whether the 3D camera is close up to the selected spacecraft's model. */
+let closeUp = false;
 let store: ChunkStore | undefined;
 let scene: SolarScene | undefined;
 let sceneStarting: Promise<SolarScene | undefined> | undefined;
@@ -121,6 +131,7 @@ function select(id: string | null, move: 'fly' | 'jump' | 'stay' = 'fly') {
     if (instant !== time.playback.instantMs) time.seek(instant);
   }
   selected = id;
+  closeUp = false;
   app.selected = map.selected = id;
   scene?.select(id, move === 'fly');
   showCard();
@@ -156,8 +167,21 @@ function showCard() {
     mission: data.missions.find((mission) => mission.id === selected),
     facts: state ? factsAt(state, stateFromChunks(chunks('earth'), tdb)) : null,
     instantMs: time.playback.instantMs,
+    model: models.find((model) => model.id === selected),
+    closeUp,
   };
 }
+
+// The card's close-up: dive to the model in 3D (from the map, 3D opens first), or back out.
+app.addEventListener('close-up', (event) => {
+  const on = (event as CustomEvent<boolean>).detail;
+  void (async () => {
+    if (on && app.view !== 'scene') await showView('scene');
+    closeUp = on;
+    scene?.closeUp(on);
+    showCard();
+  })();
+});
 
 /** The picker's list, in the language showing now. */
 function fillPicker() {
@@ -252,6 +276,7 @@ function startScene(): Promise<SolarScene | undefined> {
     try {
       // three.js is large: it loads only when someone asks for 3D.
       const { SolarScene } = await import('./scene/solar-scene.ts');
+      models = await modelsLoading;
       const created = await SolarScene.create({
         container: sceneView,
         label: sceneLabel(),
@@ -259,6 +284,7 @@ function startScene(): Promise<SolarScene | undefined> {
         backend: params.get('backend') === 'webgl2' ? 'webgl2' : 'auto',
         sky: '2k_stars_milky_way.jpg',
         onPick: (id) => select(id),
+        models: { base: modelsBase, entries: models },
       });
       sceneView.firstChild?.remove(); // the loading text
       sceneView.style.cssText = 'position:relative;display:grid;min-height:0';
