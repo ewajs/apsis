@@ -4,6 +4,7 @@
  * network call itself lives in scripts/data.
  */
 import { tdbSecondsFromJulianDate, type Sample } from './ephemeris.ts';
+import type { ElementSample } from './elements.ts';
 import type { OrbitalElements } from './orbits.ts';
 
 /** The Horizons API endpoint. */
@@ -20,7 +21,15 @@ export type VectorsRequest = {
   stop: string;
   /** A Horizons step size, such as `1d` or `6h`. */
   step: string;
+  /**
+   * The centre positions are measured from, as Horizons writes it: the Sun's centre
+   * (`500@10`) when absent, a planet's for moons and orbiters (`500@599`, Jupiter).
+   */
+  center?: string;
 };
+
+/** The Sun's centre, as Horizons names it. */
+export const SUN_CENTER = '500@10';
 
 /** Horizons answered, but with a message instead of data (bad ID, no coverage…). */
 export class HorizonsError extends Error {
@@ -41,7 +50,7 @@ export function vectorsQuery(request: VectorsRequest): Record<string, string> {
     OBJ_DATA: quoted('NO'),
     MAKE_EPHEM: quoted('YES'),
     EPHEM_TYPE: quoted('VECTORS'),
-    CENTER: quoted('500@10'),
+    CENTER: quoted(request.center ?? SUN_CENTER),
     REF_PLANE: quoted('ECLIPTIC'),
     REF_SYSTEM: quoted('ICRF'),
     VEC_TABLE: quoted('2'),
@@ -149,4 +158,44 @@ function dataRows(response: unknown): string[][] {
 // Horizons explains a refusal in the first lines of its text; keep them for the error.
 function firstLines(text: string): string {
   return text.trim().split('\n').slice(0, 6).join(' ').replace(/\s+/g, ' ').slice(0, 400);
+}
+
+/**
+ * The query parameters for a series of osculating elements around a centre (ADR 0015):
+ * ecliptic J2000, km and degrees (mean motion in degrees per second), over a span.
+ */
+export function elementSeriesQuery(request: VectorsRequest): Record<string, string> {
+  return {
+    ...vectorsQuery(request),
+    EPHEM_TYPE: "'ELEMENTS'",
+    VEC_TABLE: "'2'",
+  };
+}
+
+/**
+ * Reads an element series answer into samples `[t, a, e, i, Ω, ω, M, n]`
+ * (`ElementSample`). Columns, as Horizons names them: JDTDB, date, EC, QR, IN, OM, W,
+ * Tp, N, MA, TA, A, AD, PR.
+ */
+export function parseElementSeries(response: unknown): ElementSample[] {
+  return dataRows(response).map((cells) => {
+    const numbers = cells.map(Number);
+    const value = (column: number) => {
+      const n = numbers[column];
+      if (n === undefined || !Number.isFinite(n)) {
+        throw new Error(`Unreadable Horizons element in: ${cells.join(',')}`);
+      }
+      return n;
+    };
+    return [
+      Math.round(tdbSecondsFromJulianDate(value(0)) * 1000) / 1000,
+      value(11),
+      value(2),
+      value(4),
+      value(5),
+      value(6),
+      value(9),
+      value(8),
+    ] as const;
+  });
 }

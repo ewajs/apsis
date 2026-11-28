@@ -20,3 +20,4 @@ not silently contradicted by code.
 | [0012](0012-glass-look.md)                         | The Glass look: the view fills the screen, controls float             |
 | [0013](0013-spacecraft-models.md)                  | Spacecraft models: NASA's or ours, one body frame, Meshopt            |
 | [0014](0014-ar.md)                                 | AR: the phone's own viewers, an AR copy of each model                 |
+| [0015](0015-close-up-data.md)                      | Close-up data: daily orbital elements around each planet              |

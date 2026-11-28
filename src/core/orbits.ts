@@ -22,11 +22,18 @@ export type OrbitalElements = {
   trueAnomalyDeg: number;
 };
 
+/** The three angles that orient an orbit in the ecliptic frame. */
+export type OrbitAngles = Pick<
+  OrbitalElements,
+  'inclinationDeg' | 'ascendingNodeDeg' | 'argumentOfPeriapsisDeg'
+>;
+
 /**
  * The orbit's plane, as two unit vectors in the ecliptic frame: P points to
- * perihelion, Q is 90° ahead of it in the direction of motion.
+ * perihelion (periapsis, around another centre), Q is 90° ahead of it in the direction
+ * of motion.
  */
-function orbitPlane(elements: OrbitalElements): { p: Vector3; q: Vector3 } {
+export function orbitPlane(elements: OrbitAngles): { p: Vector3; q: Vector3 } {
   const [i, node, w] = [
     radians(elements.inclinationDeg),
     radians(elements.ascendingNodeDeg),
