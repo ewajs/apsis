@@ -34,7 +34,10 @@ the displayed instant, the card says so instead of guessing.
 `main.ts` builds the card (`showCard`) whenever the time, the selection, the language or
 the loaded years change; the component only formats. On a desktop it sits top left, all
 of it showing; on a phone it sits above the time dock, short, with the blurb and links
-behind "Más sobre la misión". Its × clears the selection.
+behind "Más sobre la misión". Its × clears the selection; its fold button (˄) tucks it into a pill with the name,
+the close-up toggle and the ×, out of the way of what it describes, keeping the
+selection. Going close up folds it by itself, so the spacecraft is in plain view; a tap
+on the name opens it again.
 
 ## Where selection lives
 
