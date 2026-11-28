@@ -11,10 +11,10 @@ installable web app (PWA) in Spanish (Argentina) and English, hosted on GitHub P
 An _apsis_ is one of the two extreme points of an orbit: the closest and the
 farthest from the body it goes around.
 
-**Status:** v0.5.0. Where twelve missions are and have been, from 1977 to two months
-ahead, on a 2D map or in a 3D solar system; search for one or tap it, read its card, and
-dive to the spacecraft itself, a 3D model in the pose it flies in. Next: seeing them in
-your room (AR). [The plan](docs/PLAN.md) lists the milestones, and
+**Status:** v0.6.0. Where twelve missions are and have been, from 1977 to two months
+ahead, on a 2D map or in a 3D solar system; search for one or tap it, read its card, dive
+to the spacecraft itself, and on a phone see it in your room, or the whole solar system
+on your table, in AR. Next: close-ups around planets, moons and small bodies. [The plan](docs/PLAN.md) lists the milestones, and
 [the decisions](docs/decisions/README.md) explain the design.
 [Open it](https://ewajs.github.io/apsis/).
 

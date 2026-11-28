@@ -185,6 +185,17 @@ SPICE for missions Horizons lacks; a link to fly a trajectory in gravitas.
 
 ## Releases
 
+### v0.6.0 — AR (2026-11-28)
+
+Apsis in your room, through the phone's own AR.
+
+- "En tu casa (RA)" on a spacecraft's card: the spacecraft at real size, standing on
+  your floor, in Quick Look (iPhone) or Scene Viewer (Android).
+- "El sistema solar en tu mesa (RA)" in the tool column: the planets, their orbits and
+  every spacecraft as they are at the shown instant, about 1.2 m across, on your table;
+  live in the browser on Android.
+- Only on phones that can: a desktop shows neither.
+
 ### v0.5.0 — Spacecraft models (2026-11-28)
 
 Every spacecraft, up close, as it really looks.
