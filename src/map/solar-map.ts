@@ -10,7 +10,7 @@ import { bodyName } from '../i18n/bodies.ts';
 import { currentLocale } from '../i18n/localization.ts';
 import { placeLabels, type LabelRequest } from '../core/labels.ts';
 import { pickAt, type ScreenMark } from '../core/pick.ts';
-import { LOG_RINGS_AU, mapPoint, radialFraction, type MapScale } from './projection.ts';
+import { LOG_RINGS_AU, mapPoint, radialFraction, type MapScale } from '../core/projection.ts';
 import {
   centredOn,
   HOME_VIEW,

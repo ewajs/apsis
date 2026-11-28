@@ -14,8 +14,9 @@ const ZOOM_STEP = 2;
  * in 3D, enlarged or true sizes, ADR 0005).
  *
  * Properties: `view`, which view it's for; `trueScale`, whether true scale is showing;
- * `atHome`, whether the map already shows all of itself.
- * Events: `zoom-by` (detail: the factor, 2 is twice as close), `view-home`, and
+ * `atHome`, whether the map already shows all of itself; `tabletop`, whether this phone
+ * can show the solar system on a table in AR (ADR 0014).
+ * Events: `tabletop`, `zoom-by` (detail: the factor, 2 is twice as close), `view-home`, and
  * `true-scale-change` (detail: the new `trueScale`).
  */
 @customElement('view-tools')
@@ -26,6 +27,8 @@ export class ViewTools extends LitElement {
   @property({ type: Boolean }) trueScale = false;
   /** Whether the map shows all of itself, centred: nothing to go back to. */
   @property({ type: Boolean }) atHome = true;
+  /** Whether the AR tabletop is on offer here. */
+  @property({ type: Boolean }) tabletop = false;
 
   constructor() {
     super();
@@ -62,6 +65,7 @@ export class ViewTools extends LitElement {
     const zoomIn = msg('Acercar', { id: 'zoom-in' });
     const zoomOut = msg('Alejar', { id: 'zoom-out' });
     const home = msg('Ver todo el mapa', { id: 'map-home' });
+    const tabletop = msg('El sistema solar en tu mesa (RA)', { id: 'tabletop-open' });
     return html`<div class="glass pill" role="toolbar" aria-orientation="vertical">
       <button
         type="button"
@@ -106,6 +110,19 @@ export class ViewTools extends LitElement {
       >
         ${icons.scale()}
       </button>
+      ${
+        this.tabletop
+          ? html`<button
+              type="button"
+              class="icon-button"
+              title=${tabletop}
+              aria-label=${tabletop}
+              @click=${() => this.#send('tabletop', undefined)}
+            >
+              ${icons.ar()}
+            </button>`
+          : nothing
+      }
     </div>`;
   }
 

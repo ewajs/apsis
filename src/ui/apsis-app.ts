@@ -24,11 +24,11 @@ import type { PickerEntry } from './body-picker.ts';
  * them, a notice when there is one. Right edge: the tool column. Bottom: the time dock.
  *
  * Properties: `locale`; `pickerEntries` and `selected`, for the picker; `card`, the
- * selection's card; `view` (the
+ * selection's card; `tabletop`, whether the AR tabletop is on offer; `view` (the
  * map or the 3D scene); `trueScale` and `mapAtHome`
  * (for the tool column); `fetchedAt` and `version` (for the info panel); `notice`, a short message
  * for the visitor, if any; `playback` and `timeRange`, for the time dock.
- * Events: `body-select` from the picker and the card; `locale-change`, `view-change`, `zoom-by`, `view-home` and
+ * Events: `body-select` from the picker and the card; `locale-change`, `view-change`, `tabletop`, `zoom-by`, `view-home` and
  * `true-scale-change` bubble up from the switches and tools, and `time-play`, `time-pause`, `time-seek` and `time-live` from
  * the time dock.
  */
@@ -52,6 +52,8 @@ export class ApsisApp extends LitElement {
   @property({ type: Boolean }) trueScale = false;
   /** Whether the map shows all of itself, centred. */
   @property({ type: Boolean }) mapAtHome = true;
+  /** Whether the AR tabletop is on offer on this phone (ADR 0014). */
+  @property({ type: Boolean }) tabletop = false;
   /** A short message for the visitor, shown under the top controls. */
   @property() notice = '';
   /** Where time is and how it moves, for the time dock. */
@@ -218,6 +220,7 @@ export class ApsisApp extends LitElement {
         .view=${this.view}
         ?trueScale=${this.trueScale}
         ?atHome=${this.mapAtHome}
+        ?tabletop=${this.tabletop}
       ></view-tools>
       ${this.card ? html`<mission-card .card=${this.card}></mission-card>` : nothing}
       <time-slider

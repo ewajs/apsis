@@ -4,7 +4,8 @@ The solar system seen from above the ecliptic's north pole: the Sun, the planets
 their orbits (see [orbits.md](orbits.md)) and the spacecraft at one instant, with each
 spacecraft's last 30 days as a trail. The scale rings are dashed, so they don't read
 as orbits. Code:
-`src/map/` (projection, the view and its moves, the `<solar-map>` component), `src/core/labels.ts` (label
+`src/core/projection.ts` (shared with the AR tabletop), `src/map/` (the view and its
+moves, the `<solar-map>` component), `src/core/labels.ts` (label
 placement, shared with the 3D view), `src/core/trails.ts`, `src/data/load.ts`,
 `src/main.ts`.
 

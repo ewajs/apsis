@@ -29,7 +29,9 @@ import { pickerEntries } from './ui/body-picker.ts';
 import { yearsToLoad } from './core/loading.ts';
 import type { MapBody } from './map/solar-map.ts';
 import type { SolarScene } from './scene/solar-scene.ts';
-import { scaleNote, sceneFailed, sceneLabel, sceneLoading } from './ui/messages.ts';
+import { closeLabel, scaleNote, sceneFailed, sceneLabel, sceneLoading } from './ui/messages.ts';
+import { trailPoints } from './core/trails.ts';
+import type { TableBody } from './scene/tabletop.ts';
 import type { View } from './ui/view-switch.ts';
 import './map/solar-map.ts';
 import './ui/apsis-app.ts';
@@ -86,6 +88,83 @@ const arViewer = ((): 'quick-look' | 'scene-viewer' | null => {
   return /android/i.test(navigator.userAgent) ? 'scene-viewer' : null;
 })();
 
+/**
+ * How this phone can show the solar system on a table (ADR 0014): Quick Look takes it
+ * as a file made in the page; on Android, Scene Viewer can't, so WebXR shows it live,
+ * where the browser offers AR. Asked without loading the 3D code.
+ */
+void (async () => {
+  if (arViewer === 'quick-look') app.tabletop = true;
+  else if (arViewer === 'scene-viewer') {
+    app.tabletop =
+      (await navigator.xr?.isSessionSupported('immersive-ar').catch(() => false)) ?? false;
+  }
+})();
+
+/** Every body as it is at the shown instant, for the tabletop. */
+function tableBodies(): TableBody[] {
+  const tdb = tdbSecondsFromUtcMs(time.playback.instantMs);
+  const bodies: TableBody[] = [
+    {
+      id: 'sun',
+      kind: 'sun',
+      at: [0, 0, 0],
+      radiusKm: RADIUS_KM.sun!,
+      texture: TEXTURES.sun,
+      rotation: ROTATION.sun,
+    },
+  ];
+  for (const body of data?.index.bodies ?? []) {
+    const chunks = store?.chunks.get(body.id) ?? new Map();
+    const state = stateFromChunks(chunks, tdb);
+    if (!state) continue;
+    const at = [state[1], state[2], state[3]] as const;
+    bodies.push(
+      body.kind === 'planet'
+        ? {
+            id: body.id,
+            kind: 'planet',
+            at,
+            radiusKm: RADIUS_KM[body.id] ?? 0,
+            texture: TEXTURES[body.id],
+            orbit: data!.orbits.planets[body.id],
+            rotation: ROTATION[body.id],
+            rings:
+              body.id === 'saturn'
+                ? { innerKm: SATURN_RINGS_KM.inner, outerKm: SATURN_RINGS_KM.outer }
+                : undefined,
+          }
+        : { id: body.id, kind: 'spacecraft', at, radiusKm: 0, trail: trailPoints(chunks, tdb) },
+    );
+  }
+  return bodies;
+}
+
+// The tool column's AR tabletop: the solar system at the shown instant, on a table.
+app.addEventListener('tabletop', () => {
+  void (async () => {
+    const { buildTabletop } = await import('./scene/tabletop.ts');
+    const craftColor = getComputedStyle(document.documentElement).getPropertyValue('--color-craft');
+    const table = await buildTabletop(
+      tableBodies(),
+      tdbSecondsFromUtcMs(time.playback.instantMs),
+      `${import.meta.env.BASE_URL}textures/`,
+      craftColor.trim(),
+    );
+    if (arViewer === 'quick-look') {
+      const { openInQuickLook } = await import('./scene/ar-export.ts');
+      await openInQuickLook(table);
+    } else {
+      // The 3D view pauses while AR has the screen.
+      scene?.stop();
+      const { showInAr } = await import('./scene/tabletop-xr.ts');
+      await showInAr(table, closeLabel(), () => {
+        if (app.view === 'scene') scene?.start();
+      });
+    }
+  })().catch((error: unknown) => console.error(error));
+});
+
 /** The AR copy of a spacecraft's model, as an absolute URL (AR viewers fetch it themselves). */
 function arUrl(file: string): string {
   return new URL(`ar/${file}`, new URL(modelsBase, location.href)).href;
@@ -96,7 +175,7 @@ app.addEventListener('ar-view', () => {
   const model = models.find((entry) => entry.id === selected);
   if (!model) return;
   void import('./scene/ar-export.ts')
-    .then(({ openInQuickLook }) => openInQuickLook(arUrl(model.file)))
+    .then(({ openModelInQuickLook }) => openModelInQuickLook(arUrl(model.file)))
     .catch((error: unknown) => console.error(error));
 });
 let store: ChunkStore | undefined;
