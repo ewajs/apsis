@@ -193,6 +193,14 @@ SPICE for missions Horizons lacks; a link to fly a trajectory in gravitas.
 
 ## Releases
 
+### v0.7.1 — AR at two sizes (2026-11-28)
+
+- A spacecraft in AR comes in two sizes: "En tu casa (RA)", 1 m long and resizable,
+  and "Tamaño real (RA)", locked at its true size; the card says what to expect under
+  each ("1 m · escala 1:109", "109 × 57 m, 67 m de alto").
+- On an iPhone it opens at once: Quick Look's files are made ahead, the 1 m one fetched
+  as soon as the card shows, and the last few kept for offline.
+
 ### v0.7.0 — Close-ups (2026-11-28)
 
 Down to the planets, their moons and what orbits them.
