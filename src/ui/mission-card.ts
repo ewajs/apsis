@@ -3,6 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { msg, updateWhenLocaleChanges } from '@lit/localize';
 import { milestonesAround, type Milestone, type Mission } from '../core/catalogue.ts';
 import type { Facts } from '../core/facts.ts';
+import type { ModelEntry } from '../core/models.ts';
 import { lightTimeSeconds } from '../core/units.ts';
 import { currentLocale, localized } from '../i18n/localization.ts';
 import { formatDistance, formatDuration, formatLooseDate, formatSpeed } from './format.ts';
@@ -21,6 +22,10 @@ export type Card = {
   facts: Facts | null;
   /** The displayed instant, UTC ms: which milestones are past. */
   instantMs: number;
+  /** Its 3D model, if it has one: the close-up button and the credit. */
+  model?: ModelEntry | undefined;
+  /** Whether the 3D view is close up to the model. */
+  closeUp: boolean;
 };
 
 /**
@@ -30,7 +35,8 @@ export type Card = {
  * screens; above the time dock on phones, with the mission's story behind "More".
  *
  * Properties: `card` (see `Card`).
- * Events: `body-select` with `null` when closed (closing clears the selection).
+ * Events: `body-select` with `null` when closed (closing clears the selection);
+ * `close-up` (detail: whether to go close up to the model, or back out).
  */
 @customElement('mission-card')
 export class MissionCard extends LitElement {
@@ -99,6 +105,31 @@ export class MissionCard extends LitElement {
       dd {
         margin: 2px 0 0;
         font-variant-numeric: tabular-nums;
+      }
+      .close-up {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        min-height: 44px;
+        margin-top: 14px;
+        border: 1px solid var(--glass-line);
+        border-radius: 999px;
+        background: rgb(255 255 255 / 0.06);
+        color: var(--color-text);
+        font: 600 0.88rem var(--font-ui);
+        cursor: pointer;
+      }
+      .close-up[aria-pressed='true'] {
+        background: var(--color-craft);
+        border-color: transparent;
+        color: var(--color-bg);
+      }
+      .credit {
+        margin: 12px 0 0;
+        font-size: 0.72rem;
+        color: var(--color-muted);
       }
       .none {
         margin: 14px 0 0;
@@ -229,6 +260,22 @@ export class MissionCard extends LitElement {
             </p>`
       }
       ${
+        card.model
+          ? html`<button
+              type="button"
+              class="close-up"
+              aria-pressed=${card.closeUp}
+              @click=${() => this.#closeUp(!card.closeUp)}
+            >
+              ${
+                card.closeUp
+                  ? msg('Volver a su vecindario', { id: 'card-close-up-out' })
+                  : msg('Ver la nave de cerca', { id: 'card-close-up' })
+              }
+            </button>`
+          : nothing
+      }
+      ${
         around.last || around.next
           ? html`<ul class="milestones">
               ${this.#milestone(msg('Último hito', { id: 'card-last' }), around.last)}
@@ -263,6 +310,7 @@ export class MissionCard extends LitElement {
                       </li>`,
                   )}
                 </ul>
+                ${card.model ? html`<p class="credit">${this.#credit(card.model)}</p>` : nothing}
               </div>`
           : nothing
       }
@@ -290,6 +338,30 @@ export class MissionCard extends LitElement {
       <span>${title} · ${formatLooseDate(milestone.date, currentLocale())}</span>
       ${localized(milestone)}
     </li>`;
+  }
+
+  /** Who made the model, and its licence; or that we made it, simplified. */
+  #credit(model: ModelEntry) {
+    if (model.ours) {
+      return msg('Modelo 3D simplificado, hecho para Apsis.', { id: 'card-model-ours' });
+    }
+    const licence =
+      model.licence === 'Public domain'
+        ? msg('dominio público', { id: 'licence-public-domain' })
+        : model.licence;
+    return html`${msg('Modelo 3D:', { id: 'card-model' })}
+    ${
+      model.source
+        ? html`<a href=${model.source} target="_blank" rel="noopener">${model.credit}</a>`
+        : model.credit
+    }
+    · ${licence}`;
+  }
+
+  #closeUp(on: boolean) {
+    this.dispatchEvent(
+      new CustomEvent<boolean>('close-up', { detail: on, bubbles: true, composed: true }),
+    );
   }
 
   #close() {

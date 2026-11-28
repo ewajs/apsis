@@ -115,15 +115,15 @@ The interface first (ADR 0012, direction A chosen 2026-11-23), then picking a mi
 The owner's priority: models and AR first, and they should look stunning (up to about
 5 MB each; data is where we save, not models).
 
-- [ ] **5.1 Model survey.** For each mission: the best free model, its exact licence and
+- [x] **5.1 Model survey.** For each mission: the best free model, its exact licence and
       credit (NASA 3D Resources are mostly public domain; ESA's terms vary), or "build
-      our own" with reference dimensions. Recorded in `docs/models.md`.
-- [ ] **5.2 The model pipeline.** `npm run models`: fetch each source, convert to GLB,
+      our own" with reference dimensions. Recorded in ADR 0013 and the models guide.
+- [x] **5.2 The model pipeline.** `npm run models`: fetch each source, convert to GLB,
       scale to metres, orient to a common frame, compress; committed outputs with a
       credits file. ADR 0013.
-- [ ] **5.3 Models in 3D.** Focus a spacecraft and zoom in: the marker hands over to the
+- [x] **5.3 Models in 3D.** Focus a spacecraft and zoom in: the marker hands over to the
       model once it's big enough on screen; lit by the Sun, its shadow side dark.
-- [ ] **5.4 Attitude.** A sensible default pose per spacecraft (Horizons has none):
+- [x] **5.4 Attitude.** A sensible default pose per spacecraft (Horizons has none):
       the high-gain antenna to Earth, or the arrays to the Sun, as each one flies.
 - [ ] **5.5 Our own models.** Where nothing free exists: a simplified model built in
       code (bus, arrays, dish, booms), labelled as ours on the card.

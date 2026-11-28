@@ -5,6 +5,7 @@
  */
 import type { Mission } from '../core/catalogue.ts';
 import { chunkPath, DATA_FORMAT, type Chunk, type DataIndex } from '../core/ephemeris.ts';
+import { parseModelIndex, type ModelEntry } from '../core/models.ts';
 import { assertOrbitFile, type OrbitFile } from '../core/orbit-file.ts';
 
 /** What's known before any positions load. */
@@ -91,5 +92,19 @@ export class ChunkStore {
     );
     await Promise.all(loads);
     return loads.length > 0;
+  }
+}
+
+/**
+ * The spacecraft models there are (`npm run models`, ADR 0013), from the models folder
+ * `base`. Without the index (or if it fails to load), none: every spacecraft stays a
+ * marker.
+ */
+export async function loadModels(base: string): Promise<ModelEntry[]> {
+  try {
+    return parseModelIndex(await getJson<unknown>(`${base}index.json`)).models;
+  } catch (error) {
+    console.error(error);
+    return [];
   }
 }

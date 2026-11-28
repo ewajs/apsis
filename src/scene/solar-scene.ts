@@ -10,22 +10,38 @@
  */
 import * as THREE from 'three/webgpu';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { defaultAttitude } from '../core/attitude.ts';
 import { position, type BodyKind, type Chunk } from '../core/ephemeris.ts';
+import type { ModelEntry } from '../core/models.ts';
 import { galacticAxes, toScene } from '../core/frames.ts';
 import { stateFromChunks } from '../core/interpolate.ts';
-import { add, length, radians, scale, subtract, type Vector3 } from '../core/math.ts';
+import {
+  add,
+  cross,
+  length,
+  normalize,
+  radians,
+  scale,
+  subtract,
+  type Vector3,
+} from '../core/math.ts';
 import { pickAt } from '../core/pick.ts';
 import { orbitPathThrough, type OrbitalElements } from '../core/orbits.ts';
 import { bodyAxes, type RotationModel } from '../core/rotation.ts';
 import { TRAIL_DAYS, trailPoints } from '../core/trails.ts';
 import { KM_PER_AU } from '../core/units.ts';
 import {
+  apparentPx,
   CRAFT_MIN_DIAMETER_PX,
   displayRadius,
+  modelShows,
+  nearPlaneKm,
   MIN_DIAMETER_PX,
   SUN_MIN_DIAMETER_PX,
   unitsPerPixel,
 } from './apparent-size.ts';
+import { CraftModels } from './craft-models.ts';
 import { LabelLayer, type ScreenBody } from './label-layer.ts';
 import { sphereBasis } from './sphere-basis.ts';
 
@@ -63,6 +79,8 @@ export type SceneOptions = {
   sky?: string;
   /** Called with a body's id when it's tapped or clicked. */
   onPick?: (id: string) => void;
+  /** The spacecraft models: their folder (a URL ending in `/`) and what's there. */
+  models?: { base: string; entries: readonly ModelEntry[] };
 };
 
 /** Vertical field of view, in degrees. */
@@ -84,10 +102,25 @@ const FOCUS_DISTANCE_RADII = 12;
  */
 const CRAFT_FOCUS_SUN_DISTANCES = 1.5;
 const CRAFT_FOCUS_MIN_KM = 0.05 * KM_PER_AU;
-/** How close the camera may come to a spacecraft's marker. */
+/** How close the camera may come to a spacecraft without a model: just a marker. */
 const CRAFT_MIN_DISTANCE_KM = 1_000;
-/** How long the camera takes to fly to a new focus; none with reduced motion. */
-const FLIGHT_MS = 1_200;
+/** With a model, as close as this many times its length, from its centre. */
+const MODEL_MIN_DISTANCE_LENGTHS = 0.8;
+/**
+ * How long a flight takes, from its shortest to its longest; none with reduced motion.
+ * In between it grows with the orders of magnitude it crosses: a hop between planets is
+ * quick, a dive from the solar system to a spacecraft's antenna takes its time.
+ */
+const FLIGHT_MS = { min: 900, perDecade: 220, max: 3_200 };
+/** A close-up frames a spacecraft from this many times its length. */
+const CLOSE_UP_LENGTHS = 2.2;
+/**
+ * A close-up looks at the spacecraft's sunlit side, this far round from the Sun's
+ * direction (0° would be the Sun behind the camera, flat light) and this high above
+ * the ecliptic.
+ */
+const CLOSE_UP_PHASE_DEG = 55;
+const CLOSE_UP_ELEVATION_DEG = 18;
 /** A press that moves less than this, in px, is a tap, not a turn of the camera. */
 const TAP_SLOP_PX = 8;
 /** Points per orbit line. */
@@ -100,8 +133,17 @@ const SKY_DISTANCE_KM = 500 * KM_PER_AU;
 /** How bright the sky is drawn, 0 to 1: dim, so names and orbits stay readable. */
 const SKY_BRIGHTNESS = 0.35;
 
-/** A body on screen: its sphere, and its orbit (planets) or trail (spacecraft). */
-type Drawn = { body: SceneBody; mesh: THREE.Mesh; orbit?: THREE.Line; trail?: THREE.Line };
+/**
+ * A body on screen: its sphere, and its orbit (planets) or trail (spacecraft); for a
+ * spacecraft close enough, its model instead of the sphere.
+ */
+type Drawn = {
+  body: SceneBody;
+  mesh: THREE.Mesh;
+  orbit?: THREE.Line;
+  trail?: THREE.Line;
+  modelShown?: boolean;
+};
 
 /** Each kind's smallest size on screen. */
 const MINIMUM_PX: Record<BodyKind | 'sun', number> = {
@@ -133,11 +175,26 @@ export class SolarScene {
   #selected: string | null = null;
   /** The origin used last frame: the focus's position, or a point on the way to it. */
   #origin: Vector3 = [0, 0, 0];
-  /** A flight to a new focus under way: where it started, and when. */
-  #flight: { from: Vector3; direction: THREE.Vector3; distance: number; at: number } | undefined;
+  /**
+   * A flight under way: where it started and when; where it ends and how long it takes
+   * are worked out on its first frame, once the target's position is known.
+   */
+  #flight:
+    | {
+        from: Vector3;
+        direction: THREE.Vector3;
+        distance: number;
+        at: number;
+        still: boolean;
+        to?: { direction: THREE.Vector3; distance: number; ms: number };
+      }
+    | undefined;
+  /** Whether the camera is (or is flying) close up to the focused spacecraft's model. */
+  #closeUp = false;
   /** Where each body was on screen last frame, for taps. */
   #onScreen: ScreenBody[] = [];
   #press: { id: number; x: number; y: number } | undefined;
+  #models: CraftModels | undefined;
   #trueScale = false;
   #orbitColor: THREE.Color;
   #craftColor: THREE.Color;
@@ -174,6 +231,16 @@ export class SolarScene {
     canvas.dataset.backend = this.backend;
     options.container.append(canvas);
     this.#labels = new LabelLayer(options.container);
+    if (options.models) {
+      // A soft studio surround for the models to reflect (see craft-models.ts), made
+      // when the first model arrives: most visits never come that close.
+      this.#models = new CraftModels(
+        options.models.base,
+        options.models.entries,
+        () => new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture,
+        () => this.refresh(),
+      );
+    }
 
     this.#scene.add(new THREE.AmbientLight(0xffffff, AMBIENT_INTENSITY), this.#sunLight);
     if (options.sky) this.#sky = this.#skyFor(options.sky);
@@ -260,17 +327,35 @@ export class SolarScene {
     this.#labels.emphasise(id);
     const focus = id ?? 'sun';
     const target = this.#drawn.find((drawn) => drawn.body.id === focus);
-    if (!target || focus === this.#focus) return;
+    if (!target || (focus === this.#focus && !this.#closeUp)) return;
     this.#focus = focus;
-    const still = !fly || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.#closeUp = false;
+    this.#startFlight(fly);
+  }
+
+  /** Whether a spacecraft has a model to see close up. */
+  hasModel(id: string): boolean {
+    return this.#models?.lengthKm(id) !== undefined;
+  }
+
+  /**
+   * Flies to the focused spacecraft's model, on its sunlit side, or back out to its
+   * neighbourhood. A dive across ten orders of magnitude, so it takes its time.
+   */
+  closeUp(on: boolean): void {
+    if (on === this.#closeUp || !this.hasModel(this.#focus)) return;
+    this.#closeUp = on;
+    this.#startFlight(true);
+  }
+
+  #startFlight(fly: boolean): void {
     this.#flight = {
       from: this.#origin,
       direction: this.#camera.position.clone().normalize(),
       distance: this.#camera.position.length(),
-      at: still ? -Infinity : performance.now(),
+      at: performance.now(),
+      still: !fly || matchMedia('(prefers-reduced-motion: reduce)').matches,
     };
-    const radius = target.body.radiusKm;
-    this.#controls.minDistance = radius > 0 ? radius * 1.5 : CRAFT_MIN_DISTANCE_KM;
   }
 
   /**
@@ -422,8 +507,16 @@ export class SolarScene {
     const redrawLines = linesKey !== this.#linesDrawnFor;
     this.#linesDrawnFor = linesKey;
 
+    this.#controls.minDistance = this.#closest();
     this.#controls.update();
-    for (const { body, mesh, orbit, trail } of this.#drawn) {
+    // Close to a spacecraft the near plane must be millimetres; far out, 1 km.
+    const near = nearPlaneKm(this.#camera.position.length());
+    if (near !== this.#camera.near) {
+      this.#camera.near = near;
+      this.#camera.updateProjectionMatrix();
+    }
+    for (const drawn of this.#drawn) {
+      const { body, mesh, orbit, trail } = drawn;
       const at = states.get(body.id);
       mesh.visible = at !== undefined;
       if (trail) trail.visible = at !== undefined;
@@ -436,6 +529,7 @@ export class SolarScene {
       mesh.scale.setScalar(
         displayRadius(body.radiusKm, distance, FOV_DEG, this.#height, minimum, trueScale),
       );
+      if (body.kind === 'spacecraft') this.#showModel(drawn, distance, at, states.get('earth'));
       if (redrawLines && body.rotation) this.#turn(mesh, body.rotation);
       if (redrawLines && orbit && body.orbit) this.#placeOrbit(orbit, body.orbit, at, origin);
       if (redrawLines && trail) this.#placeTrail(trail, body.chunks, origin);
@@ -457,11 +551,30 @@ export class SolarScene {
   #fly(focusAt: Vector3): Vector3 {
     const flight = this.#flight;
     if (!flight) return focusAt;
+    flight.to ??= this.#flightEnd(focusAt, flight.distance);
+    const { to } = flight;
+    const t = flight.still ? 1 : Math.min(1, (performance.now() - flight.at) / to.ms);
+    const eased = t * t * (3 - 2 * t);
+    const along = flight.direction.clone().lerp(to.direction, eased).normalize();
+    this.#camera.position.copy(
+      along.multiplyScalar(flight.distance * (to.distance / flight.distance) ** eased),
+    );
+    if (t === 1) this.#flight = undefined;
+    return add(flight.from, scale(subtract(focusAt, flight.from), eased));
+  }
+
+  /** Where a flight to the focus (at `focusAt`) ends, and how long it takes from `from` km. */
+  #flightEnd(focusAt: Vector3, from: number) {
     const target = this.#drawn.find((drawn) => drawn.body.id === this.#focus)!.body;
-    let direction = flight.direction;
+    let direction = this.#camera.position.clone().normalize();
     let distance = target.radiusKm * FOCUS_DISTANCE_RADII;
+    const lengthKm = this.#models?.lengthKm(target.id);
     if (this.#focus === 'sun') distance = START_DISTANCE_KM;
-    else if (target.kind === 'spacecraft') {
+    else if (this.#closeUp && lengthKm) {
+      // The sunlit side, three-quarters on.
+      distance = lengthKm * CLOSE_UP_LENGTHS;
+      direction = new THREE.Vector3(...toScene(sunlitSide(focusAt)));
+    } else if (target.kind === 'spacecraft') {
       distance = Math.max(CRAFT_FOCUS_MIN_KM, length(focusAt) * CRAFT_FOCUS_SUN_DISTANCES);
       // Outward from the Sun, tilted up from the ecliptic.
       const outward = Math.hypot(focusAt[0], focusAt[1]) || 1;
@@ -473,14 +586,50 @@ export class SolarScene {
       ];
       direction = new THREE.Vector3(...toScene(ecliptic));
     }
-    const t = Math.min(1, (performance.now() - flight.at) / FLIGHT_MS);
-    const eased = t * t * (3 - 2 * t);
-    const along = flight.direction.clone().lerp(direction, eased).normalize();
-    this.#camera.position.copy(
-      along.multiplyScalar(flight.distance * (distance / flight.distance) ** eased),
-    );
-    if (t === 1) this.#flight = undefined;
-    return add(flight.from, scale(subtract(focusAt, flight.from), eased));
+    const decades = Math.abs(Math.log10(distance / from));
+    const ms = Math.min(FLIGHT_MS.max, FLIGHT_MS.min + FLIGHT_MS.perDecade * decades);
+    return { direction, distance, ms };
+  }
+
+  /** How close the camera may come to the focus: outside a planet, or a model's length. */
+  #closest(): number {
+    const focus = this.#drawn.find((drawn) => drawn.body.id === this.#focus)?.body;
+    if (!focus) return CRAFT_MIN_DISTANCE_KM;
+    if (focus.radiusKm > 0) return focus.radiusKm * 1.5;
+    const lengthKm = this.#models?.lengthKm(focus.id);
+    return lengthKm ? lengthKm * MODEL_MIN_DISTANCE_LENGTHS : CRAFT_MIN_DISTANCE_KM;
+  }
+
+  /**
+   * Swaps a spacecraft's marker for its model once the model, at true size, is bigger
+   * on screen than the marker (ADR 0005). Loading starts a little earlier, when it's
+   * about a pixel across, or as soon as it's the focus.
+   */
+  #showModel(drawn: Drawn, distance: number, at: Vector3, earth: Vector3 | undefined): void {
+    const { id } = drawn.body;
+    const lengthKm = this.#models?.lengthKm(id);
+    if (!lengthKm || !this.#models) return;
+    const wanted = this.#focus === id || apparentPx(lengthKm, distance, FOV_DEG, this.#height) >= 1;
+    const model = wanted ? this.#models.get(id) : undefined;
+    const shows =
+      model !== undefined &&
+      drawn.mesh.visible &&
+      modelShows(lengthKm, distance, FOV_DEG, this.#height);
+    if (model) {
+      if (!model.parent) this.#scene.add(model);
+      model.visible = shows;
+      model.position.copy(drawn.mesh.position);
+      // Antenna to Earth, the Sun across the arrays (core/attitude.ts).
+      if (shows && earth) {
+        const { x, y, z } = defaultAttitude(at, earth);
+        const axis = (v: Vector3) => new THREE.Vector3(...toScene(v));
+        model.quaternion.setFromRotationMatrix(
+          new THREE.Matrix4().makeBasis(axis(x), axis(y), axis(z)),
+        );
+      }
+    }
+    drawn.modelShown = shows;
+    if (shows) drawn.mesh.visible = false;
   }
 
   /** A press that didn't move picks the body under it, if any. */
@@ -501,21 +650,35 @@ export class SolarScene {
     const rank = (body: SceneBody) =>
       body.id === this.#selected ? 2 : body.kind === 'spacecraft' ? 1 : 0;
     const order = [...this.#drawn].sort((a, b) => rank(b.body) - rank(a.body));
-    for (const { body, mesh } of order) {
-      if (!mesh.visible) continue;
+    for (const { body, mesh, modelShown } of order) {
+      if (!mesh.visible && !modelShown) continue;
       point.copy(mesh.position).project(this.#camera);
       // Outside -1…1 in depth means behind the camera or past the far plane.
       if (point.z < -1 || point.z > 1) continue;
       const distance = this.#camera.position.distanceTo(mesh.position);
+      const lengthKm = modelShown ? this.#models?.lengthKm(body.id) : undefined;
       onScreen.push({
         id: body.id,
         x: ((point.x + 1) / 2) * this.#width,
         y: ((1 - point.y) / 2) * this.#height,
-        radius: mesh.scale.x / unitsPerPixel(distance, FOV_DEG, this.#height),
+        radius: lengthKm
+          ? apparentPx(lengthKm, distance, FOV_DEG, this.#height) / 2
+          : mesh.scale.x / unitsPerPixel(distance, FOV_DEG, this.#height),
       });
     }
     this.#onScreen = onScreen;
-    this.#labels.place(onScreen, this.#width, this.#height);
+    // Close up, the card names the spacecraft; a label beside a model that fills the
+    // screen would float far off. It can still be tapped.
+    const close = this.#drawn.find((drawn) => drawn.body.id === this.#focus)?.modelShown;
+    this.#labels.place(
+      close ? onScreen.filter(({ id }) => id !== this.#focus) : onScreen,
+      this.#width,
+      this.#height,
+    );
+    // For tests and tools: which spacecraft's model fills the view, if any.
+    const canvas = this.#renderer.domElement;
+    if (close) canvas.dataset.model = this.#focus;
+    else delete canvas.dataset.model;
   }
 
   /**
@@ -585,4 +748,17 @@ export class SolarScene {
     this.#camera.aspect = width / height;
     this.#camera.updateProjectionMatrix();
   }
+}
+
+/**
+ * Where to look at a spacecraft at `at` from for a close-up, as a unit vector from it:
+ * `CLOSE_UP_PHASE_DEG` round from the Sun's direction, within the ecliptic, then up.
+ */
+function sunlitSide(at: Vector3): Vector3 {
+  const toSun = normalize(scale(at, -1));
+  const across = normalize(cross([0, 0, 1], toSun));
+  const phase = radians(CLOSE_UP_PHASE_DEG);
+  const flat = normalize(add(scale(toSun, Math.cos(phase)), scale(across, Math.sin(phase))));
+  const up = radians(CLOSE_UP_ELEVATION_DEG);
+  return normalize(add(scale(flat, Math.cos(up)), [0, 0, Math.sin(up)]));
 }

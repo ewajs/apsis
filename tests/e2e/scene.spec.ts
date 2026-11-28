@@ -178,6 +178,34 @@ test('zooms from the tool column', async ({ page }, testInfo) => {
   ).toHaveCount(0);
 });
 
+test('dives to a spacecraft’s model, and back out', async ({ page }, testInfo) => {
+  await page.goto(sceneAddress(testInfo.project.name, '&focus=psyche'));
+  const canvas = page.locator('canvas[data-backend]');
+  await expect(canvas).toBeVisible({ timeout: 20_000 });
+  const card = page.locator('mission-card');
+  await expect(card).toContainText(/Simplified 3D model, made for Apsis|Modelo 3D simplificado/);
+  await card.getByRole('button', { name: /See it up close|Ver la nave de cerca/ }).click();
+  await expect(canvas).toHaveAttribute('data-model', 'psyche', { timeout: 15_000 });
+  // Close up, the card names it; its label steps aside.
+  await expect(page.locator('[data-label="psyche"]')).toHaveCSS('visibility', 'hidden');
+  await card
+    .getByRole('button', { name: /Back to its neighbourhood|Volver a su vecindario/ })
+    .click();
+  await expect(canvas).not.toHaveAttribute('data-model', /.+/, { timeout: 15_000 });
+});
+
+test('opens 3D for a close-up asked for on the map', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'webgpu', 'The map is the same on every backend');
+  await page.goto('./?t=2026-11-23T12:00Z&focus=psyche&backend=webgl2');
+  await page
+    .locator('mission-card')
+    .getByRole('button', { name: /See it up close|Ver la nave de cerca/ })
+    .click();
+  await expect(page.locator('canvas[data-backend]')).toHaveAttribute('data-model', 'psyche', {
+    timeout: 20_000,
+  });
+});
+
 test('draws the Milky Way behind everything', async ({ page }, testInfo) => {
   await page.goto(sceneAddress(testInfo.project.name));
   await expect(page.locator('canvas[data-backend]')).toBeVisible({ timeout: 20_000 });

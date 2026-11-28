@@ -1,0 +1,13 @@
+# Spacecraft models (ADR 0013): `npm run models` builds public/models/ from this list.
+#
+# - A model from elsewhere needs a direct `url` to a GLB or glTF, its `page`, the exact
+#   `credit` and `licence`, and `rotate` (degrees about x, y, z) if it isn't already in
+#   the body frame: +Z along the high-gain antenna, +Y along the solar arrays.
+# - `own: true` builds ours from scripts/models/own/<id>.ts; the card says so.
+# - `lengthM` is the real largest dimension; the model is scaled to it.
+
+- id: psyche
+  own: true
+  lengthM: 24.8
+  credit: Apsis
+  licence: MIT
