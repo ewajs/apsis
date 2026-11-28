@@ -6,6 +6,7 @@ import { stateFromChunks } from '../core/interpolate.ts';
 import { trailPoints } from '../core/trails.ts';
 import { orbitPath, orbitPathThrough, type OrbitalElements } from '../core/orbits.ts';
 import { KM_PER_AU } from '../core/units.ts';
+import type { Vector3 } from '../core/math.ts';
 import { bodyName } from '../i18n/bodies.ts';
 import { currentLocale } from '../i18n/localization.ts';
 import { placeLabels, type LabelRequest } from '../core/labels.ts';
@@ -31,6 +32,10 @@ export type MapBody = {
   chunks: ReadonlyMap<number, Chunk>;
   /** The years it has data for: outside them (before launch, after the end) it's simply absent. */
   years: readonly number[];
+  /** Where it is at an instant, if not from `chunks` (a small body's track, ADR 0015). */
+  place?: ((t: number) => Vector3 | null) | undefined;
+  /** Its orbit at an instant, if it changes (a small body's, from its track). */
+  orbitAt?: ((t: number) => OrbitalElements | null) | undefined;
   /** The orbit to draw, for planets (ADR 0010). */
   orbit?: OrbitalElements | undefined;
 };
@@ -43,6 +48,7 @@ const MARGIN = 22;
 const SUN_RADIUS = 7;
 const PLANET_RADIUS = 4.5;
 const CRAFT_RADIUS = 3.5;
+const SMALL_RADIUS = 3;
 /** Label text: 12 px system font, so about 6.6 px per character (for placement only). */
 const LABEL_HEIGHT = 14;
 const LABEL_CHAR_WIDTH = 6.6;
@@ -237,6 +243,16 @@ export class SolarMap extends LitElement {
     .planet {
       fill: var(--color-text);
     }
+    .small {
+      fill: var(--color-muted);
+    }
+    /* Small bodies' orbits, fainter than the planets'. */
+    .orbit.faint {
+      stroke-opacity: 0.22;
+    }
+    .label.small {
+      fill: var(--color-muted);
+    }
     .spacecraft {
       fill: var(--color-craft);
     }
@@ -314,15 +330,27 @@ export class SolarMap extends LitElement {
     const markers = shown.map(({ body, now }) => ({
       body,
       ...toPx(now[1], now[2]),
-      radius: body.kind === 'planet' ? PLANET_RADIUS : CRAFT_RADIUS,
+      radius:
+        body.kind === 'planet'
+          ? PLANET_RADIUS
+          : body.kind === 'small'
+            ? SMALL_RADIUS
+            : CRAFT_RADIUS,
     }));
     this.#marks = [
       { id: 'sun', ...sun, radius: SUN_RADIUS },
       ...markers.map(({ body, x, y, radius }) => ({ id: body.id, x, y, radius })),
     ];
     // The selection's label first, then the spacecraft's: they're what the app is about.
+    // Small bodies last: they're where missions went, not where they are.
     const rank = (body: MapBody) =>
-      body.id === this.selected ? 2 : body.kind === 'spacecraft' ? 1 : 0;
+      body.id === this.selected
+        ? 3
+        : body.kind === 'spacecraft'
+          ? 2
+          : body.kind === 'small'
+            ? 0
+            : 1;
     const requests: LabelRequest[] = [...markers]
       .sort((a, b) => rank(b.body) - rank(a.body))
       .map(({ body, x, y, radius }) => ({
@@ -386,13 +414,14 @@ export class SolarMap extends LitElement {
             svg`<circle class="ring" cx=${sun.x} cy=${sun.y} r=${r * scaled}></circle>
               <text class="ring-label" x=${sun.x + 3} y=${y}>${text}</text>`,
         )}
-        ${this.bodies.map((body) =>
-          body.orbit
-            ? svg`<polyline class="orbit" data-orbit=${body.id}
-                points=${this.#orbit(body.orbit, toPx, shown.find((s) => s.body === body)?.now)}>
+        ${this.bodies.map((body) => {
+          const orbit = body.orbit ?? body.orbitAt?.(this.time);
+          return orbit
+            ? svg`<polyline class="orbit ${body.kind === 'small' ? 'faint' : ''}" data-orbit=${body.id}
+                points=${this.#orbit(orbit, toPx, shown.find((s) => s.body === body)?.now)}>
               </polyline>`
-            : nothing,
-        )}
+            : nothing;
+        })}
         ${markers
           .filter(({ body }) => body.kind === 'spacecraft')
           .map(
@@ -458,7 +487,13 @@ export class SolarMap extends LitElement {
   /** The bodies with a position now, and the linear map's edge: just past the farthest. */
   #positions() {
     const shown = this.bodies.flatMap((body) => {
-      const now = stateFromChunks(body.chunks, this.time);
+      // A tracked body has only positions; the map needs no velocity.
+      const at = body.place?.(this.time);
+      const now: Sample | null = body.place
+        ? at
+          ? [this.time, at[0], at[1], at[2], 0, 0, 0]
+          : null
+        : stateFromChunks(body.chunks, this.time);
       return now ? [{ body, now }] : [];
     });
     const edgeAu =
@@ -559,7 +594,7 @@ export class SolarMap extends LitElement {
   }
 
   #label(body: MapBody): string {
-    return body.kind === 'planet' ? bodyName(body.id) : body.name;
+    return body.kind === 'spacecraft' ? body.name : bodyName(body.id);
   }
 
   /** A spacecraft's trail (`trailPoints`), projected like everything else. */

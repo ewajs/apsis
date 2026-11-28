@@ -24,7 +24,7 @@ import {
   type YearEntry,
 } from '../../src/core/ephemeris.ts';
 import { ARCHIVE_DIR, archivedYears } from './archive-files.ts';
-import { allBodies, PLANETS } from './bodies.ts';
+import { allBodies, PLANETS, TRACK_ONLY } from './bodies.ts';
 import { readCatalogue } from './catalogue.ts';
 import { fetchTrack, fetchWithEncounters } from './horizons-client.ts';
 
@@ -81,9 +81,10 @@ try {
         from = `${Number(from.slice(0, 4)) + 1}-01-01`;
       return from;
     };
-    // A moon has no heliocentric states, only its track around its planet.
-    const samples =
-      body.kind === 'moon' ? [] : await fetchWithEncounters(body, liveFrom(archived), stop, STEP);
+    // Moons and small bodies have no heliocentric states, only their track.
+    const samples = TRACK_ONLY.includes(body.kind)
+      ? []
+      : await fetchWithEncounters(body, liveFrom(archived), stop, STEP);
     const live = chunkByYear(samples, body).filter((chunk) => !archived.includes(chunk.year));
     console.log(
       `  ${body.id.padEnd(20)} archive ${archived.length} year(s), live ${live.length} chunk(s), ${samples.length} samples`,

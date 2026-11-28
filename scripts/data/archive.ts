@@ -14,7 +14,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { chunkByYear, trackByYear } from '../../src/core/ephemeris.ts';
 import { ARCHIVE_DIR } from './archive-files.ts';
-import { allBodies } from './bodies.ts';
+import { allBodies, TRACK_ONLY } from './bodies.ts';
 import { readCatalogue } from './catalogue.ts';
 import { fetchTrack, fetchWithEncounters } from './horizons-client.ts';
 
@@ -49,9 +49,9 @@ try {
   for (const body of bodies) {
     for (let year = first; year <= last; year++) {
       const span = [`${year}-01-01`, `${year + 1}-01-01`] as const;
-      // A moon has no heliocentric states, only its track around its planet.
+      // Moons and small bodies have no heliocentric states, only their track.
       const file = new URL(`${body.id}/${year}.json`, ARCHIVE_DIR);
-      if (body.kind !== 'moon' && (!existsSync(file) || values.force)) {
+      if (!TRACK_ONLY.includes(body.kind) && (!existsSync(file) || values.force)) {
         const samples = await fetchWithEncounters(body, ...span, STEP);
         const chunk = chunkByYear(samples, body).find((c) => c.year === year);
         if (chunk && chunk.samples.length >= 2) {

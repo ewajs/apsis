@@ -3,7 +3,7 @@ import { customElement, property, query, state } from 'lit/decorators.js';
 import { live } from 'lit/directives/live.js';
 import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import type { Mission } from '../core/catalogue.ts';
-import { bodyName } from '../i18n/bodies.ts';
+import { bodyName, bodyType } from '../i18n/bodies.ts';
 import { localized } from '../i18n/localization.ts';
 import { glass } from './glass.ts';
 import { icons } from './icons.ts';
@@ -14,7 +14,7 @@ export type PickerEntry = {
   id: string;
   name: string;
   /** Which part of the list it's in. */
-  group: 'active' | 'ended' | 'planets';
+  group: 'active' | 'ended' | 'planets' | 'small';
   /** A second line: the agency and the target; for an ended mission, its years. */
   detail: string;
 };
@@ -24,11 +24,13 @@ export type PickerEntry = {
  * each in catalogue order, then the Sun and the planets.
  * @param planets The planets' ids, from the Sun outwards.
  * @param moons The moons and the planet each circles; listed after their planet.
+ * @param small Dwarf planets, asteroids and comets, in a group of their own.
  */
 export function pickerEntries(
   missions: readonly Mission[],
   planets: readonly string[],
   moons: readonly { id: string; parent: string }[] = [],
+  small: readonly string[] = [],
 ) {
   const entries: PickerEntry[] = missions.map((mission) => {
     const detail = `${mission.agency} · ${localized(mission.target)}`;
@@ -54,6 +56,8 @@ export function pickerEntries(
       });
     }
   }
+  for (const id of small)
+    entries.push({ id, name: bodyName(id), group: 'small', detail: bodyType(id) });
   return entries;
 }
 
@@ -223,6 +227,10 @@ export class BodyPicker extends LitElement {
       { key: 'active', title: msg('Misiones en curso', { id: 'picker-active' }) },
       { key: 'ended', title: msg('Misiones terminadas', { id: 'picker-ended' }) },
       { key: 'planets', title: msg('El Sol, los planetas y sus lunas', { id: 'picker-planets' }) },
+      {
+        key: 'small',
+        title: msg('Planetas enanos, asteroides y cometas', { id: 'picker-small' }),
+      },
     ] as const;
     const clear = msg('Quitar la selección', { id: 'picker-clear' });
     return html`

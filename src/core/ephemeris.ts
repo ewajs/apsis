@@ -43,7 +43,7 @@ export type Chunk = {
 };
 
 /** What kind of body a data entry is. */
-export type BodyKind = 'planet' | 'spacecraft' | 'moon';
+export type BodyKind = 'planet' | 'spacecraft' | 'moon' | 'small';
 
 /**
  * One body's orbital elements around a parent for one calendar year, plus the first

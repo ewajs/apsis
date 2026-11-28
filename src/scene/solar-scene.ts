@@ -37,6 +37,7 @@ import {
   CRAFT_MIN_DIAMETER_PX,
   displayRadius,
   MOON_MIN_DIAMETER_PX,
+  SMALL_MIN_DIAMETER_PX,
   modelShows,
   nearPlaneKm,
   MIN_DIAMETER_PX,
@@ -69,8 +70,13 @@ export type SceneBody = {
   place?: ((t: number) => Vector3 | null) | undefined;
   /** For a moon: the planet it circles; it faces it, and hides when too close to it. */
   parent?: string | undefined;
-  /** For a moon: its ellipse around its parent at an instant, to draw. */
+  /**
+   * Its ellipse at an instant, to draw: around its `parent` for a moon, around the Sun
+   * for a small body (from its track, ADR 0015).
+   */
   localOrbit?: ((t: number) => OrbitalElements | null) | undefined;
+  /** A colour for a body without a texture map (a comet, a small asteroid). */
+  color?: string | undefined;
 };
 
 /** Which GPU interface draws the scene. */
@@ -162,6 +168,7 @@ const MINIMUM_PX: Record<BodyKind | 'sun', number> = {
   planet: MIN_DIAMETER_PX,
   spacecraft: CRAFT_MIN_DIAMETER_PX,
   moon: MOON_MIN_DIAMETER_PX,
+  small: SMALL_MIN_DIAMETER_PX,
 };
 /**
  * A moon shows once it's this many px clear of its planet's disc on screen; closer, it
@@ -425,7 +432,11 @@ export class SolarScene {
     const material =
       body.kind === 'spacecraft'
         ? new THREE.MeshBasicMaterial({ color: this.#craftColor })
-        : new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0 });
+        : new THREE.MeshStandardMaterial({
+            roughness: 1,
+            metalness: 0,
+            color: body.color ?? 0xffffff,
+          });
     const mesh = new THREE.Mesh(this.#sphere, material);
     mesh.name = body.id;
     this.#scene.add(mesh);
@@ -562,9 +573,11 @@ export class SolarScene {
       if (redrawLines && orbit && body.orbit) this.#placeOrbit(orbit, body.orbit, at, origin);
       const parent = body.parent ? states.get(body.parent) : undefined;
       if (redrawLines && parent) this.#faceParent(mesh, at, parent);
-      if (redrawLines && orbit && parent && body.localOrbit) {
+      // A moon's ellipse is around its planet; a small body's, around the Sun.
+      const center = body.parent ? parent : sunAt;
+      if (redrawLines && orbit && center && body.localOrbit) {
         const ellipse = body.localOrbit(this.#time);
-        if (ellipse) this.#placeOrbit(orbit, ellipse, at, origin, parent);
+        if (ellipse) this.#placeOrbit(orbit, ellipse, at, origin, center);
       }
       if (redrawLines && trail) this.#placeTrail(trail, body.chunks, origin);
     }

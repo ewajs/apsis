@@ -23,6 +23,31 @@ export function bodyName(id: string): string {
     callisto: () => msg('Calisto', { id: 'moon-callisto' }),
     enceladus: () => msg('Encélado', { id: 'moon-enceladus' }),
     titan: () => msg('Titán', { id: 'moon-titan' }),
+    phobos: () => msg('Fobos', { id: 'moon-phobos' }),
+    deimos: () => msg('Deimos', { id: 'moon-deimos' }),
+    triton: () => msg('Tritón', { id: 'moon-triton' }),
+    charon: () => msg('Caronte', { id: 'moon-charon' }),
+    pluto: () => msg('Plutón', { id: 'small-pluto' }),
+    ceres: () => msg('Ceres', { id: 'small-ceres' }),
+    vesta: () => msg('Vesta', { id: 'small-vesta' }),
+    'psyche-asteroid': () => msg('Psyche (asteroide)', { id: 'small-psyche' }),
+    didymos: () => msg('Dídimo', { id: 'small-didymos' }),
+    'comet-67p': () => msg('67P/Churiumov-Guerasimenko', { id: 'small-67p' }),
+    arrokoth: () => msg('Arrokoth', { id: 'small-arrokoth' }),
   };
   return names[id]?.() ?? id;
+}
+
+/** What a small body is, in the language showing now: a dwarf planet, an asteroid… */
+export function bodyType(id: string): string {
+  const types: Record<string, () => string> = {
+    pluto: () => msg('Planeta enano', { id: 'type-dwarf-planet' }),
+    ceres: () => msg('Planeta enano', { id: 'type-dwarf-planet' }),
+    vesta: () => msg('Asteroide', { id: 'type-asteroid' }),
+    'psyche-asteroid': () => msg('Asteroide metálico', { id: 'type-metal-asteroid' }),
+    didymos: () => msg('Asteroide cercano a la Tierra', { id: 'type-near-earth-asteroid' }),
+    'comet-67p': () => msg('Cometa', { id: 'type-comet' }),
+    arrokoth: () => msg('Objeto del cinturón de Kuiper', { id: 'type-kuiper-belt' }),
+  };
+  return types[id]?.() ?? '';
 }

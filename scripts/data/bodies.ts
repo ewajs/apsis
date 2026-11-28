@@ -20,8 +20,16 @@ export type Body = {
    * Orbital elements around a parent, fetched daily (ADR 0015): the parent's id and its
    * centre as Horizons names it (`500@599`, Jupiter's). A moon has only this.
    */
-  track?: { center: string; centerCode: string };
+  track?: {
+    center: string;
+    centerCode: string;
+    /** The sampling step; daily when absent. Small bodies' slow ellipses take 10 days. */
+    step?: string;
+  };
 };
+
+/** Kinds that have only a track (ADR 0015): no heliocentric states are fetched for them. */
+export const TRACK_ONLY: readonly BodyKind[] = ['moon', 'small'];
 
 /** The planets: their centres, not their system barycentres (docs/guides/data.md). */
 export const PLANETS: readonly Body[] = [
@@ -79,6 +87,47 @@ export const MOONS: readonly Body[] = [
     kind: 'moon',
     track: { center: 'saturn', centerCode: '500@699' },
   },
+  {
+    id: 'phobos',
+    horizonsId: '401',
+    kind: 'moon',
+    track: { center: 'mars', centerCode: '500@499' },
+  },
+  {
+    id: 'deimos',
+    horizonsId: '402',
+    kind: 'moon',
+    track: { center: 'mars', centerCode: '500@499' },
+  },
+  {
+    id: 'triton',
+    horizonsId: '801',
+    kind: 'moon',
+    track: { center: 'neptune', centerCode: '500@899' },
+  },
+  {
+    id: 'charon',
+    horizonsId: '901',
+    kind: 'moon',
+    track: { center: 'pluto', centerCode: '500@999' },
+  },
+];
+
+/** Around the Sun on slow ellipses: elements every 10 days are plenty (ADR 0015). */
+const SUN_TRACK = { center: 'sun', centerCode: '500@10', step: '10d' };
+
+/**
+ * Dwarf planets, asteroids, a comet and a Kuiper belt object: where missions went. 67P has
+ * one orbit solution per apparition; `CAP` picks the closest.
+ */
+export const SMALL_BODIES: readonly Body[] = [
+  { id: 'pluto', horizonsId: '999', kind: 'small', track: SUN_TRACK },
+  { id: 'ceres', horizonsId: '1;', kind: 'small', track: SUN_TRACK },
+  { id: 'vesta', horizonsId: '4;', kind: 'small', track: SUN_TRACK },
+  { id: 'psyche-asteroid', horizonsId: '16;', kind: 'small', track: SUN_TRACK },
+  { id: 'didymos', horizonsId: '65803;', kind: 'small', track: SUN_TRACK },
+  { id: 'comet-67p', horizonsId: 'DES=1000012;CAP;', kind: 'small', track: SUN_TRACK },
+  { id: 'arrokoth', horizonsId: '486958;', kind: 'small', track: SUN_TRACK },
 ];
 
 /**
@@ -88,6 +137,7 @@ export const MOONS: readonly Body[] = [
 export function allBodies(missions: readonly Mission[]): Body[] {
   return [
     ...PLANETS,
+    ...SMALL_BODIES,
     ...MOONS,
     ...missions.flatMap((mission) =>
       mission.horizons === null

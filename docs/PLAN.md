@@ -147,11 +147,16 @@ The owner's priority: models and AR first, and they should look stunning (up to 
 - [x] **7.1 Target-centred views.** A view centred on a planet or small body, with a
       smooth hand-over from the solar system.
 - [x] **7.2 Moons.** The Moon, Io, Europa, Ganymede, Callisto, Titan, Enceladus.
-- [ ] **7.3 Small bodies.** Pluto, Ceres, Vesta, 67P, Arrokoth, Psyche, Didymos; real
-      shapes where a free shape model exists.
+- [x] **7.3 Small bodies.** Pluto, Ceres, Vesta, 67P, Arrokoth, Psyche, Didymos; real
+      shapes where a free shape model exists. Done as spheres; shape models (NASA has
+      several) are for a later step.
 - [ ] **7.4 Orbiters from daily elements.** Osculating elements once a day from
       Horizons, propagated in between (tiny data; disclosed as computed): Juno's
       perijoves, Cassini's Grand Finale, BepiColombo at Mercury, Dawn, Rosetta at 67P.
+      Dawn (Vesta, Ceres) and Rosetta (67P) deferred: Horizons gives no elements around
+      small bodies ("required masses not defined"); they need elements from positions
+      and a body's mass, and Dawn two centres.
+
 - [ ] **7.5 Mars orbiters** (time-boxed): MRO, MAVEN, Mars Express, TGO, Odyssey, and
       others Horizons has.
 - [ ] **7.6 Earth orbit** (time-boxed): the ISS, Hubble and a few more, from CelesTrak
