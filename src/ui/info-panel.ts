@@ -121,6 +121,12 @@ export class InfoPanel extends LitElement {
             id: 'credit-textures',
           })}
         </li>
+        <li>
+          ${msg(
+            'Modelos 3D de las naves: NASA, sin copyright; BepiColombo y Psyche, simplificados, hechos para Apsis. Cada ficha dice de dónde sale el suyo.',
+            { id: 'credit-models' },
+          )}
+        </li>
       </ul>
       <h3>${msg('Código abierto', { id: 'info-code' })}</h3>
       <p>

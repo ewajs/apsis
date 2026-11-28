@@ -83,5 +83,7 @@ export const templates = {
     'Where deep-space missions are, and where they were: on a map or in a 3D solar system, from 1977 to two months ahead.',
   'info-sources': 'Where it all comes from',
   'credit-textures': 'Textures: Solar System Scope, CC BY 4.0, based on NASA data.',
+  'credit-models':
+    'Spacecraft 3D models: NASA, without copyright; BepiColombo and Psyche, simplified, made for Apsis. Each card says where its own comes from.',
   'info-code': 'Open source',
 };
