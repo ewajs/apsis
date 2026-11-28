@@ -37,7 +37,7 @@ The map drops each position's height above the ecliptic and keeps its direction 
 plane: +x points to the vernal equinox, +y is 90° ahead along Earth's orbit, so the
 planets go round anticlockwise. Most bodies sit close to the plane; Voyager 1 is 35°
 above it, so its distance on the map (141 AU in the plane) is shorter than its real one
-(172 AU). The mission card (M4) will show real distances.
+(172 AU). The mission card shows real distances.
 
 ## Two scales
 
@@ -65,8 +65,8 @@ goes through them in order of importance (spacecraft first, then planets) and tr
 eight spots around each marker: right, left, above, below, then the diagonals. The
 first free spot inside the visible area wins; with none free, the label hides.
 Hovering or long-pressing any marker still names it (its SVG `<title>`). On a crowded
-phone screen Mars may lose its label next to Psyche; the picker (M4) will name
-everything.
+phone screen Mars may lose its label next to Psyche; the picker names everything, and
+a selected body's label always shows ([selection.md](selection.md)).
 
 The width of a label is estimated (6.6 px per character at 12 px), not measured:
 measuring text in the DOM on every frame would cost more than an occasional loose fit.

@@ -89,8 +89,8 @@ like the orbits.
 
 Up close the trails show their limits: with one sample a day, Juno's trail around
 Jupiter is a jagged polygon, and Juno itself whips out of a close-up frame. That's the
-interpolation finding of step 1.3; Jupiter-centred data minutes apart comes with the
-local views (M5).
+interpolation finding of step 1.3; the close-ups (M7) fix it with Jupiter-centred orbits
+from daily elements.
 
 ## Labels
 

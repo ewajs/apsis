@@ -72,7 +72,7 @@ What that means:
   to under 2 km.
 - **Orbiters need their own data.** Juno whips around Jupiter in hours at perijove;
   even a 3-hour heliocentric step is 29,000 km off, more than a third of Jupiter's
-  radius. Local views (M5) will fetch Jupiter-centred data at minutes-scale steps.
+  radius. Close-ups (M7) will use Jupiter-centred orbits from daily osculating elements.
 
 ## Finding the right samples
 

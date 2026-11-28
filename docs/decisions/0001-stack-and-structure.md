@@ -32,7 +32,7 @@
   (many asteroids, say). The cost is two backends to test: browser tests force the
   WebGL backend, and each release is checked on a real WebGPU device, as gravitas does
   (its ADR 0006). `WebGLRenderer` was the first choice because three.js's WebXR
-  support is mature there; AR is now a handoff to Scene Viewer and Quick Look (M7),
+  support is mature there; AR is now a handoff to Scene Viewer and Quick Look (M6),
   so that reason no longer holds.
 - **Lit**, as in gravitas and Lux Studio: the owner knows it, components are
   standard elements, and `@lit/localize` switches language without a reload. Svelte
