@@ -40,6 +40,7 @@ import { yearsToLoad } from './core/loading.ts';
 import type { MapBody } from './map/solar-map.ts';
 import type { SolarScene } from './scene/solar-scene.ts';
 import {
+  arOffline,
   arSizeNotes,
   closeLabel,
   scaleNote,
@@ -208,6 +209,30 @@ app.addEventListener('tabletop', () => {
   })().catch((error: unknown) => console.error(error));
 });
 
+/**
+ * On an iPhone, the selected spacecraft's 1 m USDZ, fetched as soon as its card shows so
+ * "En tu casa (RA)" opens at once (ADR 0014): whose it is, and the file as a blob URL
+ * once it has arrived. One spacecraft at a time. The service worker keeps the last few
+ * for offline. (On Android, Scene Viewer fetches files itself: nothing to get ready.)
+ */
+let arReady: { id: string; href?: string } | undefined;
+
+/** Starts fetching a spacecraft's 1 m USDZ, unless it's already the one getting ready. */
+function prepareAr(model: ModelEntry) {
+  if (arViewer !== 'quick-look' || arReady?.id === model.id) return;
+  if (arReady?.href) URL.revokeObjectURL(arReady.href);
+  const ready: { id: string; href?: string } = { id: model.id };
+  arReady = ready;
+  // A failure (offline, and not kept) leaves it unready: a tap says so, or downloads it.
+  void fetch(arUrl(arFile(model.id, 'room', 'usdz')))
+    .then((response) => (response.ok ? response.blob() : null))
+    .then((blob) => {
+      if (!blob || arReady !== ready) return;
+      ready.href = URL.createObjectURL(new Blob([blob], { type: 'model/vnd.usdz+zip' }));
+    })
+    .catch(() => undefined);
+}
+
 /** Scene Viewer's links for a spacecraft's two AR sizes, titled with its name and size. */
 function sceneViewerHrefs(model: ModelEntry, name: string): Record<ArSize, string> {
   const notes = arSizeNotes(model);
@@ -231,8 +256,15 @@ app.addEventListener('ar-view', (event) => {
   const model = models.find((entry) => entry.id === selected);
   if (!model) return;
   const size = (event as CustomEvent<ArSize>).detail;
-  // Straight from the tap: Quick Look downloads the file ready-made (`npm run models`).
-  openInQuickLook(quickLookHref(arUrl(arFile(model.id, size, 'usdz')), size));
+  // Straight from the tap, nothing awaited, so Safari still counts it as the visitor's:
+  // the 1 m file if it has arrived, else the file's address for Quick Look to download.
+  if (size === 'room' && arReady?.id === model.id && arReady.href) {
+    openInQuickLook(arReady.href);
+  } else if (!navigator.onLine) {
+    say(arOffline());
+  } else {
+    openInQuickLook(quickLookHref(arUrl(arFile(model.id, size, 'usdz')), size));
+  }
 });
 let store: ChunkStore | undefined;
 let scene: SolarScene | undefined;
@@ -334,6 +366,7 @@ function showCard() {
   const computed = track !== undefined && trackOffset(track.chunks, tdb) !== null;
   const name = names()[selected] ?? selected;
   const model = models.find((entry) => entry.id === selected);
+  if (model) prepareAr(model);
   const earth = positionAt('earth', tdb, world);
   const earthVelocity = velocityAt('earth', tdb, world);
   app.card = {

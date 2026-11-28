@@ -56,3 +56,7 @@ export function arSizeNotes(model: ModelEntry): Record<ArSize, string> {
     real: msg(str`${long} × ${wide} m, ${tall} m de alto`, { id: 'ar-real-note' }),
   };
 }
+
+/** When an AR file isn't on the phone and there's no connection to fetch it. */
+export const arOffline = (): string =>
+  msg('Sin conexión: este modelo todavía no está guardado en el teléfono.', { id: 'ar-offline' });

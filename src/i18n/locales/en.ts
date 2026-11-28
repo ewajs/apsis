@@ -77,6 +77,7 @@ export const templates = {
   'card-ended': 'Ended',
   'card-close-up': 'See it up close',
   'card-close-up-out': 'Back to its neighbourhood',
+  'ar-offline': 'Offline: this model isn’t saved on this phone yet.',
   'card-ar-real': 'Real size (AR)',
   'ar-room-note': str`${0} m · scale 1:${1}`,
   'ar-real-note': str`${0} × ${1} m, ${2} m tall`,

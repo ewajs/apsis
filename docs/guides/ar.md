@@ -37,7 +37,10 @@ Each model has four AR files (`public/models/ar/`, see [models.md](models.md)), 
 Android's links are built by `sceneViewerUrl`, resizable only at 1 m, titled with the
 name and `arSizeNotes` (`ui/messages.ts`): "Juno · 1 m · escala 1:20". An iPhone's tap
 opens the USDZ through a link with `rel="ar"` around an image (`scene/quick-look.ts`),
-with `#allowsContentScaling=0` for the real size (`quickLookHref`).
+with `#allowsContentScaling=0` for the real size (`quickLookHref`). The 1 m one is
+fetched when the card shows (`prepareAr` in `main.ts`) and opened from a blob once it
+has arrived; the service worker keeps the last six (`apsis-ar`, `vite.config.ts`).
+Offline with nothing kept, the tap shows a notice instead (`arOffline`).
 
 ## The tabletop
 
