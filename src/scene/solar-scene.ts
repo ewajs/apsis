@@ -682,7 +682,9 @@ export class SolarScene {
     const lengthKm = this.#models?.lengthKm(id);
     if (!lengthKm || !this.#models) return;
     const wanted = this.#focus === id || apparentPx(lengthKm, distance, FOV_DEG, this.#height) >= 1;
-    const model = wanted ? this.#models.get(id) : undefined;
+    // A model loaded earlier is still placed, and hidden, when no longer wanted: left
+    // alone, it would stay where it was last drawn, by the next focus.
+    const model = wanted ? this.#models.get(id) : this.#models.loaded(id);
     const shows =
       model !== undefined &&
       drawn.mesh.visible &&
@@ -751,6 +753,11 @@ export class SolarScene {
     const canvas = this.#renderer.domElement;
     if (close) canvas.dataset.model = this.#focus;
     else delete canvas.dataset.model;
+    // And every model drawn this frame, whatever the focus.
+    canvas.dataset.models = this.#scene.children
+      .filter((object) => object.name.startsWith('model:') && object.visible)
+      .map((object) => object.name.slice('model:'.length))
+      .join(' ');
   }
 
   /**

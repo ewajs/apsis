@@ -60,6 +60,12 @@ export class CraftModels {
     return entry ? entry.lengthM * KM_PER_M : undefined;
   }
 
+  /** The model, if it has loaded; asking doesn't start a load. */
+  loaded(id: string): THREE.Object3D | undefined {
+    const slot = this.#slots.get(id);
+    return slot?.state === 'ready' ? slot.object : undefined;
+  }
+
   /**
    * The model, if it has loaded; asking starts the load. The object is in km (scaled from
    * the file's metres), to be placed and turned by the caller.
