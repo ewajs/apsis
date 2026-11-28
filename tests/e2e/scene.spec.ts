@@ -200,6 +200,13 @@ test('dives to a spacecraft’s model, and back out', async ({ page }, testInfo)
   await expect(canvas).toHaveAttribute('data-model', 'psyche', { timeout: 15_000 });
   // Close up, the card names it; its label steps aside.
   await expect(page.locator('[data-label="psyche"]')).toHaveCSS('visibility', 'hidden');
+  // The card folds out of the way, keeping the selection; it opens again on a tap.
+  await expect(card.getByText(/From the Sun|Distancia al Sol/)).toHaveCount(0);
+  await card.getByRole('button', { name: /Open the card|Abrir la ficha/ }).click();
+  await expect(card.getByText(/From the Sun|Distancia al Sol/)).toBeVisible();
+  await expect(page).toHaveURL(/focus=psyche/);
+  await card.getByRole('button', { name: /Fold the card|Plegar la ficha/ }).click();
+  await expect(canvas).toHaveAttribute('data-model', 'psyche');
   await card
     .getByRole('button', { name: /Back to its neighbourhood|Volver a su vecindario/ })
     .click();

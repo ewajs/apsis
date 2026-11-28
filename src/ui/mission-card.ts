@@ -51,6 +51,11 @@ export class MissionCard extends LitElement {
   @property({ attribute: false }) card: Card | undefined;
   /** Whether a phone shows the mission's story too. */
   @state() private expanded = false;
+  /**
+   * Whether the card is folded into a pill (name, close-up, unfold, ×), out of the way of
+   * what it describes; the selection stays. Going close up folds it.
+   */
+  @state() private folded = false;
 
   constructor() {
     super();
@@ -98,6 +103,42 @@ export class MissionCard extends LitElement {
       .close {
         flex: none;
         margin: -6px -8px 0 0;
+      }
+      .close + .close {
+        margin-left: -4px;
+      }
+      .folded {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        max-width: 100%;
+        padding: 0 4px 0 0;
+      }
+      .unfold {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        height: 44px;
+        padding: 0 10px 0 16px;
+        border: 0;
+        border-radius: 999px;
+        background: none;
+        color: inherit;
+        font: 600 0.95rem var(--font-display);
+        cursor: pointer;
+      }
+      .unfold span:not(.visually-hidden) {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
       }
       dl {
         display: grid;
@@ -207,9 +248,15 @@ export class MissionCard extends LitElement {
   ];
 
   override willUpdate(changed: Map<PropertyKey, unknown>) {
-    // Each new selection starts folded.
+    if (!changed.has('card')) return;
     const before = changed.get('card') as Card | undefined;
-    if (changed.has('card') && before?.id !== this.card?.id) this.expanded = false;
+    // Each new selection opens whole, with its story folded.
+    if (before?.id !== this.card?.id) {
+      this.expanded = false;
+      this.folded = false;
+    }
+    // Arriving close up, the card steps aside so the spacecraft can be seen.
+    else if (!before?.closeUp && this.card?.closeUp) this.folded = true;
   }
 
   override render() {
@@ -219,6 +266,8 @@ export class MissionCard extends LitElement {
     const au = msg('UA', { id: 'unit-au' });
     const { mission, facts } = card;
     const close = msg('Quitar la selección', { id: 'picker-clear' });
+    const fold = msg('Plegar la ficha', { id: 'card-fold' });
+    if (this.folded) return this.#pill(card, close);
     const rows: [string, string][] = [];
     if (facts) {
       if (card.kind !== 'sun') {
@@ -253,6 +302,15 @@ export class MissionCard extends LitElement {
           <h2 id="name">${card.name}</h2>
           <p class="about">${this.#about(card)}</p>
         </div>
+        <button
+          type="button"
+          class="icon-button close"
+          aria-label=${fold}
+          title=${fold}
+          @click=${() => (this.folded = true)}
+        >
+          ${icons.fold()}
+        </button>
         <button
           type="button"
           class="icon-button close"
@@ -377,6 +435,57 @@ export class MissionCard extends LitElement {
       <span>${title} · ${formatLooseDate(milestone.date, currentLocale())}</span>
       ${localized(milestone)}
     </li>`;
+  }
+
+  /**
+   * The folded card: a pill with the name (tap to unfold), the close-up toggle when
+   * there's a model, and ×.
+   */
+  #pill(card: Card, close: string) {
+    const unfold = msg('Abrir la ficha', { id: 'card-unfold' });
+    return html`<div class="glass pill folded">
+      <button
+        type="button"
+        class="unfold"
+        aria-expanded="false"
+        @click=${() => (this.folded = false)}
+      >
+        <span class="visually-hidden">${unfold}:</span>
+        <span>${card.name}</span>
+        ${icons.unfold()}
+      </button>
+      ${
+        card.model
+          ? html`<button
+              type="button"
+              class="icon-button"
+              aria-pressed=${card.closeUp}
+              aria-label=${
+                card.closeUp
+                  ? msg('Volver a su vecindario', { id: 'card-close-up-out' })
+                  : msg('Ver la nave de cerca', { id: 'card-close-up' })
+              }
+              title=${
+                card.closeUp
+                  ? msg('Volver a su vecindario', { id: 'card-close-up-out' })
+                  : msg('Ver la nave de cerca', { id: 'card-close-up' })
+              }
+              @click=${() => this.#closeUp(!card.closeUp)}
+            >
+              ${card.closeUp ? icons.closeOut() : icons.closeIn()}
+            </button>`
+          : nothing
+      }
+      <button
+        type="button"
+        class="icon-button"
+        aria-label=${close}
+        title=${close}
+        @click=${this.#close}
+      >
+        ${icons.close()}
+      </button>
+    </div>`;
   }
 
   /** Who made the model, and its licence; or that we made it, simplified. */

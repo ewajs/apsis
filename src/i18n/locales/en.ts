@@ -52,6 +52,8 @@ export const templates = {
   'card-close-up': 'See it up close',
   'card-close-up-out': 'Back to its neighbourhood',
   'card-ar': 'In your room (AR)',
+  'card-fold': 'Fold the card',
+  'card-unfold': 'Open the card',
   'tabletop-open': 'The solar system on your table (AR)',
   'card-model': '3D model:',
   'card-model-ours': 'Simplified 3D model, made for Apsis.',
