@@ -4,6 +4,31 @@ How the page starts, how components get their text in two languages, and how the
 installs and works offline. Code: `src/main.ts`, `src/ui/`, `src/i18n/`,
 `vite.config.ts`, `scripts/icons.ts`.
 
+## The frame
+
+| Phone, map                | The info panel          | Desktop, 3D                   |
+| ------------------------- | ----------------------- | ----------------------------- |
+| ![Phone](frame-phone.png) | ![Info](frame-info.png) | ![Desktop](frame-desktop.png) |
+
+The look is "Glass" (ADR 0012, after gravitas): the view (map or 3D) fills the screen
+and every control floats over it.
+
+- `apsis-app` lays them out: the name top left, then the picker
+  ([selection.md](selection.md); on phones the picker alone); `view-switch`, `language-switch` and the
+  info button top right; a notice (`role="status"`) under them; `view-tools` (the tool
+  column: zoom in and out, back to the whole map on the map, the scale) on the right
+  edge; the time dock at the bottom; `info-panel` (a native modal
+  `<dialog>`: credits, data date, version) on demand.
+- Shared styles are in `ui/glass.ts` (`.glass` panels, `.pill`s, `.icon-button`s), icons
+  in `ui/icons.ts`; colours, fonts and the glass come from tokens in `styles.css`, with
+  solid panels under `prefers-reduced-transparency`.
+- `--hud-top/right/bottom/left` say how much room the floating controls take at each
+  edge; the 2D map reads them and centres itself in what's left (narrow screens let the
+  tool column float over the map's edge; short ones let the map run up between the top
+  pills).
+- Inter and Space Grotesk are self-hosted (`@fontsource-variable/*`, imported in
+  `main.ts`); only the Latin files are precached.
+
 ## Start-up
 
 `index.html` holds no content, only a `<noscript>` line and the module script.

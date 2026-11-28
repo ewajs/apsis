@@ -3,6 +3,7 @@
  * itself, ADR 0001) and its states. Call after the locale is set.
  */
 import { msg } from '@lit/localize';
+import type { View } from './view-switch.ts';
 
 /** What the 3D canvas shows, for screen readers. */
 export const sceneLabel = () =>
@@ -18,3 +19,15 @@ export const sceneFailed = () =>
   msg('Este dispositivo no pudo mostrar la vista 3D. Seguí con el mapa en 2D.', {
     id: 'scene-failed',
   });
+
+/** What the scale tool has just switched to, said briefly. */
+export function scaleNote(view: View, trueScale: boolean): string {
+  if (view === 'map') {
+    return trueScale
+      ? msg('Distancias reales', { id: 'map-scale-linear-note' })
+      : msg('Distancias en escala logarítmica', { id: 'map-scale-log-note' });
+  }
+  return trueScale
+    ? msg('Tamaños reales: casi todo es espacio vacío', { id: 'scene-scale-true-note' })
+    : msg('Planetas agrandados para que se vean', { id: 'scene-scale-enlarged-note' });
+}

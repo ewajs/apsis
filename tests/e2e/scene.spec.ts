@@ -69,6 +69,24 @@ test('looks at Neptune up close without losing it (floating origin)', async ({
     .toBeGreaterThan(200);
 });
 
+test('flies to what you pick, and picks what you tap', async ({ page }, testInfo) => {
+  await page.goto(sceneAddress(testInfo.project.name));
+  await expect(page.locator('canvas[data-backend]')).toBeVisible({ timeout: 20_000 });
+  // The Sun sits in the middle at first: tapping there selects it.
+  const canvas = (await page.locator('canvas[data-backend]').boundingBox())!;
+  await page.mouse.click(canvas.x + canvas.width / 2, canvas.y + canvas.height / 2);
+  await expect(page).toHaveURL(/focus=sun/);
+
+  await page.getByRole('button', { name: /Find another|Buscar otro/ }).click();
+  await page.keyboard.type('neptun');
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/focus=neptune/);
+  await expect(page.locator('[data-label="neptune"]')).toHaveCSS('font-weight', '600');
+  await expect
+    .poll(() => countMiddlePixels(page, 'neptune'), { timeout: 10_000 })
+    .toBeGreaterThan(200);
+});
+
 test('switches between the map and the 3D view', async ({ page }, testInfo) => {
   const backend = FORCE_WEBGL.includes(testInfo.project.name) ? '&backend=webgl2' : '';
   await page.goto(`./?t=2026-11-23T12:00Z${backend}`);
@@ -114,7 +132,7 @@ test.describe('in a Spanish browser', () => {
       earth.y >= clipper.y + clipper.height;
     expect(apart).toBe(true);
 
-    await page.getByRole('button', { name: 'English' }).click();
+    await page.getByRole('combobox', { name: 'Idioma' }).selectOption('en');
     await expect(label('earth')).toHaveText('Earth');
   });
 });
@@ -122,14 +140,42 @@ test.describe('in a Spanish browser', () => {
 test('shows true sizes on request, keeping the spacecraft marked', async ({ page }, testInfo) => {
   await page.goto(sceneAddress(testInfo.project.name));
   await expect(page.locator('canvas[data-backend]')).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByText(/Planets enlarged|Planetas agrandados/)).toBeVisible();
   await page.getByRole('button', { name: /Show true sizes|Ver tamaños reales/ }).click();
-  await expect(page.getByText(/True sizes|Tamaños reales/)).toBeVisible();
+  await expect(page.getByRole('status')).toHaveText(/True sizes|Tamaños reales/);
   // The planets shrink below a pixel; their names and the spacecraft's stay.
   await expect(page.locator('[data-label="europa-clipper"]')).toHaveCSS('visibility', 'visible');
   // Each view keeps its own setting: the map is still on its log scale.
   await page.getByRole('button', { name: /2D map|Mapa en 2D/ }).click();
-  await expect(page.getByText(/logarithmic scale|escala logarítmica/)).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: /Show true distances|Ver distancias reales/ }),
+  ).toBeVisible();
+});
+
+test('zooms from the tool column', async ({ page }, testInfo) => {
+  await page.goto(sceneAddress(testInfo.project.name));
+  await expect(page.locator('canvas[data-backend]')).toBeVisible({ timeout: 20_000 });
+  // Venus: no spacecraft beside it to take its label's place (James Webb sits by Earth).
+  // A hidden label keeps its last place, so only a visible one is measured. One call:
+  // software WebGL draws a few frames a second, and each call waits for one.
+  const apart = () =>
+    page.evaluate(() => {
+      const label = (id: string) => document.querySelector(`[data-label="${id}"]`)!;
+      if (getComputedStyle(label('venus')).visibility !== 'visible') return -1;
+      const [sun, venus] = [label('sun'), label('venus')].map((e) => e.getBoundingClientRect());
+      return Math.hypot(venus!.x - sun!.x, venus!.y - sun!.y);
+    });
+  await expect.poll(apart).toBeGreaterThan(0);
+  const start = await apart();
+  // Half the distance to the Sun: Venus looks farther from it (by perspective, not
+  // exactly twice).
+  await page.getByRole('button', { name: /Zoom in|Acercar/ }).click();
+  await expect.poll(apart).toBeGreaterThan(start * 1.3);
+  await page.getByRole('button', { name: /Zoom out|Alejar/ }).click();
+  await expect.poll(apart).toBeLessThan(start * 1.2);
+  // Going back to the whole map is for the map only.
+  await expect(
+    page.getByRole('button', { name: /Show the whole map|Ver todo el mapa/ }),
+  ).toHaveCount(0);
 });
 
 test('draws the Milky Way behind everything', async ({ page }, testInfo) => {

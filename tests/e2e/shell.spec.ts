@@ -14,12 +14,9 @@ test.describe('in a Spanish browser', () => {
     await expect(page.getByRole('heading', { name: /¿Dónde están ahora\?/ })).toBeVisible();
     await page.evaluate(() => Object.assign(window, { sameDocument: true }));
 
-    await page.getByRole('button', { name: 'English' }).click();
+    await page.getByRole('combobox', { name: 'Idioma' }).selectOption('en');
     await expect(page.getByRole('heading', { name: /Where are they now\?/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'English' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    await expect(page.getByRole('combobox', { name: 'Language' })).toHaveValue('en');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     expect(await page.evaluate(() => 'sameDocument' in window)).toBe(true);
 

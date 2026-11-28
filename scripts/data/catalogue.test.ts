@@ -14,7 +14,13 @@ describe('data/catalogue.yaml', () => {
       'psyche',
       'parker-solar-probe',
       'voyager-1',
+      'new-horizons',
+      'bepicolombo',
+      'jwst',
       'cassini',
+      'galileo',
+      'rosetta',
+      'dawn',
     ]);
     for (const mission of missions) expect(mission.horizons).not.toBeNull();
   });

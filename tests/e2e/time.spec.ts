@@ -83,16 +83,14 @@ test.describe('the time bar', () => {
     await expect.poll(() => addressTime(page.url())).toBeNull();
   });
 
-  test('plays backwards after a change of direction', async ({ page }) => {
+  test('plays backwards at a backwards pace', async ({ page }) => {
     await page.goto('./?t=2026-11-20T00:00Z');
     await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
     const start = addressTime(page.url())!;
-    await bar(page)
-      .getByRole('button', { name: /Forwards in time|Hacia adelante/ })
-      .click();
+    // Speed and direction are one menu: "← 1 week/s".
     await bar(page)
       .getByRole('combobox', { name: /Speed|Velocidad/ })
-      .selectOption('week');
+      .selectOption('-week');
     await bar(page)
       .getByRole('button', { name: /^(Play|Reproducir)$/ })
       .click();
@@ -154,4 +152,20 @@ test('goes back to Cassini at Saturn and Voyager 1 at Jupiter', async ({ page })
   await page.goto('./?t=1979-03-05T12:00Z');
   await expect(page.locator('solar-map [data-body="voyager-1"]')).toBeAttached();
   await expect(page.locator('solar-map [data-body="cassini"]')).toHaveCount(0);
+});
+
+test('keeps the time dock still while the date changes', async ({ page }) => {
+  await page.goto('./?t=2026-11-23T20:32Z');
+  await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
+  const dock = page.locator('time-slider');
+  const now = dock.getByRole('button', { name: /^(Now|Ahora)$/ });
+  const positions: number[] = [];
+  for (const t of ['1977-01-01T00:00Z', '1988-09-08T08:08Z', '2026-11-23T20:32Z']) {
+    await dock.getByRole('slider').evaluate((input: HTMLInputElement, value) => {
+      input.value = String(Date.parse(value));
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }, t);
+    positions.push((await now.boundingBox())!.x);
+  }
+  expect(new Set(positions).size).toBe(1);
 });

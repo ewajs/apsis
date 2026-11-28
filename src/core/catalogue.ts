@@ -74,12 +74,21 @@ export function parseCatalogue(data: unknown): Mission[] {
     const text = (key: string) => {
       if (typeof entry[key] !== 'string' || entry[key].trim() === '') problem(`${key} is required`);
     };
-    const localized = (value: unknown, key: string) => {
+    /**
+     * Text in both languages. Anything else in it is a mistake: in YAML's `{ … }` form an
+     * unquoted comma ends the text, and what followed becomes a key of its own.
+     * @param also Other keys the object may have (a milestone's date).
+     */
+    const localized = (value: unknown, key: string, also: readonly string[] = []) => {
       if (!isRecord(value)) return problem(`${key} needs es and en`);
       for (const lang of ['es', 'en']) {
         if (typeof value[lang] !== 'string' || value[lang].trim() === '') {
           problem(`${key}.${lang} is missing`);
         }
+      }
+      const stray = Object.keys(value).filter((k) => !['es', 'en', ...also].includes(k));
+      if (stray.length > 0) {
+        problem(`${key} has unexpected ${stray.join(', ')} (a comma in unquoted text?)`);
       }
     };
 
@@ -132,7 +141,7 @@ export function parseCatalogue(data: unknown): Mission[] {
           if (milestone.date < previous) problem(`${key} is out of date order`);
           previous = milestone.date;
         }
-        localized(milestone, key);
+        localized(milestone, key, ['date', 'encounter']);
       });
     }
 
@@ -156,4 +165,45 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isDay(value: unknown): value is string {
   return typeof value === 'string' && DAY.test(value);
+}
+
+const DAY_MS = 86_400_000;
+
+/**
+ * The instant nearest `instantMs` (UTC ms) that the mission has positions for: itself
+ * when it's inside the coverage, or else a day inside its nearer end, clear of the last
+ * sample. A mission without a known coverage keeps the instant.
+ * @example instantWithData(cassini, Date.UTC(2026, 0, 1)) // 2017-09-14, its last day
+ */
+export function instantWithData(mission: Mission, instantMs: number): number {
+  if (!mission.coverage) return instantMs;
+  const from = Date.parse(`${mission.coverage.from}T00:00Z`) + DAY_MS;
+  const to = Date.parse(`${mission.coverage.to}T00:00Z`) - DAY_MS;
+  return Math.min(to, Math.max(from, instantMs));
+}
+
+/**
+ * Where a loose date starts, in UTC ms: `'2029'` is 1 January 2029, `'2026-12'` is
+ * 1 December 2026.
+ */
+export function looseDateStart(date: LooseDate): number {
+  const [year = 0, month = 1, day = 1] = date.split('-').map(Number);
+  return Date.UTC(year, month - 1, day);
+}
+
+/**
+ * The milestones either side of an instant: the last that has started, and the first
+ * still to come. A loose date counts from its start ('2029' is past from 1 January).
+ * @example milestonesAround(juno.milestones, Date.UTC(2020, 0, 1)) // { last: 2016's arrival, next: 2021's Ganymede }
+ */
+export function milestonesAround(
+  milestones: readonly Milestone[],
+  instantMs: number,
+): { last?: Milestone; next?: Milestone } {
+  const next = milestones.findIndex((milestone) => looseDateStart(milestone.date) > instantMs);
+  const lastIndex = next === -1 ? milestones.length - 1 : next - 1;
+  return {
+    ...(lastIndex >= 0 && { last: milestones[lastIndex] }),
+    ...(next !== -1 && { next: milestones[next] }),
+  };
 }

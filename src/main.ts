@@ -6,9 +6,12 @@
  *
  * Address parameters, for links and tests: `t=2026-12-03T16:15Z` (show that instant,
  * paused; the address follows the instant as it moves), `play=day|week|month` (play
- * at that speed, `-day` backwards), `view=3d` (start in 3D), `focus=neptune` (what the
- * 3D camera orbits), `backend=webgl2` (force the 3D fallback).
+ * at that speed, `-day` backwards), `view=3d` (start in 3D), `focus=juno` (what's
+ * selected: the map rings it, the 3D camera orbits it; the address follows the
+ * selection), `backend=webgl2` (force the 3D fallback).
  */
+import '@fontsource-variable/inter';
+import '@fontsource-variable/space-grotesk';
 import './ui/styles.css';
 import { pickLocale, setLocale, type Locale } from './i18n/localization.ts';
 import { RADIUS_KM, SATURN_RINGS_KM } from './core/bodies.ts';
@@ -18,15 +21,21 @@ import { SPEEDS, type Playback, type Speed } from './core/playback.ts';
 import { parseInstant, tdbSecondsFromUtcMs } from './core/time.ts';
 import { TimeController } from './time/controller.ts';
 import { ChunkStore, loadCatalogue, type Catalogue } from './data/load.ts';
+import { instantWithData } from './core/catalogue.ts';
+import { factsAt } from './core/facts.ts';
+import { stateFromChunks } from './core/interpolate.ts';
+import { pickerEntries } from './ui/body-picker.ts';
 import { yearsToLoad } from './core/loading.ts';
 import type { MapBody } from './map/solar-map.ts';
 import type { SolarScene } from './scene/solar-scene.ts';
-import { sceneFailed, sceneLabel, sceneLoading } from './ui/messages.ts';
+import { scaleNote, sceneFailed, sceneLabel, sceneLoading } from './ui/messages.ts';
 import type { View } from './ui/view-switch.ts';
 import './map/solar-map.ts';
 import './ui/apsis-app.ts';
 
 const LOCALE_KEY = 'apsis.locale';
+/** How long a passing notice (the scale just chosen) stays, in ms. */
+const NOTICE_MS = 3_000;
 /** How often, at most, the address bar follows the playing instant, in ms. */
 const ADDRESS_EVERY_MS = 500;
 /** Texture files (public/textures, credited in CREDITS.md), by body id. */
@@ -44,6 +53,7 @@ const TEXTURES: Readonly<Record<string, string>> = {
 
 const params = new URLSearchParams(location.search);
 const app = document.createElement('apsis-app');
+app.version = __APP_VERSION__;
 const map = document.createElement('solar-map');
 const sceneView = document.createElement('div');
 sceneView.style.cssText =
@@ -65,7 +75,11 @@ async function showLocale(locale: Locale) {
 app.addEventListener('locale-change', (event) => {
   const locale = (event as CustomEvent<Locale>).detail;
   localStorage.setItem(LOCALE_KEY, locale);
-  void showLocale(locale).then(() => scene?.setNames(names()));
+  void showLocale(locale).then(() => {
+    scene?.setNames(names());
+    fillPicker();
+    showCard();
+  });
 });
 
 app.addEventListener('view-change', (event) => {
@@ -74,12 +88,96 @@ app.addEventListener('view-change', (event) => {
 
 /** Each view's own scale setting: log or true distances; enlarged or true sizes. */
 const trueScale: Record<View, boolean> = { map: false, scene: false };
+let noticeTimer: ReturnType<typeof setTimeout> | undefined;
+/** Says something briefly under the top controls. */
+function say(text: string) {
+  clearTimeout(noticeTimer);
+  app.notice = text;
+  noticeTimer = setTimeout(() => (app.notice = ''), NOTICE_MS);
+}
+
 app.addEventListener('true-scale-change', (event) => {
   const value = (event as CustomEvent<boolean>).detail;
   trueScale[app.view] = value;
   app.trueScale = value;
   if (app.view === 'map') map.scale = value ? 'linear' : 'log';
   else if (scene) scene.trueScale = value;
+  say(scaleNote(app.view, value));
+});
+
+/** The selected body ('sun', a planet, a mission), or none; `?focus=` in the address. */
+let selected: string | null = params.get('focus');
+
+/**
+ * Selects a body in every view, and the address follows. A mission picked at an instant
+ * it has no positions for (Cassini today) takes time to the nearest one it has.
+ * @param move Whether the views go to it: the 3D camera flies there, the map brings it
+ *   to the middle. A tap on the map selects in place; at start-up, it's simply there.
+ */
+function select(id: string | null, move: 'fly' | 'jump' | 'stay' = 'fly') {
+  const mission = id ? data?.missions.find((entry) => entry.id === id) : undefined;
+  if (mission) {
+    const instant = instantWithData(mission, time.playback.instantMs);
+    if (instant !== time.playback.instantMs) time.seek(instant);
+  }
+  selected = id;
+  app.selected = map.selected = id;
+  scene?.select(id, move === 'fly');
+  showCard();
+  if (id && move !== 'stay') map.centreOnSelection();
+  const address = new URL(location.href);
+  if (id) address.searchParams.set('focus', id);
+  else address.searchParams.delete('focus');
+  history.replaceState(null, '', address);
+}
+app.addEventListener('body-select', (event) => {
+  // The picker's events reach here retargeted to the shell; the map's come from the map.
+  const id = (event as CustomEvent<string | null>).detail;
+  select(id, event.target === map ? 'stay' : 'fly');
+});
+
+/** The selection's card at the displayed instant: its distances, speed and story. */
+function showCard() {
+  if (!selected || !data || !store) {
+    app.card = undefined;
+    return;
+  }
+  const tdb = tdbSecondsFromUtcMs(time.playback.instantMs);
+  const chunks = (id: string) => store!.chunks.get(id) ?? new Map();
+  const kind = selected === 'sun' ? 'sun' : data.index.bodies.find((b) => b.id === selected)?.kind;
+  if (!kind) return;
+  // The Sun sits still at the origin of heliocentric states.
+  const state =
+    kind === 'sun' ? ([tdb, 0, 0, 0, 0, 0, 0] as const) : stateFromChunks(chunks(selected), tdb);
+  app.card = {
+    id: selected,
+    kind,
+    name: names()[selected] ?? selected,
+    mission: data.missions.find((mission) => mission.id === selected),
+    facts: state ? factsAt(state, stateFromChunks(chunks('earth'), tdb)) : null,
+    instantMs: time.playback.instantMs,
+  };
+}
+
+/** The picker's list, in the language showing now. */
+function fillPicker() {
+  if (!data) return;
+  const planets = data.index.bodies.filter((body) => body.kind === 'planet');
+  app.pickerEntries = pickerEntries(
+    data.missions,
+    planets.map((body) => body.id),
+  );
+}
+
+// Zoom: the tool column's buttons act on whichever view is showing.
+app.addEventListener('zoom-by', (event) => {
+  const factor = (event as CustomEvent<number>).detail;
+  if (app.view === 'map') map.zoomBy(factor);
+  else scene?.zoomBy(factor);
+});
+app.addEventListener('view-home', () => map.goHome());
+map.addEventListener('map-view-change', (event) => {
+  app.mapAtHome = (event as CustomEvent<boolean>).detail;
 });
 
 // The displayed instant: now, or `?t=…` paused there (ADR 0011, docs/guides/time.md).
@@ -92,6 +190,7 @@ function showTime(playback: Playback) {
   map.time = tdb;
   if (scene) scene.time = tdb;
   app.playback = playback;
+  showCard();
   loadYearsFor(playback);
   const now = performance.now();
   if (playback.rate !== 0 && !playback.live && now - addressWrittenAt < ADDRESS_EVERY_MS) return;
@@ -112,6 +211,7 @@ function loadYearsFor(playback: Playback) {
     .then((arrived) => {
       if (!arrived) return;
       map.requestUpdate();
+      showCard();
       scene?.refresh();
     })
     .catch((error: unknown) => console.error(error))
@@ -158,6 +258,7 @@ function startScene(): Promise<SolarScene | undefined> {
         texturesBase: `${import.meta.env.BASE_URL}textures/`,
         backend: params.get('backend') === 'webgl2' ? 'webgl2' : 'auto',
         sky: '2k_stars_milky_way.jpg',
+        onPick: (id) => select(id),
       });
       sceneView.firstChild?.remove(); // the loading text
       sceneView.style.cssText = 'position:relative;display:grid;min-height:0';
@@ -216,7 +317,7 @@ function fillScene() {
       rotation: ROTATION.sun!,
     },
   );
-  scene.focus = params.get('focus') ?? 'sun';
+  scene.select(selected, false);
   scene.trueScale = trueScale.scene;
   showTime(time.playback);
 }
@@ -238,8 +339,11 @@ try {
     orbit: data!.orbits.planets[body.id],
   }));
   map.bodies = bodies;
+  fillPicker();
+  if (selected) select(selected, 'jump');
   await store.ensure(yearsToLoad(time.playback.instantMs, time.playback.rate));
   map.status = 'ready';
+  showCard();
   app.fetchedAt = data.index.fetchedAt;
   // Playback runs from the first archived year to the end of the live data. The live
   // span's dates are TDB; ending two minutes early keeps clear of the last sample

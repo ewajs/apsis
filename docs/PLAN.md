@@ -87,13 +87,20 @@ Shape: ADR 0011 (accepted 2026-11-23).
 
 ## M4 — Pick one (v0.4.0)
 
-- [ ] **4.1 Picker and selection.** List, search, selection, camera flies to it.
-- [ ] **4.2 Mission card.** Distance from Earth, light-time, speed, next milestone,
+The interface first (ADR 0012, direction A chosen 2026-11-23), then picking a mission.
+
+- [x] **4.0a The new frame.** Typefaces, glass panels and their solid fallback, icons, the
+      view under floating controls, the info panel instead of the footer, the tool column.
+- [x] **4.0b The time dock.** Compact, one row on phones, a fixed-width date.
+- [x] **4.0c Moving around the 2D map.** Zoom (wheel, pinch, buttons), pan, recentre.
+
+- [x] **4.1 Picker and selection.** List, search, selection, camera flies to it.
+- [x] **4.2 Mission card.** Distance from Earth, light-time, speed, next milestone,
       blurb, links.
-- [ ] **4.3 More kinds of journey.** JWST (parked at L2, Earth's neighbourhood),
+- [x] **4.3 More kinds of journey.** JWST (parked at L2, Earth's neighbourhood),
       BepiColombo (Mercury), New Horizons (the Kuiper belt). The catalogue then grows one
       entry at a time, by PR: representative first, everything eventually.
-- [ ] **4.4 More ended missions.** Rosetta (a comet), Galileo, Dawn (moved from M3's 3.6
+- [x] **4.4 More ended missions.** Rosetta (a comet), Galileo, Dawn (moved from M3's 3.6
       at the v0.3.0 release; the archive they need is in place).
 
 ## M5 — Local views (v0.5.0)
@@ -127,6 +134,24 @@ SPICE for missions Horizons lacks; major moons; Earth-centred view for near-Eart
 missions; a link to fly a trajectory in gravitas.
 
 ## Releases
+
+### v0.4.0 — Pick one (2026-11-24)
+
+A new look, a map you can move around, and every mission one tap away.
+
+- The view fills the screen and the controls float over it in glass panels (ADR 0012);
+  the info panel holds the credits, the data date and the version.
+- A compact time dock: one row on a phone, a date that keeps still, speed and direction
+  in one menu.
+- The 2D map zooms and pans: wheel, pinch, double tap, drag, the keyboard and the tool
+  column's buttons.
+- Search for any mission or planet, or tap it on the map or in 3D: the map rings it and
+  brings it to the middle, the camera flies to it, and links keep it (`?focus=`). An
+  ended mission takes you to when it flew.
+- Its card: distance from the Sun and from Earth, how long a signal takes, speed, the
+  last and next milestones, what it's for and where to read more.
+- Six more missions, each from launch: New Horizons, BepiColombo (in orbit around
+  Mercury since 21 November 2026), James Webb, Galileo, Rosetta and Dawn. Twelve in all.
 
 ### v0.3.0 — Time (2026-11-23)
 

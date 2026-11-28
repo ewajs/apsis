@@ -37,13 +37,15 @@ billion km from the Sun, so a 32-bit position near it can only step by hundreds 
 and anything near Neptune would jitter between those steps.
 
 So the camera never looks at "the solar system": it looks at a **focus** (the Sun by
-default; `?focus=neptune` for now, the picker later). Every frame, `#frame()` works out
+default; whatever is selected, see [selection.md](selection.md)). Every frame, `#frame()` works out
 each body's position in 64-bit JavaScript numbers, subtracts the focus's position
 (`subtract` from `core/math.ts`), and only then hands the result to three.js. Near the focus the numbers
 are small and precise; far away they're large and imprecise, but far away is also tiny
 on screen. `frames.test.ts` shows the difference: over a km lost near Neptune with
 absolute positions, under a centimetre with relative ones. The camera orbits the focus
-at the origin, which is why panning is off.
+at the origin, which is why panning is off: a drag turns, the wheel or a pinch zooms
+(three.js's `OrbitControls`), and the tool column's + and − call `zoomBy`, which moves
+the camera within the same limits.
 
 ## True scale with a minimum size
 

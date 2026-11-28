@@ -17,3 +17,4 @@ not silently contradicted by code.
 | [0009](0009-catalogue.md)                          | Hand-written bilingual YAML catalogue                                 |
 | [0011](0011-history-and-time.md)                   | Every mission's history in yearly files, and the time slider          |
 | [0010](0010-planet-orbits.md)                      | Planet orbits from osculating elements, fetched once and committed    |
+| [0012](0012-glass-look.md)                         | The Glass look: the view fills the screen, controls float             |

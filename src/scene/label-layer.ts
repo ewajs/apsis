@@ -43,6 +43,14 @@ export class LabelLayer {
     }
   }
 
+  /** Sets the label in bold for the selected body, if any; the others back to normal. */
+  emphasise(id: string | null): void {
+    for (const [labelId, label] of this.#labels) {
+      label.element.style.fontWeight = labelId === id ? '600' : '';
+      label.width = 0; // bold is wider: measured again
+    }
+  }
+
   /**
    * Places this frame's labels. `bodies` are those on screen, most important first; any
    * label not placed (off screen, or no free spot) hides.

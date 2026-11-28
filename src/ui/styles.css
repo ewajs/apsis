@@ -17,10 +17,26 @@
   /* Text on a --color-sun or --color-craft fill. */
   --color-on-accent: #070b14;
 
-  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Inter for text and numbers, Space Grotesk for names and labels (as in gravitas),
+     self-hosted (@fontsource-variable, loaded in main.ts). */
+  --font-ui: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Space Grotesk Variable', var(--font-ui);
   --radius: 14px;
   --space: 16px;
   --dur-fast: 150ms;
+
+  /* Glass: panels float over the view, translucent and blurred. */
+  --glass-bg: rgba(12, 20, 34, 0.58);
+  --glass-line: rgba(150, 200, 255, 0.14);
+  --glass-blur: blur(14px) saturate(140%);
+  --glass-press: rgba(255, 255, 255, 0.12);
+
+  /* Room the floating controls take at each edge of the view: the map centres itself in
+     what's left. The bottom holds the time dock. */
+  --hud-top: 68px;
+  --hud-right: 64px;
+  --hud-bottom: 104px;
+  --hud-left: 12px;
 
   color-scheme: dark;
   background: var(--color-bg);
@@ -42,5 +58,28 @@ body {
 @media (prefers-reduced-motion: reduce) {
   :root {
     --dur-fast: 0ms;
+  }
+}
+
+/* On narrow screens the map uses the full width; the tool column floats over its edge. */
+@media (max-width: 600px) {
+  :root {
+    --hud-right: 12px;
+  }
+}
+
+/* On short screens (a phone on its side) the map may run up between the top corners'
+   pills: the middle of the top edge is free. */
+@media (max-height: 500px) {
+  :root {
+    --hud-top: 12px;
+  }
+}
+
+/* Solid panels for those who ask for less transparency (as gravitas does). */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-bg: #0c1422;
+    --glass-blur: none;
   }
 }

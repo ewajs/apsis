@@ -131,6 +131,114 @@
     en: The most distant human-made object. It flew past Jupiter and Saturn, and since 2012 it has been in interstellar space.
   links: [https://science.nasa.gov/mission/voyager/voyager-1/]
 
+- id: new-horizons
+  name: New Horizons
+  agency: NASA
+  launch: 2006-01-19
+  target: { es: Plutón y el cinturón de Kuiper, en: Pluto and the Kuiper belt }
+  status: active
+  horizons: '-98'
+  coverage: { from: 2006-01-20, to: 2049-12-31 }
+  milestones:
+    - {
+        date: 2007-02-28,
+        encounter: true,
+        es: Pasa por Júpiter para tomar impulso,
+        en: Swings past Jupiter for a boost,
+      }
+    - { date: 2015-07-14, encounter: true, es: Pasa por Plutón, en: Flies past Pluto }
+    - { date: 2019-01-01, encounter: true, es: Pasa por Arrokoth, en: Flies past Arrokoth }
+  blurb:
+    es: Pasó por Plutón en 2015 y por Arrokoth en 2019, el objeto más lejano visitado hasta ahora. Sigue alejándose por el cinturón de Kuiper.
+    en: It flew past Pluto in 2015 and Arrokoth in 2019, the farthest object ever visited, and keeps heading out through the Kuiper belt.
+  links: [https://science.nasa.gov/mission/new-horizons/]
+
+- id: bepicolombo
+  name: BepiColombo
+  agency: ESA / JAXA
+  launch: 2018-10-20
+  target: { es: Mercurio, en: Mercury }
+  status: active
+  horizons: '-121'
+  coverage: { from: 2018-10-21, to: 2027-04-10 }
+  milestones:
+    - {
+        date: 2020-04-10,
+        encounter: true,
+        es: Pasa por la Tierra para tomar impulso,
+        en: Swings past Earth for a boost,
+      }
+    - {
+        date: 2020-10-15,
+        encounter: true,
+        es: Pasa por Venus para tomar impulso,
+        en: Swings past Venus for a boost,
+      }
+    - {
+        date: 2021-08-10,
+        encounter: true,
+        es: Pasa otra vez por Venus,
+        en: Swings past Venus again,
+      }
+    - {
+        date: 2021-10-01,
+        encounter: true,
+        es: Primera pasada por Mercurio,
+        en: First Mercury flyby,
+      }
+    - {
+        date: 2022-06-23,
+        encounter: true,
+        es: Segunda pasada por Mercurio,
+        en: Second Mercury flyby,
+      }
+    - {
+        date: 2023-06-19,
+        encounter: true,
+        es: Tercera pasada por Mercurio,
+        en: Third Mercury flyby,
+      }
+    - {
+        date: 2024-09-04,
+        encounter: true,
+        es: Cuarta pasada por Mercurio,
+        en: Fourth Mercury flyby,
+      }
+    - { date: 2024-12-01, encounter: true, es: Quinta pasada por Mercurio, en: Fifth Mercury flyby }
+    - { date: 2025-01-08, encounter: true, es: Sexta pasada por Mercurio, en: Sixth Mercury flyby }
+    - {
+        date: 2026-11-21,
+        encounter: true,
+        es: Entra en órbita de Mercurio,
+        en: Enters orbit around Mercury,
+      }
+    - { date: 2026-12-09, es: Los dos orbitadores se separan, en: The two orbiters part ways }
+    - { date: 2027-04, es: Empieza la ciencia en Mercurio, en: Science at Mercury begins }
+  blurb:
+    es: Dos orbitadores, uno europeo y uno japonés, que viajaron juntos ocho años y pasaron nueve veces por planetas para frenar. Llegó a Mercurio en noviembre de 2026.
+    en: Two orbiters, one European and one Japanese, that travelled together for eight years and flew past planets nine times to slow down. It reached Mercury in November 2026.
+  links: [https://www.esa.int/Science_Exploration/Space_Science/BepiColombo]
+
+- id: jwst
+  name: James Webb
+  agency: NASA / ESA / CSA
+  launch: 2021-12-25
+  target: { es: 'el punto L2, más allá de la Tierra', en: 'the L2 point, beyond Earth' }
+  status: active
+  horizons: '-170'
+  coverage: { from: 2021-12-26, to: 2031-11-15 }
+  milestones:
+    - { date: 2022-01-24, es: Llega a su órbita alrededor de L2, en: Reaches its orbit around L2 }
+    - {
+        date: 2022-07-12,
+        es: Publica sus primeras imágenes científicas,
+        en: Releases its first science images,
+      }
+  blurb:
+    es: El telescopio espacial más grande. Mira el universo en infrarrojo desde cerca del punto L2, a 1,5 millones de km de la Tierra, del lado opuesto al Sol.
+    en: The largest space telescope. It watches the universe in infrared from near the L2 point, 1.5 million km from Earth on the side away from the Sun.
+  links: [https://science.nasa.gov/mission/webb/]
+
 - id: cassini
   name: Cassini
   agency: NASA / ESA / ASI
@@ -179,3 +287,152 @@
     es: Estudió Saturno, sus anillos y sus lunas durante 13 años. Descubrió géiseres en Encélado y dejó la sonda Huygens en Titán. Terminó zambulléndose en el planeta para no contaminar sus lunas.
     en: Studied Saturn, its rings and its moons for 13 years. It found geysers on Enceladus and set the Huygens probe down on Titan, then ended by plunging into the planet so as not to contaminate its moons.
   links: [https://science.nasa.gov/mission/cassini/]
+
+- id: galileo
+  name: Galileo
+  agency: NASA
+  launch: 1989-10-18
+  target: { es: Júpiter, en: Jupiter }
+  status: ended
+  horizons: '-77'
+  coverage: { from: 1989-10-20, to: 2003-09-21 }
+  milestones:
+    - {
+        date: 1990-02-10,
+        encounter: true,
+        es: Pasa por Venus para tomar impulso,
+        en: Swings past Venus for a boost,
+      }
+    - {
+        date: 1990-12-08,
+        encounter: true,
+        es: Pasa por la Tierra para tomar impulso,
+        en: Swings past Earth for a boost,
+      }
+    - {
+        date: 1991-10-29,
+        encounter: true,
+        es: Pasa por el asteroide Gaspra,
+        en: Flies past the asteroid Gaspra,
+      }
+    - {
+        date: 1992-12-08,
+        encounter: true,
+        es: Pasa otra vez por la Tierra,
+        en: Swings past Earth again,
+      }
+    - {
+        date: 1993-08-28,
+        encounter: true,
+        es: Pasa por el asteroide Ida,
+        en: Flies past the asteroid Ida,
+      }
+    - {
+        date: 1995-12-07,
+        encounter: true,
+        es: Entra en órbita de Júpiter,
+        en: Enters orbit around Jupiter,
+      }
+    - {
+        date: 2003-09-21,
+        es: Se hunde en Júpiter y termina la misión,
+        en: 'Plunges into Jupiter, ending the mission',
+      }
+  blurb:
+    es: La primera nave en orbitar Júpiter. Soltó una sonda en su atmósfera y encontró indicios de un océano bajo el hielo de Europa. En 2003 la hundieron en Júpiter para no contaminar esa luna.
+    en: The first spacecraft to orbit Jupiter. It dropped a probe into its atmosphere and found signs of an ocean under Europa's ice. In 2003 it was sent into Jupiter so as not to contaminate that moon.
+  links: [https://science.nasa.gov/mission/galileo/]
+
+- id: rosetta
+  name: Rosetta
+  agency: ESA
+  launch: 2004-03-02
+  target: { es: el cometa 67P, en: comet 67P }
+  status: ended
+  horizons: '-226'
+  coverage: { from: 2004-03-03, to: 2016-09-30 }
+  milestones:
+    - {
+        date: 2005-03-04,
+        encounter: true,
+        es: Pasa por la Tierra para tomar impulso,
+        en: Swings past Earth for a boost,
+      }
+    - {
+        date: 2007-02-25,
+        encounter: true,
+        es: Pasa por Marte para tomar impulso,
+        en: Swings past Mars for a boost,
+      }
+    - {
+        date: 2007-11-13,
+        encounter: true,
+        es: Pasa otra vez por la Tierra,
+        en: Swings past Earth again,
+      }
+    - {
+        date: 2008-09-05,
+        encounter: true,
+        es: Pasa por el asteroide Šteins,
+        en: Flies past the asteroid Šteins,
+      }
+    - {
+        date: 2009-11-13,
+        encounter: true,
+        es: Pasa por la Tierra por tercera vez,
+        en: Swings past Earth a third time,
+      }
+    - {
+        date: 2010-07-10,
+        encounter: true,
+        es: Pasa por el asteroide Lutecia,
+        en: Flies past the asteroid Lutetia,
+      }
+    - { date: 2014-08-06, es: Llega al cometa 67P, en: Arrives at comet 67P }
+    - {
+        date: 2014-11-12,
+        es: Posa el módulo Philae sobre el cometa,
+        en: Sets the Philae lander down on the comet,
+      }
+    - {
+        date: 2015-08-13,
+        es: El cometa pasa por su punto más cercano al Sol,
+        en: The comet passes closest to the Sun,
+      }
+    - {
+        date: 2016-09-30,
+        es: Se posa sobre el cometa y termina la misión,
+        en: 'Touches down on the comet, ending the mission',
+      }
+  blurb:
+    es: La primera nave en orbitar un cometa y en posar un módulo sobre él, Philae, en 2014. Acompañó al cometa 67P en su paso por el Sol y terminó posándose sobre él en 2016.
+    en: The first spacecraft to orbit a comet and set a lander on it, Philae, in 2014. It rode along with comet 67P past the Sun and ended by touching down on it in 2016.
+  links: [https://www.esa.int/Science_Exploration/Space_Science/Rosetta]
+
+- id: dawn
+  name: Dawn
+  agency: NASA
+  launch: 2007-09-27
+  target: { es: Vesta y Ceres, en: Vesta and Ceres }
+  status: ended
+  horizons: '-203'
+  coverage: { from: 2007-09-28, to: 2018-11-01 }
+  milestones:
+    - {
+        date: 2009-02-18,
+        encounter: true,
+        es: Pasa por Marte para tomar impulso,
+        en: Swings past Mars for a boost,
+      }
+    - { date: 2011-07-16, es: Entra en órbita de Vesta, en: Enters orbit around Vesta }
+    - { date: 2012-09-05, es: Deja Vesta rumbo a Ceres, en: Leaves Vesta for Ceres }
+    - { date: 2015-03-06, es: Entra en órbita de Ceres, en: Enters orbit around Ceres }
+    - {
+        date: 2018-11-01,
+        es: Se queda sin combustible y termina la misión,
+        en: 'Runs out of fuel, ending the mission',
+      }
+  blurb:
+    es: La única nave que orbitó dos cuerpos del cinturón de asteroides, Vesta y después Ceres, gracias a su propulsión eléctrica. Se quedó sin combustible en 2018 y sigue en órbita de Ceres.
+    en: The only spacecraft to orbit two bodies in the asteroid belt, Vesta and then Ceres, thanks to electric propulsion. It ran out of fuel in 2018 and remains in orbit around Ceres.
+  links: [https://science.nasa.gov/mission/dawn/]
