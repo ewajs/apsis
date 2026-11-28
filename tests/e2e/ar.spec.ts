@@ -107,6 +107,20 @@ test('hands the solar system, as it is now, to Quick Look as a tabletop', async 
   const handoff = page.locator('a[rel="ar"][data-ar="quick-look"]');
   await expect(handoff).toBeAttached({ timeout: 30_000 });
   expect(await handoff.getAttribute('href')).toMatch(/^blob:/);
+  // Each body where the table puts it: Earth moved off the centre and scaled down to a
+  // bead (USDZ is an uncompressed zip, so its text layer reads as it is).
+  const usda = await page.evaluate(
+    async (href) => {
+      const bytes = await (await fetch(href)).arrayBuffer();
+      return new TextDecoder('latin1').decode(bytes);
+    },
+    (await handoff.getAttribute('href'))!,
+  );
+  const earth = /def Xform "earth[^"]*"[^]*?xformOp:transform = (\([^\n]*\))/.exec(usda);
+  expect(earth).not.toBeNull();
+  const [scaleX, , , , , , , , , , , , x, , z] = earth![1]!.match(/-?[\d.e-]+/g)!.map(Number);
+  expect(scaleX).toBeLessThan(0.1);
+  expect(Math.hypot(x!, z!)).toBeGreaterThan(0.01);
 });
 
 test('offers the tabletop only where a phone can show it', async ({ page }, testInfo) => {
