@@ -102,6 +102,8 @@ export async function fetchTrack(
 
 /** Hours either side of an orbiter's periapsis sampled hourly (ADR 0015). */
 export const PERIAPSIS_HOURS = 12;
+/** Only orbits longer than this (two days, in seconds) get hourly periapsis samples. */
+const PERIAPSIS_MIN_PERIOD_S = 2 * 86_400;
 
 /**
  * An orbiter's daily samples with hourly ones around each periapsis between `start` and
@@ -117,6 +119,10 @@ async function withPeriapses(
   const horizonsTime = (tdb: number) =>
     new Date(Date.UTC(2000, 0, 1, 12) + tdb * 1000).toISOString().slice(0, 16).replace('T', ' ');
   const [from, to] = [Date.parse(`${start}T00:00Z`), Date.parse(`${stop}T00:00Z`)];
+  // Only long, eccentric orbits need it: a two-hour orbit (a Mars orbiter) would mean a
+  // dozen extra requests a day, and its daily elements are already close.
+  const [first] = daily;
+  if (!first || 360 / first[7] < PERIAPSIS_MIN_PERIOD_S) return daily;
   let samples = daily;
   for (const periapsis of periapsisTimes(daily)) {
     const ms = Date.UTC(2000, 0, 1, 12) + periapsis * 1000;

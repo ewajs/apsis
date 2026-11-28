@@ -56,20 +56,26 @@ Checked 2026-11-28 (5.1). NASA's models carry no copyright ("free and without
 copyright"; NASA credited as the source). ESA's are not usable here: Scifleet forbids
 redistribution and derivative works, the SPICE models are non-commercial (ADR 0013).
 
-| Spacecraft     | Source                                       | Credit                          | Size   |
-| -------------- | -------------------------------------------- | ------------------------------- | ------ |
-| Juno           | science.nasa.gov 3D model                    | NASA VTAD                       | 0.9 MB |
-| Europa Clipper | science.nasa.gov 3D model, simplified to 35% | NASA VTAD                       | 4.4 MB |
-| Psyche         | ours (no clean free source)                  | Apsis                           | small  |
-| Parker         | science.nasa.gov 3D model                    | NASA VTAD                       | 0.7 MB |
-| Voyager 1      | science.nasa.gov 3D model                    | NASA VTAD                       | 0.4 MB |
-| New Horizons   | science.nasa.gov 3D model                    | NASA VTAD                       | 0.3 MB |
-| BepiColombo    | ours (ESA's terms don't allow it)            | Apsis                           | small  |
-| James Webb     | nasa/NASA-3D-Resources, model B              | NASA/Christopher R. Meaney      | 1.4 MB |
-| Cassini        | science.nasa.gov 3D model                    | NASA VTAD                       | 0.6 MB |
-| Galileo        | nasa/NASA-3D-Resources, recoloured           | NASA/JPL/Solar System Simulator | 0.2 MB |
-| Rosetta        | nasa/NASA-3D-Resources                       | NASA                            | 0.4 MB |
-| Dawn           | nasa/NASA-3D-Resources, cells recoloured     | NASA/Brian E. Kumanchik         | 0.3 MB |
+| Spacecraft     | Source                                                          | Credit                          | Size   |
+| -------------- | --------------------------------------------------------------- | ------------------------------- | ------ |
+| Juno           | science.nasa.gov 3D model                                       | NASA VTAD                       | 0.9 MB |
+| Europa Clipper | science.nasa.gov 3D model, simplified to 35%                    | NASA VTAD                       | 4.4 MB |
+| Psyche         | ours (no clean free source)                                     | Apsis                           | small  |
+| Parker         | science.nasa.gov 3D model                                       | NASA VTAD                       | 0.7 MB |
+| Voyager 1      | science.nasa.gov 3D model                                       | NASA VTAD                       | 0.4 MB |
+| New Horizons   | science.nasa.gov 3D model                                       | NASA VTAD                       | 0.3 MB |
+| BepiColombo    | ours (ESA's terms don't allow it)                               | Apsis                           | small  |
+| James Webb     | nasa/NASA-3D-Resources, model B                                 | NASA/Christopher R. Meaney      | 1.4 MB |
+| Cassini        | science.nasa.gov 3D model                                       | NASA VTAD                       | 0.6 MB |
+| Galileo        | nasa/NASA-3D-Resources, recoloured                              | NASA/JPL/Solar System Simulator | 0.2 MB |
+| Rosetta        | nasa/NASA-3D-Resources                                          | NASA                            | 0.4 MB |
+| Dawn           | nasa/NASA-3D-Resources, cells recoloured                        | NASA/Brian E. Kumanchik         | 0.3 MB |
+| MRO            | science.nasa.gov Mars 3D resources                              | NASA                            | 0.3 MB |
+| MAVEN          | science.nasa.gov Mars 3D resources                              | NASA                            | 1.0 MB |
+| Mars Odyssey   | science.nasa.gov Mars 3D resources (antenna's pose approximate) | NASA                            | 0.5 MB |
+
+Mars Express, TGO and Hope have no free model yet (ESA's and the UAE's terms, ADR
+0013): markers for now.
 
 ## Our own
 

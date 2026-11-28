@@ -157,7 +157,7 @@ The owner's priority: models and AR first, and they should look stunning (up to 
       small bodies ("required masses not defined"); they need elements from positions
       and a body's mass, and Dawn two centres.
 
-- [ ] **7.5 Mars orbiters** (time-boxed): MRO, MAVEN, Mars Express, TGO, Odyssey, and
+- [x] **7.5 Mars orbiters** (time-boxed): MRO, MAVEN, Mars Express, TGO, Odyssey, and
       others Horizons has.
 - [ ] **7.6 Earth orbit** (time-boxed): the ISS, Hubble and a few more, from CelesTrak
       orbital data fetched by CI (free, no key, once a day), propagated in `core` with an
