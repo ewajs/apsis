@@ -150,7 +150,7 @@ The owner's priority: models and AR first, and they should look stunning (up to 
 - [x] **7.3 Small bodies.** Pluto, Ceres, Vesta, 67P, Arrokoth, Psyche, Didymos; real
       shapes where a free shape model exists. Done as spheres; shape models (NASA has
       several) are for a later step.
-- [ ] **7.4 Orbiters from daily elements.** Osculating elements once a day from
+- [x] **7.4 Orbiters from daily elements.** Osculating elements once a day from
       Horizons, propagated in between (tiny data; disclosed as computed): Juno's
       perijoves, Cassini's Grand Finale, BepiColombo at Mercury, Dawn, Rosetta at 67P.
       Dawn (Vesta, Ceres) and Rosetta (67P) deferred: Horizons gives no elements around

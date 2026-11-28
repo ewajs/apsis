@@ -18,6 +18,7 @@ added and corrected through pull requests:
   status: active # active | ended
   horizons: '-61' # Horizons ID, or null with `noEphemeris` saying why
   coverage: { from: 2011-08-06, to: 2028-09-01 } # from Horizons (docs/guides/data.md)
+  orbiting: { body: jupiter, from: 2016-07-06 } # while it circles a planet (ADR 0015)
   milestones: # in date order; a day, a month or a year
     - {
         date: 2016-07-05,

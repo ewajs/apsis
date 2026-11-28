@@ -3,7 +3,7 @@
  * User-Agent, retries with backoff on 500/503 and network errors (ADR 0002).
  */
 import { assertValidSamples, mergeSamples, type Sample } from '../../src/core/ephemeris.ts';
-import type { ElementSample } from '../../src/core/elements.ts';
+import { periapsisTimes, type ElementSample } from '../../src/core/elements.ts';
 import {
   elementSeriesQuery,
   HORIZONS_API,
@@ -72,9 +72,10 @@ export async function fetchTrack(
   stop: string,
 ): Promise<ElementSample[]> {
   if (!body.track) return [];
-  if (body.coverage) {
-    if (body.coverage.from > start) start = body.coverage.from;
-    if (body.coverage.to < stop) stop = body.coverage.to;
+  // Clipped to the coverage, and to the track's own dates (an orbiter at its planet).
+  for (const span of [body.coverage, body.track]) {
+    if (span?.from && span.from > start) start = span.from;
+    if (span?.to && span.to < stop) stop = span.to;
   }
   if (start >= stop) return [];
   const query = elementSeriesQuery({
@@ -84,14 +85,55 @@ export async function fetchTrack(
     step: body.track.step ?? '1d',
     center: body.track.centerCode,
   });
+  // Only closed orbits: on the day of an arrival the path can still be hyperbolic.
   const samples = parseElementSeries(
     await fetchJson(`${HORIZONS_API}?${new URLSearchParams(query)}`),
-  );
-  samples.forEach((sample, i) => {
-    if (!sample.every(Number.isFinite) || (i > 0 && sample[0] <= samples[i - 1]![0])) {
+  ).filter(([, a, e]) => e < 1 && a > 0);
+  // An orbiter whips past its planet at periapsis: hourly samples around each pass.
+  const merged =
+    body.kind === 'spacecraft' ? await withPeriapses(body, samples, start, stop) : samples;
+  merged.forEach((sample, i) => {
+    if (!sample.every(Number.isFinite) || (i > 0 && sample[0] <= merged[i - 1]![0])) {
       throw new Error(`${body.id}: track sample ${i} is not in order or not finite`);
     }
   });
+  return merged;
+}
+
+/** Hours either side of an orbiter's periapsis sampled hourly (ADR 0015). */
+export const PERIAPSIS_HOURS = 12;
+
+/**
+ * An orbiter's daily samples with hourly ones around each periapsis between `start` and
+ * `stop`: daily elements put Juno 6,000 km off near Jupiter's cloud tops, where it
+ * passes 4,000 km up.
+ */
+async function withPeriapses(
+  body: Body,
+  daily: ElementSample[],
+  start: string,
+  stop: string,
+): Promise<ElementSample[]> {
+  const horizonsTime = (tdb: number) =>
+    new Date(Date.UTC(2000, 0, 1, 12) + tdb * 1000).toISOString().slice(0, 16).replace('T', ' ');
+  const [from, to] = [Date.parse(`${start}T00:00Z`), Date.parse(`${stop}T00:00Z`)];
+  let samples = daily;
+  for (const periapsis of periapsisTimes(daily)) {
+    const ms = Date.UTC(2000, 0, 1, 12) + periapsis * 1000;
+    if (ms < from || ms > to) continue;
+    const span = PERIAPSIS_HOURS * 3600;
+    const query = elementSeriesQuery({
+      horizonsId: body.horizonsId,
+      start: horizonsTime(periapsis - span),
+      stop: horizonsTime(periapsis + span),
+      step: '1h',
+      center: body.track!.centerCode,
+    });
+    const fine = parseElementSeries(
+      await fetchJson(`${HORIZONS_API}?${new URLSearchParams(query)}`),
+    ).filter(([, a, e]) => e < 1 && a > 0);
+    samples = mergeSamples(samples, fine);
+  }
   return samples;
 }
 

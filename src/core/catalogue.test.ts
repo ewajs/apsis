@@ -172,3 +172,18 @@ describe('bilingual text', () => {
     ]);
   });
 });
+
+describe('orbiting', () => {
+  it('accepts a planet and dates, and refuses what isn’t', () => {
+    const entry = { ...valid(), orbiting: { body: 'jupiter', from: '2016-07-05' } };
+    expect(problemsOf([entry])).toEqual([]);
+    expect(problemsOf([{ ...valid(), orbiting: { body: 'jupiter' } }])).toEqual([
+      'entry 1 (juno): orbiting needs body (a planet id) and from (YYYY-MM-DD)',
+    ]);
+    expect(
+      problemsOf([
+        { ...valid(), orbiting: { body: 'jupiter', from: '2016-07-05', to: '2016-01-01' } },
+      ]),
+    ).toEqual(['entry 1 (juno): orbiting.to must be a YYYY-MM-DD after orbiting.from']);
+  });
+});

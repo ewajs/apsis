@@ -93,3 +93,20 @@ export function sampleOrbit(sample: ElementSample): OrbitalElements {
     trueAnomalyDeg: trueAnomaly / DEG,
   };
 }
+
+/**
+ * When a body on these elliptic samples next passes its periapsis after each one, in
+ * TDB seconds, without repeats (to the hour): where an orbiter moves fastest and daily
+ * samples fall short, so the data takes finer ones around them (ADR 0015).
+ */
+export function periapsisTimes(samples: readonly ElementSample[]): number[] {
+  const times: number[] = [];
+  for (const [t, , , , , , m, n] of samples) {
+    if (!(n > 0)) continue;
+    // Degrees still to go to the next periapsis, at n degrees a second.
+    const ahead = (360 - (((m % 360) + 360) % 360)) % 360;
+    const next = t + ahead / n;
+    if (!times.some((known) => Math.abs(known - next) < 3600)) times.push(next);
+  }
+  return times.sort((a, b) => a - b);
+}
