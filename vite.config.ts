@@ -69,6 +69,13 @@ export default defineConfig({
             handler: 'StaleWhileRevalidate',
             options: { cacheName: 'apsis-data' },
           },
+          // Spacecraft models (ADR 0013): a few MB each, so never precached; kept once
+          // seen, for offline close-ups, and refreshed in the background.
+          {
+            urlPattern: /\/models\/.+\.(glb|json)$/,
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'apsis-models' },
+          },
         ],
       },
     }),

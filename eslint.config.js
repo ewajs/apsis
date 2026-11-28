@@ -83,7 +83,17 @@ export default [
             allow('scripts', packages('@playwright/test', 'yaml')),
             // The model pipeline: three's geometries for our own models, gltf-transform
             // and meshoptimizer to write and compress GLB files (ADR 0013).
-            allow('scripts', packages('three', 'three/**', '@gltf-transform/*', 'meshoptimizer')),
+            allow(
+              'scripts',
+              packages(
+                'three',
+                'three/**',
+                '@gltf-transform/*',
+                'meshoptimizer',
+                'draco3dgltf',
+                'sharp',
+              ),
+            ),
             {
               from: { file: { categories: 'test' } },
               allow: { to: packages('vitest') },

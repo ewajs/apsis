@@ -8,6 +8,98 @@
       "credit": "Apsis",
       "licence": "MIT",
       "ours": true
+    },
+    {
+      "id": "juno",
+      "file": "juno.glb",
+      "lengthM": 20.1,
+      "credit": "NASA VTAD",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://science.nasa.gov/resource/juno-3d-model/"
+    },
+    {
+      "id": "europa-clipper",
+      "file": "europa-clipper.glb",
+      "lengthM": 30.5,
+      "credit": "NASA VTAD",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://science.nasa.gov/resource/europa-clipper-3d-model/"
+    },
+    {
+      "id": "parker-solar-probe",
+      "file": "parker-solar-probe.glb",
+      "lengthM": 3,
+      "credit": "NASA VTAD",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://science.nasa.gov/resource/parker-solar-probe-3d-model/",
+      "pointing": "sun"
+    },
+    {
+      "id": "voyager-1",
+      "file": "voyager-1.glb",
+      "lengthM": 13,
+      "credit": "NASA VTAD",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://science.nasa.gov/resource/voyager-3d-model/"
+    },
+    {
+      "id": "new-horizons",
+      "file": "new-horizons.glb",
+      "lengthM": 2.7,
+      "credit": "NASA VTAD",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://science.nasa.gov/resource/new-horizons-3d-model/"
+    },
+    {
+      "id": "jwst",
+      "file": "jwst.glb",
+      "lengthM": 21.2,
+      "credit": "NASA/Christopher R. Meaney",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://science.nasa.gov/3d-resources/james-webb-space-telescope-b/",
+      "pointing": "sun"
+    },
+    {
+      "id": "cassini",
+      "file": "cassini.glb",
+      "lengthM": 11,
+      "credit": "NASA VTAD",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://science.nasa.gov/resource/cassini-3d-model/"
+    },
+    {
+      "id": "galileo",
+      "file": "galileo.glb",
+      "lengthM": 11,
+      "credit": "NASA/JPL/Solar System Simulator",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://science.nasa.gov/3d-resources/galileo/"
+    },
+    {
+      "id": "rosetta",
+      "file": "rosetta.glb",
+      "lengthM": 32,
+      "credit": "NASA",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://github.com/nasa/NASA-3D-Resources"
+    },
+    {
+      "id": "dawn",
+      "file": "dawn.glb",
+      "lengthM": 19.7,
+      "credit": "NASA/Brian E. Kumanchik",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://science.nasa.gov/3d-resources/dawn/"
     }
   ]
 }

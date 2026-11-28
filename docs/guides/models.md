@@ -23,7 +23,41 @@ built by `scripts/models/own/<id>.ts`). For each one it:
    checks.
 
 The outputs are committed. To add a spacecraft: find a free model (or write a builder
-from `own/parts.ts`), add its entry, run the script, and look at it close up in the app.
+from `own/parts.ts`), add its entry, run the script, and check it:
+
+- **Its axes:** with `npm run dev`, open `/apsis/scripts/models/preview.html?id=<id>`. It
+  shows the built model from four sides with the body frame's axes (+X red, +Y green,
+  +Z blue). The antenna should face +Z and the arrays run along +Y; adjust `rotate`
+  until they do. Spacecraft that fly with a shield to the Sun (Parker, James Webb) put
+  the shield on +Z and say `pointing: sun`.
+- **Its colours:** a source with placeholder colours (Galileo's "black" bus is blue)
+  takes ours, by material name: `materials: { 'bus:black': black }`, any material in
+  `own/parts.ts`. Its texture, if any, goes.
+- **Its look in the app,** close up, under the Sun.
+
+Heavy sources take `simplify` (the fraction of triangles to keep: Europa Clipper keeps
+35% of 204,000). Textures become WebP, at most 2048 px; the script warns above 5 MB.
+
+## The models, and where they come from
+
+Checked 2026-11-28 (5.1). NASA's models carry no copyright ("free and without
+copyright"; NASA credited as the source). ESA's are not usable here: Scifleet forbids
+redistribution and derivative works, the SPICE models are non-commercial (ADR 0013).
+
+| Spacecraft     | Source                                       | Credit                          | Size   |
+| -------------- | -------------------------------------------- | ------------------------------- | ------ |
+| Juno           | science.nasa.gov 3D model                    | NASA VTAD                       | 0.9 MB |
+| Europa Clipper | science.nasa.gov 3D model, simplified to 35% | NASA VTAD                       | 4.4 MB |
+| Psyche         | ours (no clean free source)                  | Apsis                           | small  |
+| Parker         | science.nasa.gov 3D model                    | NASA VTAD                       | 0.7 MB |
+| Voyager 1      | science.nasa.gov 3D model                    | NASA VTAD                       | 0.4 MB |
+| New Horizons   | science.nasa.gov 3D model                    | NASA VTAD                       | 0.3 MB |
+| BepiColombo    | ours (ESA's terms don't allow it)            | Apsis                           | small  |
+| James Webb     | nasa/NASA-3D-Resources, model B              | NASA/Christopher R. Meaney      | 1.4 MB |
+| Cassini        | science.nasa.gov 3D model                    | NASA VTAD                       | 0.6 MB |
+| Galileo        | nasa/NASA-3D-Resources, recoloured           | NASA/JPL/Solar System Simulator | 0.2 MB |
+| Rosetta        | nasa/NASA-3D-Resources                       | NASA                            | 0.4 MB |
+| Dawn           | nasa/NASA-3D-Resources, cells recoloured     | NASA/Brian E. Kumanchik         | 0.3 MB |
 
 ## Our own
 
@@ -44,7 +78,9 @@ tuned for one hard light, the Sun. Builders stay short; a model is a few dozen p
   (`nearPlaneKm`: a thousandth of its distance, from 1 mm to 1 km), and the closest the
   camera may come is 0.8 model-lengths.
 - **Pose:** `defaultAttitude` points +Z at Earth and rolls the model so the Sun lies in
-  its x–z plane; the scene turns that into a rotation (ecliptic to scene axes).
+  its x–z plane (or, with `pointing: sun`, +Z at the Sun with Earth across); the scene
+  turns that into a rotation (ecliptic to scene axes).
 - **Close-up:** the card's button calls `closeUp(true)`: a flight to 2.2 model-lengths on
   the sunlit side. From the map, 3D opens first. While a model fills the view the
-  canvas carries `data-model="<id>"`, and the spacecraft's label steps aside.
+  canvas carries `data-model="<id>"`, and the spacecraft's label steps aside, as do
+  orbit lines and trails: from 50 m away they would cross the sky as stray lines.

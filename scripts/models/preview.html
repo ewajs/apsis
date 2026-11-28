@@ -1,0 +1,96 @@
+<!doctype html>
+<!--
+  Model preview, for adding a model (docs/guides/models.md): with `npm run dev`, open
+  /apsis/scripts/models/preview.html?id=juno. It shows public/models/<id>.glb as the
+  pipeline wrote it, from four sides, with the body frame's axes: +X red, +Y green,
+  +Z blue. The high-gain antenna should face +Z (blue), the arrays run along +Y (green);
+  fix `rotate` in data/models.yaml until they do.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Model preview</title>
+    <style>
+      body {
+        margin: 0;
+        background: #05070c;
+        color: #ccd;
+        font: 13px system-ui;
+      }
+      main {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 2px;
+        height: 100vh;
+      }
+      figure {
+        position: relative;
+        margin: 0;
+      }
+      figcaption {
+        position: absolute;
+        left: 8px;
+        top: 6px;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <main id="views"></main>
+    <script type="module">
+      import * as THREE from 'three';
+      import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+      import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+      import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+      const id = new URLSearchParams(location.search).get('id') ?? 'psyche';
+      const index = await (await fetch(`/apsis/models/index.json`)).json();
+      const entry = index.models.find((model) => model.id === id);
+      const gltf = await new GLTFLoader()
+        .setMeshoptDecoder(MeshoptDecoder)
+        .loadAsync(`/apsis/models/${entry.file}`);
+      const size = entry.lengthM;
+      const views = [
+        ['from +Z (the antenna should face you)', [0, 0, 1]],
+        ['from +X', [1, 0, 0]],
+        ['from +Y (along the arrays)', [0, 1, 0]],
+        ['three-quarters', [1, 0.7, 1.2]],
+      ];
+      for (const [caption, direction] of views) {
+        const figure = document.createElement('figure');
+        const canvas = document.createElement('canvas');
+        figure.append(
+          canvas,
+          Object.assign(document.createElement('figcaption'), { textContent: `${id}: ${caption}` }),
+        );
+        document.getElementById('views').append(figure);
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        const { width, height } = figure.getBoundingClientRect();
+        renderer.setSize(width, height, false);
+        const scene = new THREE.Scene();
+        scene.environment = new THREE.PMREMGenerator(renderer).fromScene(
+          new RoomEnvironment(),
+          0.04,
+        ).texture;
+        scene.environmentIntensity = 0.45;
+        const sun = new THREE.DirectionalLight(0xffffff, 2.5);
+        sun.position.set(1, 1, 2);
+        scene.add(sun, gltf.scene.clone(), new THREE.AxesHelper(size * 0.75));
+        const camera = new THREE.PerspectiveCamera(35, width / height, size / 100, size * 10);
+        camera.position
+          .set(...direction)
+          .normalize()
+          .multiplyScalar(size * 1.8);
+        camera.up.set(...(direction[1] === 1 ? [0, 0, 1] : [0, 1, 0]));
+        camera.lookAt(0, 0, 0);
+        renderer.render(scene, camera);
+      }
+      document.body.dataset.ready = 'true';
+    </script>
+  </body>
+</html>

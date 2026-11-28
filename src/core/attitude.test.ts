@@ -21,4 +21,12 @@ describe('defaultAttitude', () => {
     expect(isFrame(axes)).toBe(true);
     expect(dot(axes.z, [-1, 0, 0])).toBeCloseTo(1, 12);
   });
+
+  it('turns a shield to the Sun, with Earth across, for spacecraft that fly that way', () => {
+    const at: Vector3 = [3e7, 4e7, 0];
+    const axes = defaultAttitude(at, earth, 'sun');
+    expect(isFrame(axes)).toBe(true);
+    expect(dot(axes.z, normalize([-3, -4, 0]))).toBeCloseTo(1, 12);
+    expect(dot(axes.y, normalize(subtract(earth, at)))).toBeCloseTo(0, 12);
+  });
 });

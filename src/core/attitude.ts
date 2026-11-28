@@ -4,7 +4,7 @@
  * frame's +Z) towards Earth, rolled so the Sun lies across the solar arrays' axis (+Y),
  * where arrays that turn about that axis can face it. Pure.
  */
-import { cross, dot, normalize, scale, subtract, type Vector3 } from './math.ts';
+import { cross, dot, normalize, subtract, type Vector3 } from './math.ts';
 
 /** A body frame: where its x, y and z axes point, as unit vectors in the ecliptic frame. */
 export type Axes = { x: Vector3; y: Vector3; z: Vector3 };
@@ -13,20 +13,30 @@ export type Axes = { x: Vector3; y: Vector3; z: Vector3 };
 const NORTH: Vector3 = [0, 0, 1];
 
 /**
- * The default pose of a spacecraft at `at`, with Earth at `earth` (heliocentric km).
- * When Earth and the Sun are in line as seen from it (Juno near opposition), the arrays'
- * axis lies in the ecliptic instead.
+ * The pose of a spacecraft at `at` whose +Z faces `primary`, rolled so `secondary` lies
+ * in its x–z plane, across the arrays' axis (+Y). Positions are heliocentric km. When
+ * the two line up as seen from it, the arrays' axis lies in the ecliptic instead.
  */
-export function defaultAttitude(at: Vector3, earth: Vector3): Axes {
-  const z = normalize(subtract(earth, at));
-  const toSun = normalize(scale(at, -1));
-  // y ⟂ both: the Sun then lies in the x–z plane, across the arrays' axis.
-  let y = cross(z, toSun);
+export function pointAt(at: Vector3, primary: Vector3, secondary: Vector3): Axes {
+  const z = normalize(subtract(primary, at));
+  let y = cross(z, normalize(subtract(secondary, at)));
   if (Math.hypot(...y) < 1e-6) y = cross(z, NORTH);
   if (Math.hypot(...y) < 1e-6) y = [0, 1, 0];
   y = normalize(y);
-  const x = cross(y, z);
-  return { x, y, z };
+  return { x: cross(y, z), y, z };
+}
+
+/**
+ * The default pose: the antenna to Earth with the Sun across the arrays (most
+ * spacecraft), or a shield to the Sun with Earth across (Parker, James Webb).
+ */
+export function defaultAttitude(
+  at: Vector3,
+  earth: Vector3,
+  pointing: 'earth' | 'sun' = 'earth',
+): Axes {
+  const sun: Vector3 = [0, 0, 0];
+  return pointing === 'sun' ? pointAt(at, sun, earth) : pointAt(at, earth, sun);
 }
 
 /** Whether three axes are a right-handed orthonormal frame (for tests and checks). */

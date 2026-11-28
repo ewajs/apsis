@@ -515,11 +515,15 @@ export class SolarScene {
       this.#camera.near = near;
       this.#camera.updateProjectionMatrix();
     }
+    // Close up to a model, orbits and trails would cross the sky as stray lines,
+    // hundreds of millions of km away: they step aside (as of last frame's state).
+    const closeUp = this.#drawn.find((drawn) => drawn.body.id === this.#focus)?.modelShown;
     for (const drawn of this.#drawn) {
       const { body, mesh, orbit, trail } = drawn;
       const at = states.get(body.id);
       mesh.visible = at !== undefined;
-      if (trail) trail.visible = at !== undefined;
+      if (orbit) orbit.visible = !closeUp;
+      if (trail) trail.visible = at !== undefined && !closeUp;
       if (!at) continue;
       mesh.position.set(...toScene(subtract(at, origin)));
       const minimum = MINIMUM_PX[body.id === 'sun' ? 'sun' : body.kind];
@@ -621,7 +625,7 @@ export class SolarScene {
       model.position.copy(drawn.mesh.position);
       // Antenna to Earth, the Sun across the arrays (core/attitude.ts).
       if (shows && earth) {
-        const { x, y, z } = defaultAttitude(at, earth);
+        const { x, y, z } = defaultAttitude(at, earth, this.#models.pointing(id));
         const axis = (v: Vector3) => new THREE.Vector3(...toScene(v));
         model.quaternion.setFromRotationMatrix(
           new THREE.Matrix4().makeBasis(axis(x), axis(y), axis(z)),

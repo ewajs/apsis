@@ -20,6 +20,13 @@ function collectErrors(page: Page): string[] {
   return errors;
 }
 
+/**
+ * How long to wait for pixels to show. Software WebGL draws a frame or two a second on a
+ * busy machine, and each check takes a screenshot; these tests are about what's drawn,
+ * not how fast.
+ */
+const PIXELS_MS = 20_000;
+
 /** How many pixels near the middle of the canvas look like `kind`. */
 async function countMiddlePixels(page: Page, kind: 'sun' | 'neptune'): Promise<number> {
   const canvas = page.locator('canvas[data-backend]');
@@ -55,7 +62,9 @@ test('shows the Sun and the planets in 3D', async ({ page }, testInfo) => {
   expect(expected).toContain(await canvas.getAttribute('data-backend'));
   await expect(canvas).toHaveAttribute('aria-label', /Sol y los planetas|Sun and the planets/);
   // The Sun, 12 px across at the least, sits in the middle.
-  await expect.poll(() => countMiddlePixels(page, 'sun'), { timeout: 10_000 }).toBeGreaterThan(20);
+  await expect
+    .poll(() => countMiddlePixels(page, 'sun'), { timeout: PIXELS_MS })
+    .toBeGreaterThan(20);
   expect(errors).toEqual([]);
 });
 
@@ -65,7 +74,7 @@ test('looks at Neptune up close without losing it (floating origin)', async ({
   await page.goto(sceneAddress(testInfo.project.name, '&focus=neptune'));
   await expect(page.locator('canvas[data-backend]')).toBeVisible({ timeout: 20_000 });
   await expect
-    .poll(() => countMiddlePixels(page, 'neptune'), { timeout: 10_000 })
+    .poll(() => countMiddlePixels(page, 'neptune'), { timeout: PIXELS_MS })
     .toBeGreaterThan(200);
 });
 
@@ -83,7 +92,7 @@ test('flies to what you pick, and picks what you tap', async ({ page }, testInfo
   await expect(page).toHaveURL(/focus=neptune/);
   await expect(page.locator('[data-label="neptune"]')).toHaveCSS('font-weight', '600');
   await expect
-    .poll(() => countMiddlePixels(page, 'neptune'), { timeout: 10_000 })
+    .poll(() => countMiddlePixels(page, 'neptune'), { timeout: PIXELS_MS })
     .toBeGreaterThan(200);
 });
 

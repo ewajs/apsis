@@ -14,11 +14,22 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { NodeIO, getBounds, type Document } from '@gltf-transform/core';
 import { ALL_EXTENSIONS, EXTMeshoptCompression } from '@gltf-transform/extensions';
-import { dedup, prune, quantize, reorder, weld } from '@gltf-transform/functions';
-import { MeshoptEncoder } from 'meshoptimizer';
+import {
+  dedup,
+  prune,
+  quantize,
+  reorder,
+  simplify,
+  textureCompress,
+  weld,
+} from '@gltf-transform/functions';
+import draco3d from 'draco3dgltf';
+import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
+import sharp from 'sharp';
 import { Euler, Quaternion } from 'three';
 import { parse } from 'yaml';
 import { parseModelIndex, type ModelEntry } from '../../src/core/models.ts';
+import { materials } from './own/parts.ts';
 import { threeToDocument } from './three-to-gltf.ts';
 
 /** One line of `data/models.yaml`. */
@@ -36,17 +47,37 @@ type Recipe = {
   rotate?: [number, number, number];
   /** Our own: built by `scripts/models/own/<id>.ts`. */
   own?: boolean;
+  /**
+   * Source materials (by name) to replace with ours from `own/parts.ts`, where a model
+   * comes with placeholder colours: `{ 'bus:black': black }`.
+   */
+  materials?: Record<string, keyof typeof materials>;
+  /** What its +Z faces in flight (`ModelEntry.pointing`); Earth when absent. */
+  pointing?: 'earth' | 'sun';
+  /**
+   * For a heavy source: keep about this fraction of its triangles (Meshopt's simplifier,
+   * which keeps the silhouette and the seams).
+   */
+  simplify?: number;
 };
+
+/** The size a model should stay under, in bytes (ADR 0013). */
+const BUDGET_BYTES = 5e6;
+/** Textures are recompressed to WebP, at most this many pixels on a side. */
+const TEXTURE_MAX_PX = 2048;
 
 const OUT = 'public/models';
 const CACHE = '.cache/models';
 
 const { values } = parseArgs({ options: { id: { type: 'string' } } });
 const recipes = parse(readFileSync('data/models.yaml', 'utf8')) as Recipe[];
-const io = new NodeIO()
-  .registerExtensions(ALL_EXTENSIONS)
-  .registerDependencies({ 'meshopt.encoder': MeshoptEncoder });
+// Several NASA files arrive Draco-compressed: decoded on reading, re-encoded as Meshopt.
+const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({
+  'meshopt.encoder': MeshoptEncoder,
+  'draco3d.decoder': await draco3d.createDecoderModule(),
+});
 await MeshoptEncoder.ready;
+await MeshoptSimplifier.ready;
 mkdirSync(OUT, { recursive: true });
 mkdirSync(CACHE, { recursive: true });
 
@@ -71,9 +102,11 @@ for (const recipe of recipes) {
     licence: recipe.licence,
     ours: recipe.own === true,
     ...(recipe.page && { source: recipe.page }),
+    ...(recipe.pointing && { pointing: recipe.pointing }),
   };
   entries.set(recipe.id, entry);
-  console.log(`  ${recipe.id.padEnd(20)} ${(bytes.byteLength / 1e6).toFixed(2)} MB`);
+  const over = bytes.byteLength > BUDGET_BYTES ? '  over the 5 MB budget' : '';
+  console.log(`  ${recipe.id.padEnd(20)} ${(bytes.byteLength / 1e6).toFixed(2)} MB${over}`);
 }
 
 const order = recipes.map((recipe) => recipe.id);
@@ -93,7 +126,7 @@ async function load(recipe: Recipe): Promise<Document> {
     return threeToDocument(build());
   }
   if (!recipe.url) throw new Error(`${recipe.id}: needs a url, or own: true`);
-  const cached = `${CACHE}/${recipe.id}${recipe.url.endsWith('.gltf') ? '.gltf' : '.glb'}`;
+  const cached = `${CACHE}/${recipe.id}.glb`;
   if (!existsSync(cached)) {
     const response = await fetch(recipe.url);
     if (!response.ok) throw new Error(`${recipe.id}: ${response.status} for ${recipe.url}`);
@@ -132,6 +165,19 @@ async function normalise(document: Document, recipe: Recipe): Promise<void> {
       (-k * (min[1] + max[1])) / 2,
       (-k * (min[2] + max[2])) / 2,
     ]);
+  for (const material of root.listMaterials()) {
+    const ours = recipe.materials?.[material.getName()];
+    if (!ours) continue;
+    const { color, metalness, roughness } = materials[ours];
+    material
+      .setBaseColorFactor([color.r, color.g, color.b, 1])
+      .setBaseColorTexture(null)
+      .setMetallicFactor(metalness)
+      .setRoughnessFactor(roughness);
+  }
+  for (const extension of root.listExtensionsUsed()) {
+    if (extension.extensionName === 'KHR_draco_mesh_compression') extension.dispose();
+  }
   document
     .createExtension(EXTMeshoptCompression)
     .setRequired(true)
@@ -140,6 +186,14 @@ async function normalise(document: Document, recipe: Recipe): Promise<void> {
     dedup(),
     prune(),
     weld(),
+    ...(recipe.simplify
+      ? [simplify({ simplifier: MeshoptSimplifier, ratio: recipe.simplify, error: 0.0005 })]
+      : []),
+    textureCompress({
+      encoder: sharp,
+      targetFormat: 'webp',
+      resize: [TEXTURE_MAX_PX, TEXTURE_MAX_PX],
+    }),
     reorder({ encoder: MeshoptEncoder }),
     quantize(),
   );
