@@ -1,9 +1,9 @@
 /**
- * Where a body goes on the 2D map: a top-down view of the ecliptic plane, with
- * distances from the Sun on a logarithmic or a linear scale (docs/guides/map.md).
- * Pure: positions in, unit-disc coordinates out.
+ * Where a body goes on a top-down view of the ecliptic plane, the 2D map's and the AR
+ * tabletop's: distances from the Sun on a logarithmic or a linear scale
+ * (docs/guides/map.md). Pure: positions in, unit-disc coordinates out.
  */
-import { KM_PER_AU } from '../core/units.ts';
+import { KM_PER_AU } from './units.ts';
 
 /** How the map turns distance from the Sun into distance from the centre. */
 export type MapScale = 'log' | 'linear';

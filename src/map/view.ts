@@ -3,7 +3,7 @@
  * middle, and the moves that change it (docs/guides/map.md). Pure: views in, new views
  * out. Screen points are CSS px from the middle of the map's free area, y down.
  */
-import type { MapPoint } from './projection.ts';
+import type { MapPoint } from '../core/projection.ts';
 
 /** How the map is framed: `centre` is the unit-disc point in the middle of the screen. */
 export type MapView = { zoom: number; centre: MapPoint };

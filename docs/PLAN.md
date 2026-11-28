@@ -135,9 +135,9 @@ The owner's priority: models and AR first, and they should look stunning (up to 
 - [x] **6.1 A spacecraft in your room.** Hand the model to the phone's AR viewer at real
       size: Scene Viewer on Android (GLB), Quick Look on iPhone (USDZ, made with
       three.js's exporter).
-- [ ] **6.2 A tabletop solar system.** The scene at the shown instant as a snapshot,
+- [x] **6.2 A tabletop solar system.** The scene at the shown instant as a snapshot,
       sizes enlarged and the scale stated, handed off the same way.
-- [ ] **6.3 Live AR,** only if the snapshot falls short (WebXR on Android).
+- [x] **6.3 Live AR,** only if the snapshot falls short (WebXR on Android).
 
 ## M7 — Close-ups (v0.7.0)
 

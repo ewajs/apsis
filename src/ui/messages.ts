@@ -31,3 +31,6 @@ export function scaleNote(view: View, trueScale: boolean): string {
     ? msg('Tamaños reales: casi todo es espacio vacío', { id: 'scene-scale-true-note' })
     : msg('Planetas agrandados para que se vean', { id: 'scene-scale-enlarged-note' });
 }
+
+/** "Close", for buttons the shell draws outside its components (the AR overlay). */
+export const closeLabel = (): string => msg('Cerrar', { id: 'close' });

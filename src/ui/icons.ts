@@ -24,6 +24,11 @@ export const icons = {
     icon(
       svg`<circle cx="12" cy="12" r="3"></circle><path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path>`,
     ),
+  /** A cube in a frame's corners: AR, the solar system on your table. */
+  ar: () =>
+    icon(
+      svg`<path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"></path><path d="m12 7 4.5 2.5v5L12 17l-4.5-2.5v-5zM12 12l4.5-2.5M12 12v5M12 12 7.5 9.5"></path>`,
+    ),
   /** A rising curve: the scale, log or true. */
   scale: () => icon(svg`<path d="M4 19c4-1 7-4 9-8s4-6 7-7"></path><path d="M4 4v15h16"></path>`),
 };
