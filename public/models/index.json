@@ -108,6 +108,33 @@
       "licence": "Public domain",
       "ours": false,
       "source": "https://science.nasa.gov/3d-resources/dawn/"
+    },
+    {
+      "id": "mro",
+      "file": "mro.glb",
+      "lengthM": 13.6,
+      "credit": "NASA",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://science.nasa.gov/3d-resources/"
+    },
+    {
+      "id": "maven",
+      "file": "maven.glb",
+      "lengthM": 11.4,
+      "credit": "NASA",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://science.nasa.gov/3d-resources/"
+    },
+    {
+      "id": "mars-odyssey",
+      "file": "mars-odyssey.glb",
+      "lengthM": 5.7,
+      "credit": "NASA",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://science.nasa.gov/3d-resources/"
     }
   ]
 }

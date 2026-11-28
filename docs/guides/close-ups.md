@@ -65,6 +65,12 @@ In 3D, while the track covers the instant, the spacecraft draws its current orbi
 the planet in its own colour, and its 30-day heliocentric trail (a jagged polygon of
 daily points around a planet) steps aside. Its card carries the "calculada" note.
 
+Around Mars (7.5): Mars Reconnaissance Orbiter, MAVEN (until it fell silent on 6 December
+2025), Mars Express, ExoMars TGO, Mars Odyssey and Hope, each from the day after its
+orbit insertion. Their two-hour orbits get no hourly periapsis samples (only orbits
+longer than two days do): a dozen extra requests a day for each, while their daily
+elements are already close. Tianwen-1 is left out: Horizons has only its cruise.
+
 Dawn (Vesta, Ceres) and Rosetta (67P) are deferred: Horizons gives no orbital elements
 around small bodies ("required masses not defined").
 

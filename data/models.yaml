@@ -101,3 +101,27 @@
   lengthM: 19.7
   rotate: [0, 0, 90]
   materials: { shiny_panel: cells }
+
+- id: mro
+  url: https://assets.science.nasa.gov/content/dam/science/psd/mars/resources/gltf_files/24884_MRO.glb
+  page: https://science.nasa.gov/3d-resources/
+  credit: NASA
+  licence: Public domain
+  lengthM: 13.6
+  rotate: [-90, -90, 0]
+
+- id: maven
+  url: https://assets.science.nasa.gov/content/dam/science/psd/mars/resources/gltf_files/24882_Maven.glb
+  page: https://science.nasa.gov/3d-resources/
+  credit: NASA
+  licence: Public domain
+  lengthM: 11.4
+  rotate: [90, 90, 0]
+
+- id: mars-odyssey
+  url: https://assets.science.nasa.gov/content/dam/science/psd/mars/resources/gltf_files/24885_Odyssey.glb
+  page: https://science.nasa.gov/3d-resources/
+  credit: NASA
+  licence: Public domain
+  lengthM: 5.7
+  rotate: [0, 0, 90]

@@ -243,6 +243,176 @@
     en: The largest space telescope. It watches the universe in infrared from near the L2 point, 1.5 million km from Earth on the side away from the Sun.
   links: [https://science.nasa.gov/mission/webb/]
 
+- id: mro
+  name: Mars Reconnaissance Orbiter
+  agency: NASA
+  launch: 2005-08-12
+  target: { es: Marte, en: Mars }
+  status: active
+  horizons: '-74'
+  coverage: { from: 2005-08-13, to: 2027-01-17 }
+  orbiting: { body: mars, from: 2006-03-11 }
+  milestones:
+    - { date: 2006-03-10, es: Entra en órbita de Marte, en: Enters orbit around Mars }
+    - { date: 2006-11-08, es: Empieza su ciencia, en: Begins its science mission }
+    - {
+        date: 2008-05-25,
+        es: Fotografía a Phoenix bajando en paracaídas,
+        en: Photographs Phoenix descending under its parachute,
+      }
+  blurb:
+    es: Orbita Marte desde 2006 con la cámara más potente mandada a otro planeta, que distingue objetos de alrededor de un metro. También es uno de los grandes repetidores de los róveres.
+    en: Orbiting Mars since 2006 with the most powerful camera sent to another planet, able to make out objects about a metre across. It is also one of the rovers' main relays.
+  links: [https://science.nasa.gov/mission/mars-reconnaissance-orbiter/]
+
+- id: maven
+  name: MAVEN
+  agency: NASA
+  launch: 2013-11-18
+  target: { es: Marte, en: Mars }
+  status: ended
+  horizons: '-202'
+  # Horizons runs to 2026-03-01, but past the loss of signal that is a prediction.
+  coverage: { from: 2013-11-19, to: 2025-12-06 }
+  orbiting: { body: mars, from: 2014-09-23, to: 2025-12-06 }
+  milestones:
+    - { date: 2014-09-22, es: Entra en órbita de Marte, en: Enters orbit around Mars }
+    - {
+        date: 2014-10-19,
+        es: Observa el paso cercano del cometa Siding Spring,
+        en: Watches comet Siding Spring pass close by,
+      }
+    - {
+        date: 2015-11-05,
+        es: Muestra cómo el viento solar le arranca la atmósfera a Marte,
+        en: Shows how the solar wind strips away Mars's atmosphere,
+      }
+    - {
+        date: 2025-12-06,
+        es: Se pierde el contacto al pasar detrás de Marte,
+        en: Contact is lost as it passes behind Mars,
+      }
+    - {
+        date: 2026-06-03,
+        es: La NASA da por terminada la misión,
+        en: NASA declares the mission over,
+      }
+  blurb:
+    es: Estudió la atmósfera alta de Marte durante más de once años y mostró cómo el viento solar se llevó buena parte del aire que el planeta tuvo alguna vez. Dejó de responder en diciembre de 2025.
+    en: Studied Mars's upper atmosphere for more than eleven years and showed how the solar wind carried off much of the air the planet once had. It fell silent in December 2025.
+  links: [https://science.nasa.gov/mission/maven/]
+
+- id: mars-express
+  name: Mars Express
+  agency: ESA
+  launch: 2003-06-02
+  target: { es: Marte, en: Mars }
+  status: active
+  horizons: '-41'
+  coverage: { from: 2003-06-03, to: 2032-12-31 }
+  orbiting: { body: mars, from: 2003-12-26 }
+  milestones:
+    - {
+        date: 2003-12-25,
+        es: 'Entra en órbita de Marte; su módulo Beagle 2 no da señales',
+        en: 'Enters orbit around Mars; its Beagle 2 lander is never heard from',
+      }
+    - {
+        date: 2004-01,
+        es: Confirma hielo de agua en el polo sur,
+        en: Confirms water ice at the south pole,
+      }
+    - { date: 2013-12-29, es: Pasa a 45 km de la luna Fobos, en: Passes 45 km from the moon Phobos }
+    - {
+        date: 2018-07-25,
+        es: Su radar encuentra indicios de agua líquida bajo el polo sur,
+        en: Its radar finds signs of liquid water under the south pole,
+      }
+  blurb:
+    es: La primera misión europea a Marte. Lo orbita desde 2003, mapea su superficie en 3D y su radar encontró indicios de agua líquida bajo el hielo del polo sur.
+    en: Europe's first mission to Mars. Orbiting it since 2003, it maps the surface in 3D, and its radar found signs of liquid water under the south polar ice.
+  links: [https://www.esa.int/Science_Exploration/Space_Science/Mars_Express]
+
+- id: exomars-tgo
+  name: ExoMars Trace Gas Orbiter
+  agency: ESA / Roscosmos
+  launch: 2016-03-14
+  target: { es: Marte, en: Mars }
+  status: active
+  horizons: '-143'
+  coverage: { from: 2016-03-15, to: 2039-01-03 }
+  orbiting: { body: mars, from: 2016-10-20 }
+  milestones:
+    - {
+        date: 2016-10-19,
+        es: 'Entra en órbita de Marte; el módulo Schiaparelli se estrella',
+        en: 'Enters orbit around Mars; the Schiaparelli lander crashes',
+      }
+    - {
+        date: 2017-03,
+        es: Empieza a frenar rozando la atmósfera,
+        en: Starts slowing down by skimming the atmosphere,
+      }
+    - {
+        date: 2018-02-20,
+        es: Termina de frenar con la atmósfera,
+        en: Finishes slowing down in the atmosphere,
+      }
+    - { date: 2018-04, es: Empieza su ciencia, en: Begins its science mission }
+  blurb:
+    es: Olfatea la atmósfera de Marte en busca de metano y otros gases que podrían delatar actividad geológica o biológica, y hace de repetidor para los róveres. Para llegar a su órbita frenó rozando la atmósfera durante casi un año.
+    en: Sniffs Mars's atmosphere for methane and other gases that could betray geological or biological activity, and relays data from the rovers. To reach its orbit it slowed down by skimming the atmosphere for almost a year.
+  links: [https://www.esa.int/Science_Exploration/Human_and_Robotic_Exploration/Exploration/ExoMars]
+
+- id: mars-odyssey
+  name: Mars Odyssey
+  agency: NASA
+  launch: 2001-04-07
+  target: { es: Marte, en: Mars }
+  status: active
+  horizons: '-53'
+  coverage: { from: 2001-04-08, to: 2027-03-10 }
+  orbiting: { body: mars, from: 2001-10-25 }
+  milestones:
+    - { date: 2001-10-24, es: Entra en órbita de Marte, en: Enters orbit around Mars }
+    - { date: 2002-02-19, es: Empieza a mapear Marte, en: Starts mapping Mars }
+    - {
+        date: 2002-05-28,
+        es: Encuentra hielo de agua bajo la superficie,
+        en: Finds water ice just under the surface,
+      }
+    - {
+        date: 2010-12-15,
+        es: Se vuelve la nave que más tiempo trabajó en Marte,
+        en: Becomes the longest-working spacecraft at Mars,
+      }
+  blurb:
+    es: La misión que más tiempo lleva activa en órbita de otro planeta. Llegó a Marte en 2001, encontró hielo de agua enterrado cerca de la superficie y sigue haciendo de repetidor para los róveres.
+    en: The longest continually active mission in orbit around another planet. It reached Mars in 2001, found water ice buried near the surface and still relays data from the rovers.
+  links: [https://science.nasa.gov/mission/odyssey/]
+
+- id: hope
+  name: Hope
+  agency: UAE Space Agency
+  launch: 2020-07-19
+  target: { es: Marte, en: Mars }
+  status: active
+  horizons: '-62'
+  coverage: { from: 2020-07-20, to: 2027-04-14 }
+  orbiting: { body: mars, from: 2021-02-10 }
+  milestones:
+    - { date: 2021-02-09, es: Entra en órbita de Marte, en: Enters orbit around Mars }
+    - { date: 2021-05-23, es: Empieza su ciencia, en: Begins its science mission }
+    - {
+        date: 2023-03-10,
+        es: Pasa a unos 100 km de la luna Deimos,
+        en: Passes about 100 km from the moon Deimos,
+      }
+  blurb:
+    es: La primera misión árabe a otro planeta. Desde una órbita alta ve el disco entero de Marte y estudia su clima a todas horas del día y en todas las estaciones.
+    en: The first Arab mission to another planet. From a high orbit it sees the whole disc of Mars, studying its weather at every time of day and through the seasons.
+  links: [https://www.emm.ae/]
+
 - id: cassini
   name: Cassini
   agency: NASA / ESA / ASI
