@@ -191,6 +191,8 @@ test('zooms from the tool column', async ({ page }, testInfo) => {
 });
 
 test('dives to a spacecraft’s model, and back out', async ({ page }, testInfo) => {
+  // Its waits add up to 50 s, past the default 30 s budget, when software rendering is slow.
+  test.slow();
   await page.goto(sceneAddress(testInfo.project.name, '&focus=psyche'));
   const canvas = page.locator('canvas[data-backend]');
   await expect(canvas).toBeVisible({ timeout: 20_000 });
