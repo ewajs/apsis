@@ -36,13 +36,15 @@ from `own/parts.ts`), add its entry, run the script, and check it:
 - **Its look in the app,** close up, under the Sun.
 
 Heavy sources take `simplify` (the fraction of triangles to keep: Europa Clipper keeps
-35% of 204,000). Textures become WebP, at most 2048 px; the script warns above 5 MB.
+35% of 204,000), and `simplifyError` where seams keep the simplifier from removing much
+(the ISS). Textures become WebP, at most 2048 px; the script warns above 5 MB.
 
 ## The AR copies
 
 Beside each model the script writes `public/models/ar/<id>.glb`, for the phones' own AR
 viewers (ADR 0014): plain glTF, textures at most 1024 px (JPEG unless see-through),
-stood antenna-up with its lowest point at floor level, at real size. Over 5 MB it's
+stood antenna-up with its lowest point at floor level, at real size (`arUp: -z` stands
+it the other way, for one whose +Z faces Earth from below). Over 5 MB it's
 simplified, then its textures halved. `scripts/models/ar.test.ts` checks every copy is
 plain and stands on the floor.
 
@@ -73,9 +75,17 @@ redistribution and derivative works, the SPICE models are non-commercial (ADR 00
 | MRO            | science.nasa.gov Mars 3D resources                              | NASA                            | 0.3 MB |
 | MAVEN          | science.nasa.gov Mars 3D resources                              | NASA                            | 1.0 MB |
 | Mars Odyssey   | science.nasa.gov Mars 3D resources (antenna's pose approximate) | NASA                            | 0.5 MB |
+| ISS            | science.nasa.gov 3D model, simplified                           | NASA                            | 5.8 MB |
+| Hubble         | science.nasa.gov 3D model                                       | NASA                            | 0.6 MB |
 
 Mars Express, TGO and Hope have no free model yet (ESA's and the UAE's terms, ADR
-0013): markers for now.
+0013), nor has Tiangong: markers for now.
+
+The ISS is over the 5 MB budget, knowingly: 195,000 triangles of real detail across 343
+parts, after the simplifier took what it could without blurring the trusses; it loads
+only for its close-up. It and Hubble fly with +Z toward Earth (`pointing` stays Earth): the
+station's modules on the nadir side, as it really flies, and Hubble's aft end, its
+aperture to the sky.
 
 ## Our own
 

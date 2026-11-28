@@ -1,7 +1,8 @@
 # The missions Apsis shows (ADR 0009). Each entry is checked by `npm run data`.
 #
 # - Text is in Spanish (Argentina, voseo) and English; both are required.
-# - `horizons` is the JPL Horizons ID, quoted ("-61"), or null with `noEphemeris`.
+# - `horizons` is the JPL Horizons ID, quoted ("-61"), or null with `noEphemeris`; or null
+#   with `celestrak`, a satellite's catalogue number, for one around Earth (ADR 0016).
 # - `coverage` is the span Horizons has data for (docs/guides/data.md says how to find it).
 # - Milestone dates can be a day, a month or a year: YYYY-MM-DD, YYYY-MM or YYYY.
 # - `orbiting: { body, from, to? }` while it circles a planet: daily orbital elements around
@@ -242,6 +243,87 @@
     es: El telescopio espacial más grande. Mira el universo en infrarrojo desde cerca del punto L2, a 1,5 millones de km de la Tierra, del lado opuesto al Sol.
     en: The largest space telescope. It watches the universe in infrared from near the L2 point, 1.5 million km from Earth on the side away from the Sun.
   links: [https://science.nasa.gov/mission/webb/]
+
+- id: iss
+  name: ISS
+  agency: NASA / Roscosmos / ESA / JAXA / CSA
+  launch: 1998-11-20
+  target: { es: órbita terrestre, en: Earth orbit }
+  status: active
+  horizons: null
+  celestrak: 25544
+  milestones:
+    - { date: 2000-11-02, es: Llega su primera tripulación, en: Its first crew arrives }
+    - {
+        date: 2011-07,
+        es: Se despide del transbordador espacial,
+        en: Says goodbye to the Space Shuttle,
+      }
+    - {
+        date: 2020-05-31,
+        es: Llega la primera nave tripulada de una empresa privada,
+        en: The first crewed spacecraft built by a company arrives,
+      }
+    - { date: '2030', es: Está previsto retirarla, en: Due to be retired }
+  blurb:
+    es: La Estación Espacial Internacional es el laboratorio más grande que se haya puesto en órbita, a unos 400 km de altura. Da una vuelta a la Tierra cada hora y media y tiene gente a bordo sin interrupción desde el año 2000.
+    en: The International Space Station is the largest laboratory ever put in orbit, some 400 km up. It goes around Earth every hour and a half and has had people aboard without a break since 2000.
+  links: [https://www.nasa.gov/international-space-station/]
+
+- id: hubble
+  name: Hubble
+  agency: NASA / ESA
+  launch: 1990-04-24
+  target: { es: órbita terrestre, en: Earth orbit }
+  status: active
+  horizons: null
+  celestrak: 20580
+  milestones:
+    - { date: 1990-04-25, es: El Discovery lo deja en órbita, en: Discovery releases it into orbit }
+    - {
+        date: 1993-12,
+        es: Unos astronautas le corrigen la vista,
+        en: Astronauts correct its eyesight,
+      }
+    - {
+        date: 1995-12,
+        es: Mira diez días un rincón vacío del cielo y encuentra miles de galaxias,
+        en: Stares for ten days at an empty patch of sky and finds thousands of galaxies,
+      }
+    - {
+        date: 2009-05,
+        es: Recibe su última visita de astronautas,
+        en: Gets its last visit from astronauts,
+      }
+  blurb:
+    es: El telescopio espacial que cambió la astronomía. Desde unos 500 km de altura, por encima del aire que hace titilar las estrellas, mira el universo en luz visible y ultravioleta.
+    en: The space telescope that changed astronomy. From some 500 km up, above the air that makes stars twinkle, it watches the universe in visible and ultraviolet light.
+  links: [https://science.nasa.gov/mission/hubble/]
+
+- id: tiangong
+  name: Tiangong
+  agency: CMSA
+  launch: 2021-04-29
+  target: { es: órbita terrestre, en: Earth orbit }
+  status: active
+  horizons: null
+  celestrak: 48274
+  milestones:
+    - { date: 2021-06-17, es: Llega su primera tripulación, en: Its first crew arrives }
+    - {
+        date: 2022-07-24,
+        es: Se le suma el módulo de laboratorio Wentian,
+        en: The Wentian laboratory module joins it,
+      }
+    - {
+        date: 2022-10-31,
+        es: Con el módulo Mengtian queda completa,
+        en: The Mengtian module completes it,
+      }
+  blurb:
+    es: La estación espacial de China, a unos 400 km de altura. Tres módulos en forma de T, con tripulaciones que se turnan cada seis meses.
+    en: China's space station, some 400 km up. Three modules in a T shape, with crews taking turns every six months.
+  links: [https://en.cmse.gov.cn/]
 
 - id: mro
   name: Mars Reconnaissance Orbiter

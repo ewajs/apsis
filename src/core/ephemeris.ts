@@ -2,6 +2,7 @@
  * Ephemeris data as Apsis stores it (ADR 0003): state vectors in yearly chunks.
  * Positions are km and velocities km/s, heliocentric ecliptic J2000 (ADR 0004).
  */
+import type { GpElements } from './earth-orbit.ts';
 import type { ElementSample } from './elements.ts';
 import type { Vector3 } from './math.ts';
 
@@ -74,12 +75,15 @@ export type DataIndex = {
   span: { start: string; stop: string };
   bodies: {
     id: string;
-    horizonsId: string;
+    /** Its Horizons ID; a satellite from CelesTrak has none. */
+    horizonsId?: string;
     kind: BodyKind;
-    /** Years of heliocentric states (none for a moon). */
+    /** Years of heliocentric states (none for a moon, a small body or a satellite). */
     years: YearEntry[];
     /** Years of orbital elements around a parent, if any (ADR 0015). */
     track?: { center: string; years: YearEntry[] };
+    /** A satellite's orbital data from CelesTrak, fetched with the rest (ADR 0016). */
+    satellite?: GpElements;
   }[];
 };
 

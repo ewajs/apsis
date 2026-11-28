@@ -76,6 +76,7 @@ export class ChunkStore {
       world.set(body.id, {
         states: this.chunks.get(body.id)!,
         track: body.track && { center: body.track.center, chunks: this.tracks.get(body.id)! },
+        satellite: body.satellite,
       });
     }
     this.world = world;

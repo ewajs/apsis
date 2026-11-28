@@ -5,6 +5,7 @@ import juno from '../../tests/fixtures/horizons/juno-jupiter-elements.json';
 import junoVectors from '../../tests/fixtures/horizons/juno-jupiter-vectors.json';
 import {
   eccentricAnomaly,
+  elementsFromState,
   periapsisTimes,
   positionFromSamples,
   propagate,
@@ -82,5 +83,28 @@ describe('periapsisTimes', () => {
     const [, a, e] = first!;
     const distance = Math.hypot(...propagate(first!, at));
     expect(distance).toBeCloseTo(a * (1 - e), -2);
+  });
+});
+
+describe('elementsFromState', () => {
+  it('gives back the ellipse a body is on, from where it is and how it moves', () => {
+    // Juno around Jupiter: from two positions a second apart, the same ellipse.
+    const sample = series.juno.elements[0]!;
+    const t = sample[0];
+    const r = propagate(sample, t);
+    const ahead = propagate(sample, t + 1);
+    const behind = propagate(sample, t - 1);
+    const v = [0, 1, 2].map((k) => (ahead[k]! - behind[k]!) / 2) as unknown as typeof r;
+    // Jupiter's GM, km³/s², from the sample's own mean motion: n² a³.
+    const n = (sample[7] * Math.PI) / 180;
+    const mu = n * n * sample[1] ** 3;
+    const orbit = elementsFromState(r, v, mu, t);
+    expect(orbit.eccentricity).toBeCloseTo(sample[2], 5);
+    expect(orbit.semiMajorAxisKm / sample[1]).toBeCloseTo(1, 5);
+    expect(orbit.inclinationDeg).toBeCloseTo(sample[3], 4);
+    expect(orbit.ascendingNodeDeg).toBeCloseTo(sample[4], 4);
+    expect(orbit.argumentOfPeriapsisDeg).toBeCloseTo(sample[5], 3);
+    // And the drawn ellipse passes through the body.
+    expect(distance(orbitPoint(orbit, (orbit.trueAnomalyDeg * Math.PI) / 180), r)).toBeLessThan(1);
   });
 });

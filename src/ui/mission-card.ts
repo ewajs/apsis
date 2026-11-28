@@ -2,7 +2,7 @@ import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import { milestonesAround, type Milestone, type Mission } from '../core/catalogue.ts';
-import type { Facts } from '../core/facts.ts';
+import type { EarthOrbitFacts, Facts } from '../core/facts.ts';
 import type { ModelEntry } from '../core/models.ts';
 import { lightTimeSeconds } from '../core/units.ts';
 import { bodyType } from '../i18n/bodies.ts';
@@ -25,6 +25,13 @@ export type Card = {
   parent?: string | undefined;
   /** Whether the position is computed from daily orbital elements (ADR 0015). */
   computed?: boolean | undefined;
+  /**
+   * For a satellite around Earth (ADR 0016): its height and speed there (`null` when its
+   * orbital data is too old or too new for the instant), the time a turn takes, and the
+   * data's date.
+   */
+  aroundEarth?:
+    { facts: EarthOrbitFacts | null; periodSeconds: number; epochMs: number } | undefined;
   /** The displayed instant, UTC ms: which milestones are past. */
   instantMs: number;
   /** Its 3D model, if it has one: the close-up button and the credit. */
@@ -279,7 +286,23 @@ export class MissionCard extends LitElement {
     const fold = msg('Plegar la ficha', { id: 'card-fold' });
     if (this.folded) return this.#pill(card, close);
     const rows: [string, string][] = [];
-    if (facts) {
+    const aroundEarth = card.aroundEarth;
+    if (aroundEarth?.facts) {
+      rows.push(
+        [
+          msg('Altura sobre la Tierra', { id: 'card-altitude' }),
+          formatDistance(aroundEarth.facts.altitudeKm, locale, au),
+        ],
+        [
+          msg('Velocidad respecto de la Tierra', { id: 'card-speed-earth' }),
+          formatSpeed(aroundEarth.facts.speedKmS, locale),
+        ],
+        [
+          msg('Da una vuelta a la Tierra en', { id: 'card-period' }),
+          formatDuration(aroundEarth.periodSeconds, locale),
+        ],
+      );
+    } else if (facts) {
       if (card.kind !== 'sun') {
         rows.push([
           msg('Distancia al Sol', { id: 'card-from-sun' }),
@@ -332,7 +355,7 @@ export class MissionCard extends LitElement {
         </button>
       </header>
       ${
-        facts
+        rows.length > 0
           ? html`<dl>
               ${rows.map(
                 ([term, value]) =>
@@ -346,6 +369,7 @@ export class MissionCard extends LitElement {
               ${msg('Sin posición para esta fecha.', { id: 'card-no-position' })}
             </p>`
       }
+      ${aroundEarth ? this.#aroundEarthNote(aroundEarth, locale) : nothing}
       ${
         card.computed && card.facts
           ? html`<p class="note">
@@ -431,6 +455,29 @@ export class MissionCard extends LitElement {
           : nothing
       }
     </article>`;
+  }
+
+  /** Where a satellite's position comes from, and how far to trust it (ADR 0016). */
+  #aroundEarthNote(aroundEarth: NonNullable<Card['aroundEarth']>, locale: string) {
+    const date = new Intl.DateTimeFormat(locale, {
+      day: 'numeric',
+      month: 'long',
+      timeZone: 'UTC',
+    }).format(aroundEarth.epochMs);
+    return html`<p class="note">
+      ${
+        aroundEarth.facts
+          ? msg(str`Órbita aproximada, calculada con datos de CelesTrak del ${date}.`, {
+              id: 'card-celestrak',
+            })
+          : msg(
+              str`Su órbita se calcula solo unos días antes y después del ${date}, la fecha de sus datos.`,
+              {
+                id: 'card-celestrak-window',
+              },
+            )
+      }
+    </p>`;
   }
 
   /** The line under the name: the agency, the target and how it stands; or what it is. */

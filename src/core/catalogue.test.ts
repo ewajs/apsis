@@ -50,6 +50,18 @@ describe('parseCatalogue', () => {
     ]);
   });
 
+  it('accepts a satellite from CelesTrak instead of Horizons', () => {
+    const rest: Record<string, unknown> = { ...valid(), horizons: null, celestrak: 25544 };
+    delete rest.coverage;
+    expect(parseCatalogue([rest])[0]?.celestrak).toBe(25544);
+    expect(problemsOf([{ ...rest, celestrak: '25544' }])).toEqual([
+      'entry 1 (juno): celestrak must be a catalogue number, such as 25544',
+    ]);
+    expect(problemsOf([{ ...valid(), celestrak: 25544 }])).toEqual([
+      'entry 1 (juno): a satellite from celestrak has horizons: null',
+    ]);
+  });
+
   it('requires both languages everywhere', () => {
     const entry = valid();
     expect(problemsOf([{ ...entry, blurb: { es: 'Hola' } }])).toEqual([

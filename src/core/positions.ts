@@ -6,13 +6,20 @@
 import { position, yearOf, type Chunk, type TrackChunk } from './ephemeris.ts';
 import { positionFromSamples, type ElementSample } from './elements.ts';
 import { stateFromChunks } from './interpolate.ts';
+import { gpEpochMs, satellitePosition, type GpElements } from './earth-orbit.ts';
 import { add, scale, subtract, type Vector3 } from './math.ts';
+import { utcMsFromTdbSeconds } from './time.ts';
 
 /** A body's loaded data: heliocentric states by year, and its track, if it has one. */
 export type BodyData = {
   states: ReadonlyMap<number, Chunk>;
   track?: { center: string; chunks: ReadonlyMap<number, TrackChunk> } | undefined;
+  /** A satellite around Earth: its CelesTrak elements (ADR 0016). */
+  satellite?: GpElements | undefined;
 };
+
+/** How far from its data's epoch a satellite is shown: its error grows by the day. */
+export const SATELLITE_DAYS = 3;
 
 /** Every body's loaded data, by id. The Sun needs none: it's the origin. */
 export type World = ReadonlyMap<string, BodyData>;
@@ -60,6 +67,12 @@ export function positionAt(id: string, t: number, world: World): Vector3 | null 
   if (id === 'sun') return [0, 0, 0];
   const body = world.get(id);
   if (!body) return null;
+  if (body.satellite) {
+    const ms = utcMsFromTdbSeconds(t);
+    if (Math.abs(ms - gpEpochMs(body.satellite)) > SATELLITE_DAYS * 86_400_000) return null;
+    const earth = positionAt('earth', t, world);
+    return earth ? add(earth, satellitePosition(body.satellite, ms)) : null;
+  }
   if (body.track) {
     const offset = trackOffset(body.track.chunks, t);
     const parent = offset ? positionAt(body.track.center, t, world) : null;

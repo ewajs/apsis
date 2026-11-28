@@ -1,7 +1,8 @@
 # 0008. Hosting and delivery
 
 - Status: Accepted; Pages in step 0.2, the scheduled refresh in step 1.6. Amended
-  2026-11-23: weekly instead of daily.
+  2026-11-23: weekly instead of daily. Amended 2026-11-28: daily again, for the
+  satellites' data (ADR 0016).
 - Date: 2026-11-22
 
 ## Decision
@@ -11,9 +12,10 @@
 - **One workflow builds once and deploys that artifact** with the official Pages
   actions. Only the deploy job gets Pages write permissions; pull requests never
   deploy.
-- **Triggers:** push to `main`, a **weekly** schedule (Mondays 06:17 UTC; fetches fresh
-  live data), and manual runs on `main`. Weekly, not daily: the 60-day window leaves
-  plenty of margin, and the owner prefers fewer updates.
+- **Triggers:** push to `main`, a **daily** schedule (06:17 UTC; fetches fresh live
+  data), and manual runs on `main`. Weekly was enough for the 60-day window of
+  Horizons data, but satellites around Earth (ADR 0016) show only within three days of
+  their CelesTrak data: a daily run keeps them current, with two missed runs to spare.
 - **CI runs fast checks only** (format, lint, types, unit tests, build). Browser
   tests run locally, as in gravitas.
 - **A failed fetch fails the build**, and the previous deployment stays live. With 60

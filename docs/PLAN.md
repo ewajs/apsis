@@ -159,7 +159,7 @@ The owner's priority: models and AR first, and they should look stunning (up to 
 
 - [x] **7.5 Mars orbiters** (time-boxed): MRO, MAVEN, Mars Express, TGO, Odyssey, and
       others Horizons has.
-- [ ] **7.6 Earth orbit** (time-boxed): the ISS, Hubble and a few more, from CelesTrak
+- [x] **7.6 Earth orbit** (time-boxed): the ISS, Hubble and Tiangong, from CelesTrak
       orbital data fetched by CI (free, no key, once a day), propagated in `core` with an
       ellipse plus Earth's-bulge drift: approximate, and labelled so. The data run goes
       daily.

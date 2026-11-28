@@ -100,3 +100,18 @@ mosaics of Voyager, Galileo, Cassini, Dawn and New Horizons images, public domai
 Unimaged areas are filled with the surface's average colour; Titan's is its
 near-infrared surface map tinted to its haze, not its true colour. They're never
 precached: the service worker keeps each one once a close-up has shown it.
+
+## Around Earth
+
+The ISS, Hubble and Tiangong (7.6, ADR 0016) come from CelesTrak, not Horizons: the
+catalogue gives `celestrak: 25544` (the satellite's catalogue number) and `horizons: null`.
+`npm run data` fetches each one's latest orbital elements (`scripts/data/celestrak.ts`,
+validated by `parseGp`) and puts them in `index.json`; `positionAt` carries them to the
+instant (`core/earth-orbit.ts`: an ellipse that Earth's bulge turns, rotated into the
+ecliptic) and adds Earth's position, within three days of the data (`SATELLITE_DAYS`).
+
+The card gives the height above Earth, the speed relative to Earth and the time a turn
+takes, with the note "Órbita aproximada, calculada con datos de CelesTrak del…". Picked
+in 3D, a satellite is framed with Earth (`framedByParent`), with its ellipse around it
+(`elementsFromState`, from its position and velocity). The map and the tabletop leave
+satellites out.

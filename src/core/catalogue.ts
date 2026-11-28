@@ -30,8 +30,13 @@ export type Mission = {
   status: 'active' | 'ended';
   /** The Horizons ID, or `null` when there is no public ephemeris. */
   horizons: string | null;
-  /** Why there is no ephemeris; present exactly when `horizons` is `null`. */
+  /** Why there is no ephemeris; present when `horizons` is `null` and `celestrak` absent. */
   noEphemeris?: Localized;
+  /**
+   * For a satellite around Earth: its catalogue number at CelesTrak, whose daily orbital
+   * data positions it (ADR 0016), instead of Horizons.
+   */
+  celestrak?: number;
   /** The span Horizons covers, as calendar dates; fetches are clipped to it. */
   coverage?: { from: string; to: string };
   /**
@@ -113,7 +118,12 @@ export function parseCatalogue(data: unknown): Mission[] {
       problem('status must be active or ended');
     }
 
-    if (entry.horizons === null) {
+    if (entry.celestrak !== undefined) {
+      if (!Number.isInteger(entry.celestrak) || (entry.celestrak as number) <= 0) {
+        problem('celestrak must be a catalogue number, such as 25544');
+      }
+      if (entry.horizons !== null) problem('a satellite from celestrak has horizons: null');
+    } else if (entry.horizons === null) {
       if (entry.noEphemeris === undefined) problem('horizons is null, so noEphemeris must say why');
       else localized(entry.noEphemeris, 'noEphemeris');
     } else if (typeof entry.horizons !== 'string' || !HORIZONS_ID.test(entry.horizons)) {
