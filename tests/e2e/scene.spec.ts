@@ -215,6 +215,24 @@ test('dives to a spacecraft’s model, and back out', async ({ page }, testInfo)
   await expect(canvas).not.toHaveAttribute('data-model', /.+/, { timeout: 15_000 });
 });
 
+test('leaves a spacecraft’s model behind when it flies to another', async ({ page }, testInfo) => {
+  test.slow();
+  await page.goto(sceneAddress(testInfo.project.name, '&focus=psyche'));
+  const canvas = page.locator('canvas[data-backend]');
+  await expect(canvas).toBeVisible({ timeout: 20_000 });
+  const card = page.locator('mission-card');
+  await card.getByRole('button', { name: /See it up close|Ver la nave de cerca/ }).click();
+  await expect(canvas).toHaveAttribute('data-model', 'psyche', { timeout: 15_000 });
+  await page.getByRole('button', { name: /Find another|Buscar otro/ }).click();
+  await page.keyboard.type('juno');
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/focus=juno/);
+  await card.getByRole('button', { name: /See it up close|Ver la nave de cerca/ }).click();
+  await expect(canvas).toHaveAttribute('data-model', 'juno', { timeout: 15_000 });
+  // Psyche's model stays with Psyche, out of sight: only Juno's is drawn.
+  await expect(canvas).toHaveAttribute('data-models', 'juno');
+});
+
 test('opens 3D for a close-up asked for on the map', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'webgpu', 'The map is the same on every backend');
   await page.goto('./?t=2026-11-23T12:00Z&focus=psyche&backend=webgl2');
