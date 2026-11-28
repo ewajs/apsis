@@ -51,6 +51,7 @@ export const templates = {
   'card-ended': 'Ended',
   'card-close-up': 'See it up close',
   'card-close-up-out': 'Back to its neighbourhood',
+  'card-ar': 'In your room (AR)',
   'card-model': '3D model:',
   'card-model-ours': 'Simplified 3D model, made for Apsis.',
   'licence-public-domain': 'public domain',

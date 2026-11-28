@@ -38,6 +38,18 @@ from `own/parts.ts`), add its entry, run the script, and check it:
 Heavy sources take `simplify` (the fraction of triangles to keep: Europa Clipper keeps
 35% of 204,000). Textures become WebP, at most 2048 px; the script warns above 5 MB.
 
+## The AR copies
+
+Beside each model the script writes `public/models/ar/<id>.glb`, for the phones' own AR
+viewers (ADR 0014): plain glTF, textures at most 1024 px (JPEG unless see-through),
+stood antenna-up with its lowest point at floor level, at real size. Over 5 MB it's
+simplified, then its textures halved. `scripts/models/ar.test.ts` checks every copy is
+plain and stands on the floor.
+
+On Android the card's "En tu casa (RA)" is a link that opens Scene Viewer
+(`core/ar.ts`, `sceneViewerUrl`); on an iPhone, a button that converts the AR copy to USDZ
+in the page and hands it to Quick Look (`scene/ar-export.ts`).
+
 ## The models, and where they come from
 
 Checked 2026-11-28 (5.1). NASA's models carry no copyright ("free and without

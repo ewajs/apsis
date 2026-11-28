@@ -12,9 +12,10 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
-import { NodeIO, getBounds, type Document } from '@gltf-transform/core';
+import { Material, NodeIO, getBounds, type Document } from '@gltf-transform/core';
 import { ALL_EXTENSIONS, EXTMeshoptCompression } from '@gltf-transform/extensions';
 import {
+  cloneDocument,
   dedup,
   prune,
   quantize,
@@ -65,8 +66,14 @@ type Recipe = {
 const BUDGET_BYTES = 5e6;
 /** Textures are recompressed to WebP, at most this many pixels on a side. */
 const TEXTURE_MAX_PX = 2048;
+/** For AR, smaller textures: phones' AR viewers load the file whole. */
+const AR_TEXTURE_MAX_PX = 1024;
+/** The AR copy should stay under this, in bytes; heavier ones are simplified further. */
+const AR_BUDGET_BYTES = 5e6;
 
 const OUT = 'public/models';
+/** The AR copies (ADR 0014): plain GLB, standing up, for the phones' own AR viewers. */
+const AR_OUT = `${OUT}/ar`;
 const CACHE = '.cache/models';
 
 const { values } = parseArgs({ options: { id: { type: 'string' } } });
@@ -78,7 +85,7 @@ const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies(
 });
 await MeshoptEncoder.ready;
 await MeshoptSimplifier.ready;
-mkdirSync(OUT, { recursive: true });
+mkdirSync(AR_OUT, { recursive: true });
 mkdirSync(CACHE, { recursive: true });
 
 const indexPath = `${OUT}/index.json`;
@@ -90,10 +97,26 @@ const entries = new Map(previous.map((entry) => [entry.id, entry]));
 for (const recipe of recipes) {
   if (values.id && recipe.id !== values.id) continue;
   const document = await load(recipe);
-  await normalise(document, recipe);
+  await toBodyFrame(document, recipe);
+  const ar = cloneDocument(document);
+  await compressForApp(document);
+  await standForAr(ar);
+  // Plain glTF is big: a heavy model keeps fewer triangles in AR, then smaller
+  // textures, until it fits.
+  const arSize = async () => (await io.writeBinary(ar)).byteLength;
+  if ((await arSize()) > AR_BUDGET_BYTES) {
+    // A phone's AR view forgives more than a close-up: up to 2% of the size off.
+    await ar.transform(
+      weld(),
+      simplify({ simplifier: MeshoptSimplifier, ratio: 0.25, error: 0.02 }),
+    );
+  }
+  if ((await arSize()) > AR_BUDGET_BYTES) await arTextures(ar, AR_TEXTURE_MAX_PX / 2);
   const file = `${recipe.id}.glb`;
   const bytes = await io.writeBinary(document);
   writeFileSync(`${OUT}/${file}`, bytes);
+  const arBytes = await io.writeBinary(ar);
+  writeFileSync(`${AR_OUT}/${file}`, arBytes);
   const entry: ModelEntry = {
     id: recipe.id,
     file,
@@ -106,7 +129,10 @@ for (const recipe of recipes) {
   };
   entries.set(recipe.id, entry);
   const over = bytes.byteLength > BUDGET_BYTES ? '  over the 5 MB budget' : '';
-  console.log(`  ${recipe.id.padEnd(20)} ${(bytes.byteLength / 1e6).toFixed(2)} MB${over}`);
+  const mb = (n: number) => `${(n / 1e6).toFixed(2)} MB`;
+  console.log(
+    `  ${recipe.id.padEnd(20)} ${mb(bytes.byteLength)}${over}, AR ${mb(arBytes.byteLength)}`,
+  );
 }
 
 const order = recipes.map((recipe) => recipe.id);
@@ -136,10 +162,10 @@ async function load(recipe: Recipe): Promise<Document> {
 }
 
 /**
- * Brings a model into the body frame at its real size, then compresses it: duplicate
- * data merged, unused data dropped, vertices quantised and Meshopt-encoded.
+ * Brings a model into the body frame at its real size, with our materials where asked,
+ * duplicate data merged, unused data dropped and, if asked, simplified.
  */
-async function normalise(document: Document, recipe: Recipe): Promise<void> {
+async function toBodyFrame(document: Document, recipe: Recipe): Promise<void> {
   const root = document.getRoot();
   const scene = root.getDefaultScene() ?? root.listScenes()[0];
   if (!scene) throw new Error(`${recipe.id}: the file has no scene`);
@@ -178,10 +204,6 @@ async function normalise(document: Document, recipe: Recipe): Promise<void> {
   for (const extension of root.listExtensionsUsed()) {
     if (extension.extensionName === 'KHR_draco_mesh_compression') extension.dispose();
   }
-  document
-    .createExtension(EXTMeshoptCompression)
-    .setRequired(true)
-    .setEncoderOptions({ method: EXTMeshoptCompression.EncoderMethod.QUANTIZE });
   await document.transform(
     dedup(),
     prune(),
@@ -189,6 +211,16 @@ async function normalise(document: Document, recipe: Recipe): Promise<void> {
     ...(recipe.simplify
       ? [simplify({ simplifier: MeshoptSimplifier, ratio: recipe.simplify, error: 0.0005 })]
       : []),
+  );
+}
+
+/** The app's copy: WebP textures, vertices quantised and Meshopt-encoded. */
+async function compressForApp(document: Document): Promise<void> {
+  document
+    .createExtension(EXTMeshoptCompression)
+    .setRequired(true)
+    .setEncoderOptions({ method: EXTMeshoptCompression.EncoderMethod.QUANTIZE });
+  await document.transform(
     textureCompress({
       encoder: sharp,
       targetFormat: 'webp',
@@ -197,4 +229,48 @@ async function normalise(document: Document, recipe: Recipe): Promise<void> {
     reorder({ encoder: MeshoptEncoder }),
     quantize(),
   );
+}
+
+/**
+ * The AR copy (ADR 0014): plain glTF, which every AR viewer reads (no Meshopt, no
+ * quantisation, textures in their own format, at most 1024 px), stood up the way the
+ * viewers place a model on the floor: the antenna (+Z) up, its lowest point at floor
+ * level and centred over it.
+ */
+async function standForAr(document: Document): Promise<void> {
+  const scene = document.getRoot().listScenes()[0]!;
+  const stand = document.createNode('stand');
+  // −90° about x: +Z (the antenna) to +Y (up).
+  stand.setRotation([-Math.SQRT1_2, 0, 0, Math.SQRT1_2]);
+  for (const child of scene.listChildren()) {
+    scene.removeChild(child);
+    stand.addChild(child);
+  }
+  const floor = document.createNode('floor').addChild(stand);
+  scene.addChild(floor);
+  const { min, max } = getBounds(scene);
+  floor.setTranslation([-(min[0] + max[0]) / 2, -min[1], -(min[2] + max[2]) / 2]);
+  await arTextures(document, AR_TEXTURE_MAX_PX);
+}
+
+/**
+ * The AR copy's textures: at most `px` on a side, as JPEG (a tenth of PNG's size) unless
+ * their material is see-through.
+ */
+async function arTextures(document: Document, px: number): Promise<void> {
+  for (const texture of document.getRoot().listTextures()) {
+    const image = texture.getImage();
+    if (!image) continue;
+    const seeThrough = texture
+      .listParents()
+      .some((parent) => parent instanceof Material && parent.getAlphaMode() !== 'OPAQUE');
+    const resized = sharp(image).resize(px, px, {
+      fit: 'inside',
+      withoutEnlargement: true,
+    });
+    const bytes = seeThrough
+      ? await resized.png().toBuffer()
+      : await resized.jpeg({ quality: 82 }).toBuffer();
+    texture.setImage(new Uint8Array(bytes)).setMimeType(seeThrough ? 'image/png' : 'image/jpeg');
+  }
 }
