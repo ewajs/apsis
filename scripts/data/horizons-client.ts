@@ -3,7 +3,14 @@
  * User-Agent, retries with backoff on 500/503 and network errors (ADR 0002).
  */
 import { assertValidSamples, mergeSamples, type Sample } from '../../src/core/ephemeris.ts';
-import { HORIZONS_API, parseVectors, vectorsQuery } from '../../src/core/horizons.ts';
+import type { ElementSample } from '../../src/core/elements.ts';
+import {
+  elementSeriesQuery,
+  HORIZONS_API,
+  parseElementSeries,
+  parseVectors,
+  vectorsQuery,
+} from '../../src/core/horizons.ts';
 import type { Body } from './bodies.ts';
 
 /** Attempts per request, and the wait before the second (doubled each time). */
@@ -52,6 +59,39 @@ export async function fetchSamples(
   const query = vectorsQuery({ horizonsId: body.horizonsId, start, stop, step });
   const samples = parseVectors(await fetchJson(`${HORIZONS_API}?${new URLSearchParams(query)}`));
   assertValidSamples(samples, body.id);
+  return samples;
+}
+
+/**
+ * A body's orbital elements around its parent from `start` to `stop` (calendar dates,
+ * TDB), daily, clipped to its coverage (ADR 0015): none when the span is outside it.
+ */
+export async function fetchTrack(
+  body: Body,
+  start: string,
+  stop: string,
+): Promise<ElementSample[]> {
+  if (!body.track) return [];
+  if (body.coverage) {
+    if (body.coverage.from > start) start = body.coverage.from;
+    if (body.coverage.to < stop) stop = body.coverage.to;
+  }
+  if (start >= stop) return [];
+  const query = elementSeriesQuery({
+    horizonsId: body.horizonsId,
+    start,
+    stop,
+    step: '1d',
+    center: body.track.centerCode,
+  });
+  const samples = parseElementSeries(
+    await fetchJson(`${HORIZONS_API}?${new URLSearchParams(query)}`),
+  );
+  samples.forEach((sample, i) => {
+    if (!sample.every(Number.isFinite) || (i > 0 && sample[0] <= samples[i - 1]![0])) {
+      throw new Error(`${body.id}: track sample ${i} is not in order or not finite`);
+    }
+  });
   return samples;
 }
 

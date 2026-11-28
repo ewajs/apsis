@@ -187,8 +187,8 @@ export function parseElementSeries(response: unknown): ElementSample[] {
       }
       return n;
     };
-    return [
-      Math.round(tdbSecondsFromJulianDate(value(0)) * 1000) / 1000,
+    return roundElements([
+      tdbSecondsFromJulianDate(value(0)),
       value(11),
       value(2),
       value(4),
@@ -196,6 +196,26 @@ export function parseElementSeries(response: unknown): ElementSample[] {
       value(6),
       value(9),
       value(8),
-    ] as const;
+    ]);
   });
+}
+
+/**
+ * An element sample rounded to what matters (ADR 0015), so a year's file stays small:
+ * time to 1 ms, distance to 1 m, eccentricity to 10 decimals, angles to 10⁻⁸ degrees
+ * (under a metre at Io's distance), mean motion to 12 significant digits.
+ */
+export function roundElements(sample: ElementSample): ElementSample {
+  const to = (value: number, decimals: number) => Number(value.toFixed(decimals));
+  const [t, a, e, i, node, w, m, n] = sample;
+  return [
+    to(t, 3),
+    to(a, 3),
+    to(e, 10),
+    to(i, 8),
+    to(node, 8),
+    to(w, 8),
+    to(m, 8),
+    Number(n.toPrecision(12)),
+  ];
 }

@@ -12,11 +12,11 @@
  */
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
-import { chunkByYear } from '../../src/core/ephemeris.ts';
+import { chunkByYear, trackByYear } from '../../src/core/ephemeris.ts';
 import { ARCHIVE_DIR } from './archive-files.ts';
 import { allBodies } from './bodies.ts';
 import { readCatalogue } from './catalogue.ts';
-import { fetchWithEncounters } from './horizons-client.ts';
+import { fetchTrack, fetchWithEncounters } from './horizons-client.ts';
 
 /** The archive's step; encounters get hourly samples around them (`fetchWithEncounters`). */
 const STEP = '1d';
@@ -48,15 +48,32 @@ let written = 0;
 try {
   for (const body of bodies) {
     for (let year = first; year <= last; year++) {
+      const span = [`${year}-01-01`, `${year + 1}-01-01`] as const;
+      // A moon has no heliocentric states, only its track around its planet.
       const file = new URL(`${body.id}/${year}.json`, ARCHIVE_DIR);
-      if (existsSync(file) && !values.force) continue;
-      const samples = await fetchWithEncounters(body, `${year}-01-01`, `${year + 1}-01-01`, STEP);
-      const chunk = chunkByYear(samples, body).find((c) => c.year === year);
-      if (!chunk || chunk.samples.length < 2) continue;
-      mkdirSync(new URL('./', file), { recursive: true });
-      writeFileSync(file, `${JSON.stringify(chunk)}\n`);
-      written++;
-      console.log(`  ${body.id.padEnd(20)} ${year}  ${chunk.samples.length} samples`);
+      if (body.kind !== 'moon' && (!existsSync(file) || values.force)) {
+        const samples = await fetchWithEncounters(body, ...span, STEP);
+        const chunk = chunkByYear(samples, body).find((c) => c.year === year);
+        if (chunk && chunk.samples.length >= 2) {
+          mkdirSync(new URL('./', file), { recursive: true });
+          writeFileSync(file, `${JSON.stringify(chunk)}\n`);
+          written++;
+          console.log(`  ${body.id.padEnd(20)} ${year}  ${chunk.samples.length} samples`);
+        }
+      }
+      const trackFile = new URL(`${body.id}/${year}.track.json`, ARCHIVE_DIR);
+      if (body.track && (!existsSync(trackFile) || values.force)) {
+        const elements = await fetchTrack(body, ...span);
+        const chunk = trackByYear(elements, body.id, body.track.center).find(
+          (c) => c.year === year,
+        );
+        if (chunk && chunk.samples.length >= 2) {
+          mkdirSync(new URL('./', trackFile), { recursive: true });
+          writeFileSync(trackFile, `${JSON.stringify(chunk)}\n`);
+          written++;
+          console.log(`  ${body.id.padEnd(20)} ${year}  track, ${chunk.samples.length} samples`);
+        }
+      }
     }
   }
 } catch (error) {

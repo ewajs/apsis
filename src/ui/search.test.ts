@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matches, searchForm } from './search.ts';
+import { bestMatch, matches, searchForm } from './search.ts';
 
 describe('search', () => {
   it('ignores case and accents', () => {
@@ -16,5 +16,18 @@ describe('search', () => {
   it('matches everything when empty', () => {
     expect(matches('', ['Juno'])).toBe(true);
     expect(matches('  ', ['Juno'])).toBe(true);
+  });
+
+  it('takes an exact name first, then a name that starts with the search, then a mention', () => {
+    const list = [
+      { name: 'Juno', detail: 'NASA · Júpiter' },
+      { name: 'Mercurio', detail: '' },
+      { name: 'Júpiter', detail: '' },
+      { name: 'Ío', detail: 'Luna de Júpiter' },
+    ];
+    expect(bestMatch('io', list)?.name).toBe('Ío');
+    expect(bestMatch('jupi', list)?.name).toBe('Júpiter');
+    expect(bestMatch('ju', list)?.name).toBe('Juno');
+    expect(bestMatch('zzz', [])).toBeUndefined();
   });
 });

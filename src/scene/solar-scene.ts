@@ -19,6 +19,7 @@ import { stateFromChunks } from '../core/interpolate.ts';
 import {
   add,
   cross,
+  dot,
   length,
   normalize,
   radians,
@@ -35,6 +36,7 @@ import {
   apparentPx,
   CRAFT_MIN_DIAMETER_PX,
   displayRadius,
+  MOON_MIN_DIAMETER_PX,
   modelShows,
   nearPlaneKm,
   MIN_DIAMETER_PX,
@@ -60,6 +62,15 @@ export type SceneBody = {
   rotation?: RotationModel | undefined;
   /** Rings in its equatorial plane, in km from its centre (Saturn). */
   rings?: { innerKm: number; outerKm: number; texture: string } | undefined;
+  /**
+   * Where it is at an instant, heliocentric km (`positionAt`, ADR 0015); without it,
+   * from `chunks`.
+   */
+  place?: ((t: number) => Vector3 | null) | undefined;
+  /** For a moon: the planet it circles; it faces it, and hides when too close to it. */
+  parent?: string | undefined;
+  /** For a moon: its ellipse around its parent at an instant, to draw. */
+  localOrbit?: ((t: number) => OrbitalElements | null) | undefined;
 };
 
 /** Which GPU interface draws the scene. */
@@ -150,7 +161,13 @@ const MINIMUM_PX: Record<BodyKind | 'sun', number> = {
   sun: SUN_MIN_DIAMETER_PX,
   planet: MIN_DIAMETER_PX,
   spacecraft: CRAFT_MIN_DIAMETER_PX,
+  moon: MOON_MIN_DIAMETER_PX,
 };
+/**
+ * A moon shows once it's this many px clear of its planet's disc on screen; closer, it
+ * and its orbit would only crowd the planet.
+ */
+const MOON_CLEARANCE_PX = 8;
 
 /** The 3D view. Create it with `SolarScene.create`, which resolves once it can draw. */
 export class SolarScene {
@@ -415,7 +432,9 @@ export class SolarScene {
     if (body.texture) this.#loadTexture(mesh, body.texture);
     if (body.rings) mesh.add(this.#ringsFor(body.radiusKm, body.rings));
     const drawn: Drawn = { body, mesh };
-    if (body.orbit) drawn.orbit = this.#line(ORBIT_POINTS + 1, this.#orbitColor, 0.45);
+    if (body.orbit || body.localOrbit) {
+      drawn.orbit = this.#line(ORBIT_POINTS + 1, this.#orbitColor, 0.45);
+    }
     if (body.kind === 'spacecraft') drawn.trail = this.#line(TRAIL_DAYS + 1, this.#craftColor, 0.6);
     this.#drawn.push(drawn);
     return drawn;
@@ -496,6 +515,11 @@ export class SolarScene {
     const states = new Map<string, Vector3>([['sun', sunAt]]);
     for (const { body } of this.#drawn) {
       if (body.id === 'sun') continue;
+      if (body.place) {
+        const at = body.place(this.#time);
+        if (at) states.set(body.id, at);
+        continue;
+      }
       const state = stateFromChunks(body.chunks, this.#time);
       if (state) states.set(body.id, position(state));
     }
@@ -536,8 +560,15 @@ export class SolarScene {
       if (body.kind === 'spacecraft') this.#showModel(drawn, distance, at, states.get('earth'));
       if (redrawLines && body.rotation) this.#turn(mesh, body.rotation);
       if (redrawLines && orbit && body.orbit) this.#placeOrbit(orbit, body.orbit, at, origin);
+      const parent = body.parent ? states.get(body.parent) : undefined;
+      if (redrawLines && parent) this.#faceParent(mesh, at, parent);
+      if (redrawLines && orbit && parent && body.localOrbit) {
+        const ellipse = body.localOrbit(this.#time);
+        if (ellipse) this.#placeOrbit(orbit, ellipse, at, origin, parent);
+      }
       if (redrawLines && trail) this.#placeTrail(trail, body.chunks, origin);
     }
+    this.#hideCrowdedMoons();
     this.#sunLight.position.copy(this.#sun.mesh.position);
     // The sky moves with the camera, so it's always as far away: at infinity, in effect.
     this.#sky?.position.copy(this.#camera.position);
@@ -689,12 +720,54 @@ export class SolarScene {
    * Writes an orbit's points relative to the focus, in 64-bit before the GPU's 32. The
    * line passes through the planet, densest there (`orbitPathThrough`).
    */
-  #placeOrbit(line: THREE.Line, elements: OrbitalElements, at: Vector3, origin: Vector3): void {
+  #placeOrbit(
+    line: THREE.Line,
+    elements: OrbitalElements,
+    at: Vector3,
+    origin: Vector3,
+    center: Vector3 = [0, 0, 0],
+  ): void {
     const vertices = line.geometry.getAttribute('position') as THREE.BufferAttribute;
-    orbitPathThrough(elements, ORBIT_POINTS, at).forEach((point, i) => {
-      vertices.setXYZ(i, ...toScene(subtract(point, origin)));
+    // Elements are around `center` (the Sun, or a moon's planet).
+    orbitPathThrough(elements, ORBIT_POINTS, subtract(at, center)).forEach((point, i) => {
+      vertices.setXYZ(i, ...toScene(subtract(add(point, center), origin)));
     });
     vertices.needsUpdate = true;
+  }
+
+  /**
+   * Turns a moon so the same face looks at its planet, as tidally locked moons do: its
+   * longitude 0 towards the planet, its pole as near ecliptic north as that allows.
+   */
+  #faceParent(mesh: THREE.Mesh, at: Vector3, parent: Vector3): void {
+    const meridian = normalize(subtract(parent, at));
+    const north: Vector3 = [0, 0, 1];
+    const pole = normalize(subtract(north, scale(meridian, dot(north, meridian))));
+    const [x, y, z] = sphereBasis({ pole, meridian, east: cross(pole, meridian) }).map(
+      (axis) => new THREE.Vector3(...axis),
+    ) as [THREE.Vector3, THREE.Vector3, THREE.Vector3];
+    mesh.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
+  }
+
+  /** Hides moons (and their orbits) too close to their planet on screen to tell apart. */
+  #hideCrowdedMoons(): void {
+    const [moon, planet] = [new THREE.Vector3(), new THREE.Vector3()];
+    for (const drawn of this.#drawn) {
+      if (!drawn.body.parent || !drawn.mesh.visible) continue;
+      const parent = this.#drawn.find((other) => other.body.id === drawn.body.parent);
+      if (!parent?.mesh.visible) continue;
+      moon.copy(drawn.mesh.position).project(this.#camera);
+      planet.copy(parent.mesh.position).project(this.#camera);
+      const apartPx = Math.hypot(
+        ((moon.x - planet.x) / 2) * this.#width,
+        ((moon.y - planet.y) / 2) * this.#height,
+      );
+      const distance = this.#camera.position.distanceTo(parent.mesh.position);
+      const planetPx = parent.mesh.scale.x / unitsPerPixel(distance, FOV_DEG, this.#height);
+      const shows = apartPx > planetPx + MOON_CLEARANCE_PX;
+      drawn.mesh.visible = shows;
+      if (drawn.orbit) drawn.orbit.visible &&= shows;
+    }
   }
 
   /**

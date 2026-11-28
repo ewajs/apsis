@@ -23,6 +23,8 @@ import { TimeController } from './time/controller.ts';
 import { ChunkStore, loadCatalogue, loadModels, type Catalogue } from './data/load.ts';
 import { instantWithData } from './core/catalogue.ts';
 import { factsAt } from './core/facts.ts';
+import { positionAt, trackOffset, trackSampleAt, velocityAt } from './core/positions.ts';
+import { sampleOrbit } from './core/elements.ts';
 import { sceneViewerUrl } from './core/ar.ts';
 import { stateFromChunks } from './core/interpolate.ts';
 import { pickerEntries } from './ui/body-picker.ts';
@@ -52,6 +54,14 @@ const TEXTURES: Readonly<Record<string, string>> = {
   saturn: '2k_saturn.jpg',
   uranus: '2k_uranus.jpg',
   neptune: '2k_neptune.jpg',
+  // Moons: loaded only when a close-up shows them (never precached).
+  moon: 'bodies/2k_moon.jpg',
+  io: 'bodies/2k_io.jpg',
+  europa: 'bodies/2k_europa.jpg',
+  ganymede: 'bodies/2k_ganymede.jpg',
+  callisto: 'bodies/2k_callisto.jpg',
+  enceladus: 'bodies/2k_enceladus.jpg',
+  titan: 'bodies/2k_titan.jpg',
 };
 
 const params = new URLSearchParams(location.search);
@@ -115,6 +125,8 @@ function tableBodies(): TableBody[] {
     },
   ];
   for (const body of data?.index.bodies ?? []) {
+    // At a table's scale a moon sits on its planet.
+    if (body.kind === 'moon') continue;
     const chunks = store?.chunks.get(body.id) ?? new Map();
     const state = stateFromChunks(chunks, tdb);
     if (!state) continue;
@@ -260,12 +272,15 @@ function showCard() {
     return;
   }
   const tdb = tdbSecondsFromUtcMs(time.playback.instantMs);
-  const chunks = (id: string) => store!.chunks.get(id) ?? new Map();
-  const kind = selected === 'sun' ? 'sun' : data.index.bodies.find((b) => b.id === selected)?.kind;
+  const entry = data.index.bodies.find((b) => b.id === selected);
+  const kind = selected === 'sun' ? 'sun' : entry?.kind;
   if (!kind) return;
-  // The Sun sits still at the origin of heliocentric states.
-  const state =
-    kind === 'sun' ? ([tdb, 0, 0, 0, 0, 0, 0] as const) : stateFromChunks(chunks(selected), tdb);
+  const world = store.world;
+  const at = positionAt(selected, tdb, world);
+  const velocity = velocityAt(selected, tdb, world);
+  // Computed from orbital elements when its track covers this instant (ADR 0015).
+  const track = world.get(selected)?.track;
+  const computed = track !== undefined && trackOffset(track.chunks, tdb) !== null;
   const name = names()[selected] ?? selected;
   const model = models.find((entry) => entry.id === selected);
   app.card = {
@@ -273,7 +288,9 @@ function showCard() {
     kind,
     name,
     mission: data.missions.find((mission) => mission.id === selected),
-    facts: state ? factsAt(state, stateFromChunks(chunks('earth'), tdb)) : null,
+    facts: at && velocity ? factsAt(at, velocity, positionAt('earth', tdb, world)) : null,
+    parent: entry?.track && kind === 'moon' ? names()[entry.track.center] : undefined,
+    computed,
     instantMs: time.playback.instantMs,
     model,
     closeUp,
@@ -302,9 +319,13 @@ app.addEventListener('close-up', (event) => {
 function fillPicker() {
   if (!data) return;
   const planets = data.index.bodies.filter((body) => body.kind === 'planet');
+  const moons = data.index.bodies.flatMap((body) =>
+    body.kind === 'moon' && body.track ? [{ id: body.id, parent: body.track.center }] : [],
+  );
   app.pickerEntries = pickerEntries(
     data.missions,
     planets.map((body) => body.id),
+    moons,
   );
 }
 
@@ -420,11 +441,23 @@ function names(): Record<string, string> {
   const all: Record<string, string> = { sun: bodyName('sun') };
   for (const body of data?.index.bodies ?? []) {
     all[body.id] =
-      body.kind === 'planet'
+      body.kind === 'planet' || body.kind === 'moon'
         ? bodyName(body.id)
         : (data!.missions.find((mission) => mission.id === body.id)?.name ?? body.id);
   }
   return all;
+}
+
+/** A moon's planet, and its ellipse around it at an instant (from its track). */
+function moonExtras(id: string, parent: string) {
+  return {
+    parent,
+    localOrbit: (t: number) => {
+      const chunks = store!.world.get(id)?.track?.chunks;
+      const sample = chunks ? trackSampleAt(chunks, t) : null;
+      return sample ? sampleOrbit(sample) : null;
+    },
+  };
 }
 
 /** Hands the scene its bodies, once both the scene and the data are there. */
@@ -450,6 +483,9 @@ function fillScene() {
               texture: '2k_saturn_ring_alpha.png',
             }
           : undefined,
+      // One way to place everything: a track where there is one, else states (ADR 0015).
+      place: (t: number) => positionAt(body.id, t, store!.world),
+      ...(body.kind === 'moon' && body.track && moonExtras(body.id, body.track.center)),
     })),
     {
       name: named.sun!,
@@ -471,7 +507,9 @@ try {
   const base = `${import.meta.env.BASE_URL}data/`;
   data = await loadCatalogue(base);
   store = new ChunkStore(base, data.index);
-  const bodies: MapBody[] = data.index.bodies.map((body) => ({
+  // The map leaves moons out: at its scale they sit on their planet.
+  const onMap = data.index.bodies.filter((body) => body.kind !== 'moon');
+  const bodies: MapBody[] = onMap.map((body) => ({
     id: body.id,
     kind: body.kind,
     name: data!.missions.find((mission) => mission.id === body.id)?.name ?? body.id,

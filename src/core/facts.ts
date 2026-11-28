@@ -1,9 +1,8 @@
 /**
  * What the mission card says about a body at one instant: how far it is from the Sun
- * and from Earth, and how fast it moves. Pure: states in, numbers out (km, km/s).
+ * and from Earth, and how fast it moves. Pure: positions in, numbers out (km, km/s).
  */
-import { position, type Sample } from './ephemeris.ts';
-import { distance, length } from './math.ts';
+import { distance, length, type Vector3 } from './math.ts';
 
 /** A body's distances and speed at one instant. */
 export type Facts = {
@@ -16,13 +15,13 @@ export type Facts = {
 };
 
 /**
- * The facts for a body in `state` (heliocentric, as Horizons gives it), with Earth in
- * `earth`.
+ * The facts for a body at `at` moving at `velocity` (heliocentric km and km/s), with
+ * Earth at `earth`.
  */
-export function factsAt(state: Sample, earth: Sample | null): Facts {
+export function factsAt(at: Vector3, velocity: Vector3, earth: Vector3 | null): Facts {
   return {
-    fromSunKm: length(position(state)),
-    fromEarthKm: earth ? distance(position(state), position(earth)) : null,
-    speedKmS: Math.hypot(state[4], state[5], state[6]),
+    fromSunKm: length(at),
+    fromEarthKm: earth ? distance(at, earth) : null,
+    speedKmS: length(velocity),
   };
 }

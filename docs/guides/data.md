@@ -80,10 +80,17 @@ into a `HorizonsError` carrying the message.
 ## The files
 
 ```text
-public/data/index.json                    { format: 2, fetchedAt, span, bodies: [{ id, horizonsId, kind, years: [{ year, archived }] }] }
+public/data/index.json                    { format: 3, fetchedAt, span, bodies: [{ id, horizonsId, kind, years: [{ year, archived }], track? }] }
 public/data/live/<body>/<year>.json       { format, body, horizonsId, year, samples: [[t, x, y, z, vx, vy, vz], …] }
 public/data/archive/<body>/<year>.json    the same, for a whole past year
+public/data/…/<body>/<year>.track.json    { format, body, center, year, samples: [[t, a, e, i, Ω, ω, M, n], …] }
 ```
+
+A **track** (ADR 0015) is a body's orbital elements around a parent, daily: `track:
+{ center: 'jupiter', years }` in the index, `trackPath` for the files. A moon has only a
+track (no heliocentric `years`); `positionAt` (`core/positions.ts`) adds it to the
+parent's position. The moons (`MOONS` in `scripts/data/bodies.ts`) are archived from
+1977: about 2 MB per moon (40 KB a year; samples rounded by `roundElements`).
 
 `chunkPath` (in `core/ephemeris.ts`) is the one place that turns a body and a year
 entry into a path, for the scripts and the browser alike. Each chunk also holds the
@@ -94,9 +101,10 @@ second file. A body-year at a daily step is about 30 KB (14 KB gzipped).
 
 `loadCatalogue` fetches the index, the catalogue and the orbits. Right after an app
 update, the service worker may hand the new code an index in the previous format; then
-it fetches a fresh one (`index.json?format=2`, an address the cache hasn't seen).
+it fetches a fresh one (`index.json?format=3`, an address the cache hasn't seen).
 
-`ChunkStore` then loads years on demand. On every change of the shown instant,
+`ChunkStore` then loads years on demand, states and tracks alike, and offers them all
+as one `world` for `positionAt`. On every change of the shown instant,
 `main.ts` asks `yearsToLoad(instant, rate)` (pure, tested) which years it needs: the
 year shown, the previous one while a trail still reaches back across New Year, and the
 next or previous one within 60 days of a year's edge in the direction of play. The

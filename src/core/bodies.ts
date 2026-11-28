@@ -14,6 +14,14 @@ export const RADIUS_KM: Readonly<Record<string, number>> = {
   saturn: 58_232,
   uranus: 25_362,
   neptune: 24_622,
+  // Moons (NASA fact sheets).
+  moon: 1_737.4,
+  io: 1_821.6,
+  europa: 1_560.8,
+  ganymede: 2_634.1,
+  callisto: 2_410.3,
+  enceladus: 252.1,
+  titan: 2_574.7,
 };
 
 /**

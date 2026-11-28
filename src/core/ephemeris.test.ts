@@ -4,7 +4,7 @@ import {
   assertValidSamples,
   chunkByYear,
   chunkPath,
-  DATA_FORMAT,
+  CHUNK_FORMAT,
   mergeSamples,
   tdbSecondsFromJulianDate,
   yearOf,
@@ -36,7 +36,7 @@ describe('chunkByYear', () => {
     expect(chunks.map((c) => c.year)).toEqual([2026, 2027]);
     expect(chunks[0]!.samples).toEqual(samples.slice(0, 3));
     expect(chunks[1]!.samples).toEqual(samples.slice(2));
-    expect(chunks[0]).toMatchObject({ format: DATA_FORMAT, body: 'earth', horizonsId: '399' });
+    expect(chunks[0]).toMatchObject({ format: CHUNK_FORMAT, body: 'earth', horizonsId: '399' });
   });
 
   it('keeps a single year in one chunk', () => {
