@@ -135,6 +135,24 @@
       "licence": "Public domain",
       "ours": false,
       "source": "https://science.nasa.gov/3d-resources/"
+    },
+    {
+      "id": "iss",
+      "file": "iss.glb",
+      "lengthM": 109,
+      "credit": "NASA",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://science.nasa.gov/3d-resources/"
+    },
+    {
+      "id": "hubble",
+      "file": "hubble.glb",
+      "lengthM": 13.2,
+      "credit": "NASA",
+      "licence": "Public domain",
+      "ours": false,
+      "source": "https://science.nasa.gov/3d-resources/"
     }
   ]
 }

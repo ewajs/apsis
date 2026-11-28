@@ -78,6 +78,11 @@ export type SceneBody = {
    * for a small body (from its track, ADR 0015).
    */
   localOrbit?: ((t: number) => OrbitalElements | null) | undefined;
+  /**
+   * Framed with its `parent` when it becomes the focus, instead of its neighbourhood in
+   * the solar system: a satellite, whose orbit is too small to see from there (ADR 0016).
+   */
+  framedByParent?: boolean | undefined;
   /** A colour for a body without a texture map (a comet, a small asteroid). */
   color?: string | undefined;
 };
@@ -121,6 +126,8 @@ const FOCUS_DISTANCE_RADII = 12;
  * 0005): the inner planets for Psyche, the outer system for Voyager. At least the minimum.
  */
 const CRAFT_FOCUS_SUN_DISTANCES = 1.5;
+/** A satellite framed with its planet: from this many of the planet's radii away. */
+const PARENT_FRAMING_RADII = 5;
 const CRAFT_FOCUS_MIN_KM = 0.05 * KM_PER_AU;
 /** How close the camera may come to a spacecraft without a model: just a marker. */
 const CRAFT_MIN_DISTANCE_KM = 1_000;
@@ -633,6 +640,11 @@ export class SolarScene {
     else if (this.#closeUp && lengthKm) {
       // The sunlit side, three-quarters on.
       distance = lengthKm * CLOSE_UP_LENGTHS;
+      direction = new THREE.Vector3(...toScene(sunlitSide(focusAt)));
+    } else if (target.framedByParent && target.parent) {
+      // Its planet and its orbit fill the view, lit side on.
+      const parent = this.#drawn.find((drawn) => drawn.body.id === target.parent)?.body;
+      distance = (parent?.radiusKm ?? 0) * PARENT_FRAMING_RADII;
       direction = new THREE.Vector3(...toScene(sunlitSide(focusAt)));
     } else if (target.kind === 'spacecraft') {
       distance = Math.max(CRAFT_FOCUS_MIN_KM, length(focusAt) * CRAFT_FOCUS_SUN_DISTANCES);

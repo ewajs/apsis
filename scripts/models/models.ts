@@ -60,10 +60,22 @@ type Recipe = {
    * which keeps the silhouette and the seams).
    */
   simplify?: number;
+  /**
+   * How far, as a fraction of each part's size, the simplifier may move the surface
+   * (0.0005 when absent): looser for a source whose seams keep it from simplifying.
+   */
+  simplifyError?: number;
+  /**
+   * Which way is up in AR: `-z` for one whose +Z faces Earth from below (a satellite's
+   * nadir side, a telescope's aft end), so it doesn't stand on its head. `+z` when absent.
+   */
+  arUp?: '+z' | '-z';
 };
 
 /** The size a model should stay under, in bytes (ADR 0013). */
 const BUDGET_BYTES = 5e6;
+/** How far the simplifier may move a surface, as a fraction of the part's size. */
+const SIMPLIFY_ERROR = 0.0005;
 /** Textures are recompressed to WebP, at most this many pixels on a side. */
 const TEXTURE_MAX_PX = 2048;
 /** For AR, smaller textures: phones' AR viewers load the file whole. */
@@ -100,7 +112,7 @@ for (const recipe of recipes) {
   await toBodyFrame(document, recipe);
   const ar = cloneDocument(document);
   await compressForApp(document);
-  await standForAr(ar);
+  await standForAr(ar, recipe.arUp ?? '+z');
   // Plain glTF is big: a heavy model keeps fewer triangles in AR, then smaller
   // textures, until it fits.
   const arSize = async () => (await io.writeBinary(ar)).byteLength;
@@ -209,7 +221,13 @@ async function toBodyFrame(document: Document, recipe: Recipe): Promise<void> {
     prune(),
     weld(),
     ...(recipe.simplify
-      ? [simplify({ simplifier: MeshoptSimplifier, ratio: recipe.simplify, error: 0.0005 })]
+      ? [
+          simplify({
+            simplifier: MeshoptSimplifier,
+            ratio: recipe.simplify,
+            error: recipe.simplifyError ?? SIMPLIFY_ERROR,
+          }),
+        ]
       : []),
   );
 }
@@ -234,14 +252,15 @@ async function compressForApp(document: Document): Promise<void> {
 /**
  * The AR copy (ADR 0014): plain glTF, which every AR viewer reads (no Meshopt, no
  * quantisation, textures in their own format, at most 1024 px), stood up the way the
- * viewers place a model on the floor: the antenna (+Z) up, its lowest point at floor
+ * viewers place a model on the floor: the antenna (+Z) up (or `up`), its lowest point at floor
  * level and centred over it.
  */
-async function standForAr(document: Document): Promise<void> {
+async function standForAr(document: Document, up: '+z' | '-z'): Promise<void> {
   const scene = document.getRoot().listScenes()[0]!;
   const stand = document.createNode('stand');
-  // −90° about x: +Z (the antenna) to +Y (up).
-  stand.setRotation([-Math.SQRT1_2, 0, 0, Math.SQRT1_2]);
+  // −90° about x: +Z (the antenna) to +Y (up); +90°, −Z up.
+  const half = up === '+z' ? -Math.SQRT1_2 : Math.SQRT1_2;
+  stand.setRotation([half, 0, 0, Math.SQRT1_2]);
   for (const child of scene.listChildren()) {
     scene.removeChild(child);
     stand.addChild(child);

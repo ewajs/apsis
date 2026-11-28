@@ -11,7 +11,7 @@ time), 0011 (archive and loading).
 | ------------------------------------ | ---------------------------------------- | ---------------------- | ---------------------------------- | ------ |
 | Catalogue (`data/catalogue.yaml`)    | repository                               | a person, in a PR      | when facts change                  | yes    |
 | Planet orbits (`data/orbits.json`)   | repository                               | `npm run data:orbits`  | once; again only to move the epoch | yes    |
-| Live positions (this year, +60 days) | `public/data/live/` → the deploy         | `npm run data`, in CI  | every build: each push and weekly  | no     |
+| Live positions (this year, +60 days) | `public/data/live/` → the deploy         | `npm run data`, in CI  | every build: each push and daily   | no     |
 | Archive (complete past years)        | `data/archive/` → `public/data/archive/` | `npm run data:archive` | once per file, never edited        | yes    |
 
 Both are one file per body per year. A live file holds the part of the live window in
@@ -35,7 +35,7 @@ goes missing (ADR 0011).
 
 ## What runs
 
-`npm run data` (and CI, before every build, including the weekly scheduled one):
+`npm run data` (and CI, before every build, including the daily scheduled one):
 
 1. reads and validates `data/catalogue.yaml` (`parseCatalogue`); any problem stops the
    run with the full list;

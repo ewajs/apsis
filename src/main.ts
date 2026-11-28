@@ -22,9 +22,17 @@ import { parseInstant, tdbSecondsFromUtcMs } from './core/time.ts';
 import { TimeController } from './time/controller.ts';
 import { ChunkStore, loadCatalogue, loadModels, type Catalogue } from './data/load.ts';
 import { instantWithData } from './core/catalogue.ts';
-import { factsAt } from './core/facts.ts';
-import { positionAt, trackOffset, trackSampleAt, velocityAt } from './core/positions.ts';
-import { sampleOrbit } from './core/elements.ts';
+import { earthOrbitFacts, factsAt } from './core/facts.ts';
+import {
+  positionAt,
+  SATELLITE_DAYS,
+  trackOffset,
+  trackSampleAt,
+  velocityAt,
+} from './core/positions.ts';
+import { elementsFromState, sampleOrbit } from './core/elements.ts';
+import { EARTH_MU, gpEpochMs } from './core/earth-orbit.ts';
+import { subtract } from './core/math.ts';
 import { sceneViewerUrl } from './core/ar.ts';
 import { stateFromChunks } from './core/interpolate.ts';
 import { pickerEntries } from './ui/body-picker.ts';
@@ -258,7 +266,14 @@ let selected: string | null = params.get('focus');
  */
 function select(id: string | null, move: 'fly' | 'jump' | 'stay' = 'fly') {
   const mission = id ? data?.missions.find((entry) => entry.id === id) : undefined;
-  if (mission) {
+  const satellite = id ? data?.index.bodies.find((body) => body.id === id)?.satellite : undefined;
+  if (satellite) {
+    // Its orbital data holds for a few days (ADR 0016): far from them, back to its date.
+    const epochMs = gpEpochMs(satellite);
+    if (Math.abs(time.playback.instantMs - epochMs) > SATELLITE_DAYS * 86_400_000) {
+      time.seek(epochMs);
+    }
+  } else if (mission) {
     const instant = instantWithData(mission, time.playback.instantMs);
     if (instant !== time.playback.instantMs) time.seek(instant);
   }
@@ -297,12 +312,22 @@ function showCard() {
   const computed = track !== undefined && trackOffset(track.chunks, tdb) !== null;
   const name = names()[selected] ?? selected;
   const model = models.find((entry) => entry.id === selected);
+  const earth = positionAt('earth', tdb, world);
+  const earthVelocity = velocityAt('earth', tdb, world);
   app.card = {
     id: selected,
     kind,
     name,
     mission: data.missions.find((mission) => mission.id === selected),
-    facts: at && velocity ? factsAt(at, velocity, positionAt('earth', tdb, world)) : null,
+    facts: at && velocity ? factsAt(at, velocity, earth) : null,
+    aroundEarth: entry?.satellite && {
+      facts:
+        at && velocity && earth && earthVelocity
+          ? earthOrbitFacts(at, velocity, earth, earthVelocity)
+          : null,
+      periodSeconds: 86_400 / entry.satellite.MEAN_MOTION,
+      epochMs: gpEpochMs(entry.satellite),
+    },
     parent: entry?.track && kind === 'moon' ? names()[entry.track.center] : undefined,
     computed,
     instantMs: time.playback.instantMs,
@@ -479,6 +504,24 @@ function trackExtras(id: string, center: string) {
   };
 }
 
+/**
+ * A satellite's ellipse around Earth at an instant (ADR 0016): the two-body orbit its
+ * position and velocity there describe, framed with Earth when it's picked.
+ */
+function satelliteExtras(id: string) {
+  return {
+    parent: 'earth',
+    framedByParent: true,
+    localOrbit: (t: number) => {
+      const world = store!.world;
+      const [at, velocity] = [positionAt(id, t, world), velocityAt(id, t, world)];
+      const [earth, earthVelocity] = [positionAt('earth', t, world), velocityAt('earth', t, world)];
+      if (!at || !velocity || !earth || !earthVelocity) return null;
+      return elementsFromState(subtract(at, earth), subtract(velocity, earthVelocity), EARTH_MU, t);
+    },
+  };
+}
+
 /** Hands the scene its bodies, once both the scene and the data are there. */
 function fillScene() {
   if (!scene || !data) return;
@@ -506,6 +549,7 @@ function fillScene() {
       place: (t: number) => positionAt(body.id, t, store!.world),
       color: COLORS[body.id],
       ...(body.track && trackExtras(body.id, body.track.center)),
+      ...(body.satellite && satelliteExtras(body.id)),
     })),
     {
       name: named.sun!,
@@ -527,8 +571,8 @@ try {
   const base = `${import.meta.env.BASE_URL}data/`;
   data = await loadCatalogue(base);
   store = new ChunkStore(base, data.index);
-  // The map leaves moons out: at its scale they sit on their planet.
-  const onMap = data.index.bodies.filter((body) => body.kind !== 'moon');
+  // The map leaves moons and satellites out: at its scale they sit on their planet.
+  const onMap = data.index.bodies.filter((body) => body.kind !== 'moon' && !body.satellite);
   const bodies: MapBody[] = onMap.map((body) => ({
     id: body.id,
     kind: body.kind,

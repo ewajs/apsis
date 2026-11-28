@@ -117,6 +117,14 @@ export class InfoPanel extends LitElement {
       <ul>
         <li>${msg('Posiciones: JPL Horizons, NASA/JPL-Caltech.', { id: 'credit-horizons' })}</li>
         <li>
+          ${msg(
+            'Satélites alrededor de la Tierra: datos orbitales de CelesTrak, calculados en Apsis.',
+            {
+              id: 'credit-celestrak',
+            },
+          )}
+        </li>
+        <li>
           ${msg('Texturas: Solar System Scope, CC BY 4.0, a partir de datos de la NASA.', {
             id: 'credit-textures',
           })}

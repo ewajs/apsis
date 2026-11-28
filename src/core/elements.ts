@@ -5,7 +5,7 @@
  * samples, the body is carried along each ellipse to the instant and the two positions
  * blended. Pure.
  */
-import { add, combine, scale, type Vector3 } from './math.ts';
+import { add, combine, cross, scale, subtract, type Vector3 } from './math.ts';
 import { orbitPlane, type OrbitalElements } from './orbits.ts';
 
 /**
@@ -109,4 +109,53 @@ export function periapsisTimes(samples: readonly ElementSample[]): number[] {
     if (!times.some((known) => Math.abs(known - next) < 3600)) times.push(next);
   }
   return times.sort((a, b) => a - b);
+}
+
+/**
+ * The ellipse a body at `r` (km) moving at `v` (km/s) is on, around a centre of
+ * gravitational parameter `mu` (km³/s²), as of `epoch`: the elements of its two-body
+ * orbit, in the frame `r` and `v` are given in. For drawing an orbit known only from
+ * positions (a satellite from CelesTrak). Elliptic orbits only.
+ */
+export function elementsFromState(
+  r: Vector3,
+  v: Vector3,
+  mu: number,
+  epoch: number,
+): OrbitalElements {
+  const rLength = Math.hypot(...r);
+  const speed2 = v[0] ** 2 + v[1] ** 2 + v[2] ** 2;
+  const h = cross(r, v);
+  const hLength = Math.hypot(...h);
+  // The eccentricity vector points to periapsis.
+  const rv = r[0] * v[0] + r[1] * v[1] + r[2] * v[2];
+  const eVector = scale(subtract(scale(r, speed2 - mu / rLength), scale(v, rv)), 1 / mu);
+  const e = Math.hypot(...eVector);
+  const a = 1 / (2 / rLength - speed2 / mu);
+  const i = Math.acos(h[2] / hLength);
+  const node = cross([0, 0, 1], h);
+  const nodeLength = Math.hypot(...node);
+  const angle = (from: Vector3, to: Vector3, upwards: boolean) => {
+    const c =
+      (from[0] * to[0] + from[1] * to[1] + from[2] * to[2]) /
+      (Math.hypot(...from) * Math.hypot(...to));
+    const theta = Math.acos(Math.min(1, Math.max(-1, c)));
+    return upwards ? theta : 2 * Math.PI - theta;
+  };
+  // Near-equatorial or near-circular orbits have no node or periapsis to measure from:
+  // take the x axis, and the node, instead.
+  const nodeDir: Vector3 = nodeLength > 1e-9 ? node : [1, 0, 0];
+  const ascendingNode = nodeLength > 1e-9 ? angle([1, 0, 0], node, node[1] >= 0) : 0;
+  const periDir: Vector3 = e > 1e-9 ? eVector : nodeDir;
+  const periapsis = e > 1e-9 ? angle(nodeDir, eVector, eVector[2] >= 0) : 0;
+  const trueAnomaly = angle(periDir, r, rv >= 0);
+  return {
+    epoch,
+    eccentricity: e,
+    semiMajorAxisKm: a,
+    inclinationDeg: i / DEG,
+    ascendingNodeDeg: ascendingNode / DEG,
+    argumentOfPeriapsisDeg: periapsis / DEG,
+    trueAnomalyDeg: trueAnomaly / DEG,
+  };
 }

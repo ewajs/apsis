@@ -5,11 +5,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-  # Weekly fresh data (ADR 0008). The live window holds 60 days either side, so a week
-  # between refreshes, or a few missed runs, never leaves the site without data.
-  # Mondays 06:17 UTC: off the hour, when GitHub's scheduler is least busy.
+  # Daily fresh data (ADR 0008): satellites around Earth show within three days of their
+  # CelesTrak data (ADR 0016); Horizons' live window holds 60 days either side.
+  # 06:17 UTC: off the hour, when GitHub's scheduler is least busy.
   schedule:
-    - cron: '17 6 * * 1'
+    - cron: '17 6 * * *'
 
 permissions:
   contents: read

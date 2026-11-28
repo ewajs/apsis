@@ -4,8 +4,9 @@
  * - `live/<body>/<year>.json`: fetched from JPL Horizons now, from the earlier of
  *   1 January and 60 days ago, to 60 days ahead, skipping years already archived;
  * - `archive/<body>/<year>.json`: copied from the committed `data/archive/`;
- * - `index.json` (every body's years, and where each is), `catalogue.json` (validated)
- *   and `orbits.json` (from `data/orbits.json`, validated).
+ * - `index.json` (every body's years, and where each is, and the satellites' orbital
+ *   data from CelesTrak, ADR 0016), `catalogue.json` (validated) and `orbits.json` (from
+ *   `data/orbits.json`, validated).
  *
  * The output is generated, never committed. Any failure exits non-zero, so a build
  * never ships partial data.
@@ -26,6 +27,7 @@ import {
 import { ARCHIVE_DIR, archivedYears } from './archive-files.ts';
 import { allBodies, PLANETS, TRACK_ONLY } from './bodies.ts';
 import { readCatalogue } from './catalogue.ts';
+import { fetchSatellite } from './celestrak.ts';
 import { fetchTrack, fetchWithEncounters } from './horizons-client.ts';
 
 /** Days of data ahead of today (and at least behind): how long the site stays right. */
@@ -119,6 +121,13 @@ try {
     if (years.length === 0 && !track?.years.length) continue;
     const { id, horizonsId, kind } = body;
     index.bodies.push({ id, horizonsId, kind, years, ...(track && { track }) });
+  }
+  // Satellites around Earth: one CelesTrak request each, also one at a time.
+  for (const mission of missions) {
+    if (mission.celestrak === undefined) continue;
+    const satellite = await fetchSatellite(mission.celestrak, mission.id);
+    console.log(`  ${mission.id.padEnd(20)} CelesTrak elements of ${satellite.EPOCH}`);
+    index.bodies.push({ id: mission.id, kind: 'spacecraft', years: [], satellite });
   }
 } catch (error) {
   console.error(`\nData fetch failed: ${error instanceof Error ? error.message : error}`);

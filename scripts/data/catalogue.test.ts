@@ -6,7 +6,7 @@ describe('data/catalogue.yaml', () => {
     expect(() => readCatalogue()).not.toThrow();
   });
 
-  it('has a public ephemeris for every mission in it so far', () => {
+  it('has orbital data for every mission in it so far: Horizons, or CelesTrak around Earth', () => {
     const missions = readCatalogue();
     expect(missions.map((m) => m.id)).toEqual([
       'juno',
@@ -17,6 +17,9 @@ describe('data/catalogue.yaml', () => {
       'new-horizons',
       'bepicolombo',
       'jwst',
+      'iss',
+      'hubble',
+      'tiangong',
       'mro',
       'maven',
       'mars-express',
@@ -28,6 +31,8 @@ describe('data/catalogue.yaml', () => {
       'rosetta',
       'dawn',
     ]);
-    for (const mission of missions) expect(mission.horizons).not.toBeNull();
+    for (const mission of missions) {
+      expect(mission.horizons !== null || mission.celestrak !== undefined).toBe(true);
+    }
   });
 });

@@ -125,3 +125,25 @@
   licence: Public domain
   lengthM: 5.7
   rotate: [0, 0, 90]
+
+- id: iss
+  url: https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/i/ISS_stationary.glb
+  page: https://science.nasa.gov/3d-resources/
+  credit: NASA
+  licence: Public domain
+  lengthM: 109
+  # +Z to nadir (the modules' side), +Y along the truss: it flies with one side to Earth.
+  rotate: [0, -90, 90]
+  simplify: 0.5
+  simplifyError: 0.003
+  arUp: -z
+
+- id: hubble
+  url: https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/h/Hubble.glb
+  page: https://science.nasa.gov/3d-resources/
+  credit: NASA
+  licence: Public domain
+  lengthM: 13.2
+  # +Z out of the aft end, +Y along the arrays: aft to Earth, the aperture to the sky.
+  rotate: [0, -90, 90]
+  arUp: -z
