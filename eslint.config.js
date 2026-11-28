@@ -82,7 +82,8 @@ export default [
             // Renders the icons in the pinned Playwright Chromium.
             allow('scripts', packages('@playwright/test', 'yaml')),
             // The model pipeline: three's geometries for our own models, gltf-transform
-            // and meshoptimizer to write and compress GLB files (ADR 0013).
+            // and meshoptimizer to write and compress GLB files (ADR 0013); Prettier
+            // to write the models index in the shape the format check wants.
             allow(
               'scripts',
               packages(
@@ -92,6 +93,7 @@ export default [
                 'meshoptimizer',
                 'draco3dgltf',
                 'sharp',
+                'prettier',
               ),
             ),
             {

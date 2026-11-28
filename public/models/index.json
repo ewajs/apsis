@@ -7,7 +7,8 @@
       "lengthM": 11.4,
       "credit": "Apsis",
       "licence": "MIT",
-      "ours": true
+      "ours": true,
+      "dimensionsM": [4.199, 6.802, 11.4]
     },
     {
       "id": "psyche",
@@ -15,7 +16,8 @@
       "lengthM": 24.8,
       "credit": "Apsis",
       "licence": "MIT",
-      "ours": true
+      "ours": true,
+      "dimensionsM": [7.3, 3.342, 24.8]
     },
     {
       "id": "juno",
@@ -24,7 +26,8 @@
       "credit": "NASA VTAD",
       "licence": "Public domain",
       "ours": false,
-      "source": "https://science.nasa.gov/resource/juno-3d-model/"
+      "source": "https://science.nasa.gov/resource/juno-3d-model/",
+      "dimensionsM": [19.136, 4.614, 20.1]
     },
     {
       "id": "europa-clipper",
@@ -33,7 +36,8 @@
       "credit": "NASA VTAD",
       "licence": "Public domain",
       "ours": false,
-      "source": "https://science.nasa.gov/resource/europa-clipper-3d-model/"
+      "source": "https://science.nasa.gov/resource/europa-clipper-3d-model/",
+      "dimensionsM": [18.003, 11.253, 30.5]
     },
     {
       "id": "parker-solar-probe",
@@ -43,7 +47,8 @@
       "licence": "Public domain",
       "ours": false,
       "source": "https://science.nasa.gov/resource/parker-solar-probe-3d-model/",
-      "pointing": "sun"
+      "pointing": "sun",
+      "dimensionsM": [2.608, 3, 2.388]
     },
     {
       "id": "voyager-1",
@@ -52,7 +57,8 @@
       "credit": "NASA VTAD",
       "licence": "Public domain",
       "ours": false,
-      "source": "https://science.nasa.gov/resource/voyager-3d-model/"
+      "source": "https://science.nasa.gov/resource/voyager-3d-model/",
+      "dimensionsM": [5.96, 8.486, 13]
     },
     {
       "id": "new-horizons",
@@ -61,7 +67,8 @@
       "credit": "NASA VTAD",
       "licence": "Public domain",
       "ours": false,
-      "source": "https://science.nasa.gov/resource/new-horizons-3d-model/"
+      "source": "https://science.nasa.gov/resource/new-horizons-3d-model/",
+      "dimensionsM": [2.254, 1.925, 2.7]
     },
     {
       "id": "jwst",
@@ -71,7 +78,8 @@
       "licence": "Public domain",
       "ours": false,
       "source": "https://science.nasa.gov/3d-resources/james-webb-space-telescope-b/",
-      "pointing": "sun"
+      "pointing": "sun",
+      "dimensionsM": [12.996, 11.366, 21.2]
     },
     {
       "id": "cassini",
@@ -80,7 +88,8 @@
       "credit": "NASA VTAD",
       "licence": "Public domain",
       "ours": false,
-      "source": "https://science.nasa.gov/resource/cassini-3d-model/"
+      "source": "https://science.nasa.gov/resource/cassini-3d-model/",
+      "dimensionsM": [11, 7.134, 8.017]
     },
     {
       "id": "galileo",
@@ -89,7 +98,8 @@
       "credit": "NASA/JPL/Solar System Simulator",
       "licence": "Public domain",
       "ours": false,
-      "source": "https://science.nasa.gov/3d-resources/galileo/"
+      "source": "https://science.nasa.gov/3d-resources/galileo/",
+      "dimensionsM": [9.194, 6.952, 11]
     },
     {
       "id": "rosetta",
@@ -98,7 +108,8 @@
       "credit": "NASA",
       "licence": "Public domain",
       "ours": false,
-      "source": "https://github.com/nasa/NASA-3D-Resources"
+      "source": "https://github.com/nasa/NASA-3D-Resources",
+      "dimensionsM": [6.931, 4.56, 32]
     },
     {
       "id": "dawn",
@@ -107,7 +118,8 @@
       "credit": "NASA/Brian E. Kumanchik",
       "licence": "Public domain",
       "ours": false,
-      "source": "https://science.nasa.gov/3d-resources/dawn/"
+      "source": "https://science.nasa.gov/3d-resources/dawn/",
+      "dimensionsM": [2.2, 2.215, 19.7]
     },
     {
       "id": "mro",
@@ -116,7 +128,8 @@
       "credit": "NASA",
       "licence": "Public domain",
       "ours": false,
-      "source": "https://science.nasa.gov/3d-resources/"
+      "source": "https://science.nasa.gov/3d-resources/",
+      "dimensionsM": [6.92, 5.031, 13.6]
     },
     {
       "id": "maven",
@@ -125,7 +138,8 @@
       "credit": "NASA",
       "licence": "Public domain",
       "ours": false,
-      "source": "https://science.nasa.gov/3d-resources/"
+      "source": "https://science.nasa.gov/3d-resources/",
+      "dimensionsM": [7.135, 4.707, 11.4]
     },
     {
       "id": "mars-odyssey",
@@ -134,7 +148,8 @@
       "credit": "NASA",
       "licence": "Public domain",
       "ours": false,
-      "source": "https://science.nasa.gov/3d-resources/"
+      "source": "https://science.nasa.gov/3d-resources/",
+      "dimensionsM": [2.33, 5.7, 3.93]
     },
     {
       "id": "iss",
@@ -143,7 +158,8 @@
       "credit": "NASA",
       "licence": "Public domain",
       "ours": false,
-      "source": "https://science.nasa.gov/3d-resources/"
+      "source": "https://science.nasa.gov/3d-resources/",
+      "dimensionsM": [57.062, 66.949, 109]
     },
     {
       "id": "hubble",
@@ -152,7 +168,8 @@
       "credit": "NASA",
       "licence": "Public domain",
       "ours": false,
-      "source": "https://science.nasa.gov/3d-resources/"
+      "source": "https://science.nasa.gov/3d-resources/",
+      "dimensionsM": [9.754, 13.2, 8.733]
     }
   ]
 }

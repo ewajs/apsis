@@ -42,7 +42,11 @@ Heavy sources take `simplify` (the fraction of triangles to keep: Europa Clipper
 ## The AR copies
 
 Beside each model the script writes `public/models/ar/<id>.glb`, for the phones' own AR
-viewers (ADR 0014): plain glTF, textures at most 1024 px (JPEG unless see-through),
+viewers (ADR 0014), and from it the 1 m copy and both USDZ files (`ar-variants.ts`; see
+[ar.md](ar.md)). `npm run models:ar` (with `--id`) rebuilds only those, and the
+measured sizes in `index.json`, leaving the models as they are. The USDZ step needs
+Python 3: it installs Pixar's usd-core in `.cache/usd-venv` the first time. The AR copy
+is plain glTF, textures at most 1024 px (JPEG unless see-through),
 stood antenna-up with its lowest point at floor level, at real size (`arUp: -z` stands
 it the other way, for one whose +Z faces Earth from below). Over 5 MB it's
 simplified, then its textures halved. `scripts/models/ar.test.ts` checks every copy is

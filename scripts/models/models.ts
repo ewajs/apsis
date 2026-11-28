@@ -5,7 +5,8 @@
  * (downloaded once into `.cache/models/`) or builds our own in code
  * (`scripts/models/own/<id>.ts`); brings it into the shared body frame (metres, centred,
  * +Z along the high-gain antenna, +Y along the solar arrays) at its real size;
- * compresses it; and writes `public/models/<id>.glb` and `public/models/index.json`.
+ * compresses it; and writes `public/models/<id>.glb` and `public/models/index.json`, with
+ * the AR files beside each AR copy (`ar-variants.ts`).
  *
  *   npm run models                 every model
  *   npm run models -- --id juno    one
@@ -28,9 +29,11 @@ import draco3d from 'draco3dgltf';
 import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
 import sharp from 'sharp';
 import { Euler, Quaternion } from 'three';
+import { format, resolveConfig } from 'prettier';
 import { parse } from 'yaml';
 import { parseModelIndex, type ModelEntry } from '../../src/core/models.ts';
 import { materials } from './own/parts.ts';
+import { writeArVariants } from './ar-variants.ts';
 import { threeToDocument } from './three-to-gltf.ts';
 
 /** One line of `data/models.yaml`. */
@@ -105,6 +108,8 @@ const previous = existsSync(indexPath)
   ? parseModelIndex(JSON.parse(readFileSync(indexPath, 'utf8'))).models
   : [];
 const entries = new Map(previous.map((entry) => [entry.id, entry]));
+/** What this run built, waiting for its AR files and sizes. */
+const built = new Map<string, Omit<ModelEntry, 'dimensionsM'>>();
 
 for (const recipe of recipes) {
   if (values.id && recipe.id !== values.id) continue;
@@ -129,7 +134,7 @@ for (const recipe of recipes) {
   writeFileSync(`${OUT}/${file}`, bytes);
   const arBytes = await io.writeBinary(ar);
   writeFileSync(`${AR_OUT}/${file}`, arBytes);
-  const entry: ModelEntry = {
+  const entry: Omit<ModelEntry, 'dimensionsM'> = {
     id: recipe.id,
     file,
     lengthM: recipe.lengthM,
@@ -139,7 +144,7 @@ for (const recipe of recipes) {
     ...(recipe.page && { source: recipe.page }),
     ...(recipe.pointing && { pointing: recipe.pointing }),
   };
-  entries.set(recipe.id, entry);
+  built.set(recipe.id, entry);
   const over = bytes.byteLength > BUDGET_BYTES ? '  over the 5 MB budget' : '';
   const mb = (n: number) => `${(n / 1e6).toFixed(2)} MB`;
   console.log(
@@ -147,12 +152,22 @@ for (const recipe of recipes) {
   );
 }
 
+const dimensions = await writeArVariants([...built.keys()]);
+for (const [id, entry] of built) entries.set(id, { ...entry, dimensionsM: dimensions.get(id)! });
+
 const order = recipes.map((recipe) => recipe.id);
 const index = {
   version: 1 as const,
   models: [...entries.values()].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id)),
 };
-writeFileSync(indexPath, `${JSON.stringify(parseModelIndex(index), null, 2)}\n`);
+// In Prettier's shape, as the check wants it.
+writeFileSync(
+  indexPath,
+  await format(JSON.stringify(parseModelIndex(index), null, 2), {
+    ...(await resolveConfig(indexPath)),
+    parser: 'json',
+  }),
+);
 console.log(`Wrote ${index.models.length} model(s) to ${OUT}/`);
 
 /** The model as found: downloaded (once), or built by our own code. */

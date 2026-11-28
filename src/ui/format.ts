@@ -81,3 +81,13 @@ export function formatLooseDate(date: string, locale: string): string {
     .replace(/\./g, '')
     .replace(/ de /g, ' ');
 }
+
+/**
+ * A length in metres, without the unit: one decimal under 10 m, whole metres above.
+ * @example formatMetres(5.74, 'es-AR') // '5,7'
+ */
+export function formatMetres(metres: number, locale: string): string {
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: metres < 10 ? 1 : 0 }).format(
+    metres,
+  );
+}

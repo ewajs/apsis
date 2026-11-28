@@ -16,6 +16,11 @@ export type ModelEntry = {
   file: string;
   /** Its largest dimension, in metres: how big it looks on screen. */
   lengthM: number;
+  /**
+   * Its size standing in AR, in metres: across, up, and front to back (`npm run models`
+   * measures the AR copy). The card shows it before the real-size AR.
+   */
+  dimensionsM: [number, number, number];
   /** Who made it, as their credit asks: "NASA/JPL-Caltech". */
   credit: string;
   /** The licence, by name: "Public domain", "CC BY 4.0". */
@@ -53,6 +58,14 @@ export function parseModelIndex(data: unknown): ModelIndex {
     }
     if (typeof entry.lengthM !== 'number' || !(entry.lengthM > 0)) {
       problems.push(`${where}.lengthM must be a positive number of metres`);
+    }
+    const dimensions = entry.dimensionsM;
+    if (
+      !Array.isArray(dimensions) ||
+      dimensions.length !== 3 ||
+      !dimensions.every((size) => typeof size === 'number' && size > 0)
+    ) {
+      problems.push(`${where}.dimensionsM must be three positive numbers of metres`);
     }
     if (typeof entry.ours !== 'boolean') problems.push(`${where}.ours must be true or false`);
     if (entry.pointing !== undefined && entry.pointing !== 'earth' && entry.pointing !== 'sun') {

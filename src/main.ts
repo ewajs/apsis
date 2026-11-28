@@ -33,13 +33,22 @@ import {
 import { elementsFromState, sampleOrbit } from './core/elements.ts';
 import { EARTH_MU, gpEpochMs } from './core/earth-orbit.ts';
 import { subtract } from './core/math.ts';
-import { sceneViewerUrl } from './core/ar.ts';
+import { arFile, quickLookHref, sceneViewerUrl, type ArSize } from './core/ar.ts';
 import { stateFromChunks } from './core/interpolate.ts';
 import { pickerEntries } from './ui/body-picker.ts';
 import { yearsToLoad } from './core/loading.ts';
 import type { MapBody } from './map/solar-map.ts';
 import type { SolarScene } from './scene/solar-scene.ts';
-import { closeLabel, scaleNote, sceneFailed, sceneLabel, sceneLoading } from './ui/messages.ts';
+import {
+  arSizeNotes,
+  closeLabel,
+  scaleNote,
+  sceneFailed,
+  sceneLabel,
+  sceneLoading,
+} from './ui/messages.ts';
+import { openInQuickLook } from './scene/quick-look.ts';
+import type { ModelEntry } from './core/models.ts';
 import { trailPoints } from './core/trails.ts';
 import type { TableBody } from './scene/tabletop.ts';
 import type { View } from './ui/view-switch.ts';
@@ -186,8 +195,8 @@ app.addEventListener('tabletop', () => {
       craftColor.trim(),
     );
     if (arViewer === 'quick-look') {
-      const { openInQuickLook } = await import('./scene/ar-export.ts');
-      await openInQuickLook(table);
+      const { openObjectInQuickLook } = await import('./scene/ar-export.ts');
+      await openObjectInQuickLook(table);
     } else {
       // The 3D view pauses while AR has the screen.
       scene?.stop();
@@ -199,18 +208,31 @@ app.addEventListener('tabletop', () => {
   })().catch((error: unknown) => console.error(error));
 });
 
-/** The AR copy of a spacecraft's model, as an absolute URL (AR viewers fetch it themselves). */
+/** Scene Viewer's links for a spacecraft's two AR sizes, titled with its name and size. */
+function sceneViewerHrefs(model: ModelEntry, name: string): Record<ArSize, string> {
+  const notes = arSizeNotes(model);
+  const href = (size: ArSize) =>
+    sceneViewerUrl(
+      arUrl(arFile(model.id, size, 'glb')),
+      `${name} · ${notes[size]}`,
+      location.href,
+      size,
+    );
+  return { room: href('room'), real: href('real') };
+}
+
+/** A spacecraft's AR file, as an absolute URL (AR viewers fetch it themselves). */
 function arUrl(file: string): string {
   return new URL(`ar/${file}`, new URL(modelsBase, location.href)).href;
 }
 
 // The card's "En tu casa" on an iPhone: the AR copy, converted to USDZ, in Quick Look.
-app.addEventListener('ar-view', () => {
+app.addEventListener('ar-view', (event) => {
   const model = models.find((entry) => entry.id === selected);
   if (!model) return;
-  void import('./scene/ar-export.ts')
-    .then(({ openModelInQuickLook }) => openModelInQuickLook(arUrl(model.file)))
-    .catch((error: unknown) => console.error(error));
+  const size = (event as CustomEvent<ArSize>).detail;
+  // Straight from the tap: Quick Look downloads the file ready-made (`npm run models`).
+  openInQuickLook(quickLookHref(arUrl(arFile(model.id, size, 'usdz')), size));
 });
 let store: ChunkStore | undefined;
 let scene: SolarScene | undefined;
@@ -336,7 +358,7 @@ function showCard() {
     ar: !model
       ? undefined
       : arViewer === 'scene-viewer'
-        ? { viewer: 'scene-viewer', href: sceneViewerUrl(arUrl(model.file), name, location.href) }
+        ? { viewer: 'scene-viewer', href: sceneViewerHrefs(model, name) }
         : arViewer === 'quick-look'
           ? { viewer: 'quick-look' }
           : undefined,
