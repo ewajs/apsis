@@ -20,7 +20,10 @@ describe('parseModelIndex', () => {
   it('lists every problem', () => {
     let message = '';
     try {
-      parseModelIndex({ version: 1, models: [{ ...juno, lengthM: 0, credit: '' }, 3] });
+      parseModelIndex({
+        version: 1,
+        models: [{ ...juno, lengthM: 0, credit: '' }, 3, { ...juno, pointing: 'mars' }],
+      });
     } catch (error) {
       message = (error as Error).message;
     }
@@ -33,6 +36,7 @@ describe('parseModelIndex', () => {
       'models[0].credit is missing',
       'models[0].lengthM must be a positive number of metres',
       'models[1] is not an object',
+      'models[2].pointing must be earth or sun',
     ]);
   });
 

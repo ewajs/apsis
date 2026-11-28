@@ -24,6 +24,11 @@ export type ModelEntry = {
   source?: string;
   /** Built by us, simplified, because no free model exists: the card says so. */
   ours: boolean;
+  /**
+   * What its +Z faces in flight: Earth (its antenna, most spacecraft) or the Sun (a heat
+   * shield or sunshield: Parker, James Webb). Earth when absent.
+   */
+  pointing?: 'earth' | 'sun';
 };
 
 /** The models index. */
@@ -50,6 +55,9 @@ export function parseModelIndex(data: unknown): ModelIndex {
       problems.push(`${where}.lengthM must be a positive number of metres`);
     }
     if (typeof entry.ours !== 'boolean') problems.push(`${where}.ours must be true or false`);
+    if (entry.pointing !== undefined && entry.pointing !== 'earth' && entry.pointing !== 'sun') {
+      problems.push(`${where}.pointing must be earth or sun`);
+    }
     if (entry.source !== undefined && typeof entry.source !== 'string') {
       problems.push(`${where}.source must be a URL`);
     }
