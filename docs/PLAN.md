@@ -127,8 +127,8 @@ The owner's priority: models and AR first, and they should look stunning (up to 
       the high-gain antenna to Earth, or the arrays to the Sun, as each one flies.
 - [x] **5.5 Our own models.** Where nothing free exists: a simplified model built in
       code (bus, arrays, dish, booms), labelled as ours on the card.
-- [~] **5.6 Credits and caching.** Model credits in the info panel and the card;
-  models load on demand and stay cached for offline once seen.
+- [x] **5.6 Credits and caching.** Model credits in the info panel and the card;
+      models load on demand and stay cached for offline once seen.
 
 ## M6 — AR (v0.6.0)
 
@@ -184,6 +184,21 @@ The owner's priority: models and AR first, and they should look stunning (up to 
 SPICE for missions Horizons lacks; a link to fly a trajectory in gravitas.
 
 ## Releases
+
+### v0.5.0 — Spacecraft models (2026-11-28)
+
+Every spacecraft, up close, as it really looks.
+
+- All twelve spacecraft as 3D models at true size: ten from NASA (Juno, Europa Clipper,
+  Parker, Voyager 1, New Horizons, James Webb, Cassini, Galileo, Rosetta, Dawn), and our
+  own simplified BepiColombo and Psyche where no free model exists.
+- "Ver la nave de cerca" on the card: one continuous dive from wherever you are to the
+  spacecraft's sunlit side, across ten orders of magnitude; and back out.
+- Each one in the pose it flies in: the antenna to Earth, or a shield to the Sun (Parker,
+  James Webb).
+- Lit by the Sun, with a soft fill so metal reads as metal; orbit lines step aside up
+  close.
+- Credits on each card and in the info panel; models kept for offline once seen.
 
 ### v0.4.0 — Pick one (2026-11-24)
 
