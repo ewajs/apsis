@@ -143,9 +143,13 @@ export function assertValidSamples(samples: readonly Sample[], label: string): v
 /**
  * Swaps a stretch of coarse samples for finer ones: every coarse sample within the fine
  * samples' span is dropped, and the fine ones go in, in time order. This is how hourly
- * samples around an encounter join a daily series (ADR 0011).
+ * samples around an encounter join a daily series (ADR 0011), and hourly elements around
+ * an orbiter's periapsis its daily track (ADR 0015).
  */
-export function mergeSamples(coarse: readonly Sample[], fine: readonly Sample[]): Sample[] {
+export function mergeSamples<S extends readonly [number, ...number[]]>(
+  coarse: readonly S[],
+  fine: readonly S[],
+): S[] {
   const [first, last] = [fine[0], fine.at(-1)];
   if (!first || !last) return [...coarse];
   const outside = coarse.filter(([t]) => t < first[0] || t > last[0]);

@@ -505,7 +505,7 @@ function fillScene() {
       // One way to place everything: a track where there is one, else states (ADR 0015).
       place: (t: number) => positionAt(body.id, t, store!.world),
       color: COLORS[body.id],
-      ...(body.track && body.kind !== 'spacecraft' && trackExtras(body.id, body.track.center)),
+      ...(body.track && trackExtras(body.id, body.track.center)),
     })),
     {
       name: named.sun!,

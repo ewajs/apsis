@@ -25,6 +25,9 @@ export type Body = {
     centerCode: string;
     /** The sampling step; daily when absent. Small bodies' slow ellipses take 10 days. */
     step?: string;
+    /** Only between these days (an orbiter's time at its planet); always when absent. */
+    from?: string;
+    to?: string;
   };
 };
 
@@ -149,8 +152,21 @@ export function allBodies(missions: readonly Mission[]): Body[] {
               kind: 'spacecraft' as const,
               ...(mission.coverage && { coverage: mission.coverage }),
               encounters: mission.milestones.filter((m) => m.encounter).map((m) => m.date),
+              ...(mission.orbiting && { track: orbiterTrack(mission.orbiting) }),
             },
           ],
     ),
   ];
+}
+
+/** An orbiter's track around its planet (ADR 0015): that planet's centre, for its dates. */
+function orbiterTrack(orbiting: { body: string; from: string; to?: string }) {
+  const planet = PLANETS.find((p) => p.id === orbiting.body);
+  if (!planet) throw new Error(`orbiting: no planet "${orbiting.body}"`);
+  return {
+    center: planet.id,
+    centerCode: `500@${planet.horizonsId}`,
+    from: orbiting.from,
+    ...(orbiting.to && { to: orbiting.to }),
+  };
 }

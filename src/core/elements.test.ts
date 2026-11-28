@@ -3,7 +3,13 @@ import io from '../../tests/fixtures/horizons/io-elements.json';
 import ioVectors from '../../tests/fixtures/horizons/io-vectors.json';
 import juno from '../../tests/fixtures/horizons/juno-jupiter-elements.json';
 import junoVectors from '../../tests/fixtures/horizons/juno-jupiter-vectors.json';
-import { eccentricAnomaly, positionFromSamples, propagate, sampleOrbit } from './elements.ts';
+import {
+  eccentricAnomaly,
+  periapsisTimes,
+  positionFromSamples,
+  propagate,
+  sampleOrbit,
+} from './elements.ts';
 import { parseElementSeries, parseVectors } from './horizons.ts';
 import { distance } from './math.ts';
 import { orbitPoint } from './orbits.ts';
@@ -61,5 +67,20 @@ describe('positions from daily elements', () => {
     const orbit = sampleOrbit(sample);
     const onOrbit = orbitPoint(orbit, (orbit.trueAnomalyDeg * Math.PI) / 180);
     expect(distance(onOrbit, propagate(sample, sample[0]))).toBeLessThan(1e-3);
+  });
+});
+
+describe('periapsisTimes', () => {
+  it('finds the next close pass after each sample, once', () => {
+    const [first] = series.juno.elements;
+    const times = periapsisTimes(series.juno.elements);
+    // Juno's next perijove after 1 November 2026, the same from all three days.
+    expect(times).toHaveLength(1);
+    const at = times[0]!;
+    expect(at).toBeGreaterThan(first![0]);
+    // At periapsis its distance is the orbit's smallest, a(1 − e).
+    const [, a, e] = first!;
+    const distance = Math.hypot(...propagate(first!, at));
+    expect(distance).toBeCloseTo(a * (1 - e), -2);
   });
 });

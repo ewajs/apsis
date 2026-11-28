@@ -46,6 +46,28 @@ A moon's card reads "Luna de Júpiter", with its distances and speed; its veloci
 from two positions a minute apart (`velocityAt`). Any position from a track carries a
 note: "Posición calculada a partir de elementos orbitales diarios de JPL Horizons".
 
+## Orbiters
+
+While a spacecraft circles a planet it has a track there too (7.4): Juno around
+Jupiter from 2016, Cassini around Saturn 2004–2017, Galileo around Jupiter 1995–2003,
+BepiColombo around Mercury from 21 November 2026. The catalogue says when
+(`orbiting: { body, from, to? }`, the day after orbit insertion, when the orbit is
+closed), and the fetch keeps only closed-orbit samples.
+
+At periapsis an orbiter moves fastest: daily elements put Juno 6,000 km off near
+Jupiter's cloud tops, where it passes 4,000 km up. So each daily sample predicts the next
+periapsis (`periapsisTimes`: `t + (360° − M)/n`) and the fetch adds hourly elements for
+12 hours either side (`PERIAPSIS_HOURS`), merged in like an encounter's hourly states.
+Measured across a perijove against Horizons, hourly: a median of 2 km, at most 540 km
+(just outside the hourly window, when Juno is already 100,000 km out).
+
+In 3D, while the track covers the instant, the spacecraft draws its current orbit around
+the planet in its own colour, and its 30-day heliocentric trail (a jagged polygon of
+daily points around a planet) steps aside. Its card carries the "calculada" note.
+
+Dawn (Vesta, Ceres) and Rosetta (67P) are deferred: Horizons gives no orbital elements
+around small bodies ("required masses not defined").
+
 ## Small bodies
 
 Where missions went: the dwarf planets Pluto and Ceres, the asteroids Vesta, Psyche and

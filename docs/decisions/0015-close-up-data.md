@@ -22,7 +22,10 @@
   position (Hermite, as now) plus Io's from its elements. A body with elements at an
   instant uses them; otherwise its heliocentric states, as before.
 - **Small bodies** (Pluto, Ceres, Vesta, 67P…) use the same series around the Sun, at a
-  coarser step: their ellipses change slowly.
+  coarser step (10 days): their ellipses change slowly.
+- **Orbiters** add hourly samples for 12 hours either side of each periapsis, predicted
+  from the daily samples: Juno across a perijove, within 2 km (median) instead of
+  3,800.
 - **Said so:** the card notes when a position comes from orbital elements, "calculada a
   partir de elementos orbitales diarios de JPL Horizons".
 

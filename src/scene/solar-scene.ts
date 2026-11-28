@@ -68,7 +68,10 @@ export type SceneBody = {
    * from `chunks`.
    */
   place?: ((t: number) => Vector3 | null) | undefined;
-  /** For a moon: the planet it circles; it faces it, and hides when too close to it. */
+  /**
+   * The planet it circles: a moon (which faces it, and hides when too close to it on
+   * screen) or an orbiter while it is there (ADR 0015).
+   */
   parent?: string | undefined;
   /**
    * Its ellipse at an instant, to draw: around its `parent` for a moon, around the Sun
@@ -444,7 +447,11 @@ export class SolarScene {
     if (body.rings) mesh.add(this.#ringsFor(body.radiusKm, body.rings));
     const drawn: Drawn = { body, mesh };
     if (body.orbit || body.localOrbit) {
-      drawn.orbit = this.#line(ORBIT_POINTS + 1, this.#orbitColor, 0.45);
+      // An orbiter's orbit around its planet is in its own colour, like its trail.
+      drawn.orbit =
+        body.kind === 'spacecraft'
+          ? this.#line(ORBIT_POINTS + 1, this.#craftColor, 0.6)
+          : this.#line(ORBIT_POINTS + 1, this.#orbitColor, 0.45);
     }
     if (body.kind === 'spacecraft') drawn.trail = this.#line(TRAIL_DAYS + 1, this.#craftColor, 0.6);
     this.#drawn.push(drawn);
@@ -572,12 +579,17 @@ export class SolarScene {
       if (redrawLines && body.rotation) this.#turn(mesh, body.rotation);
       if (redrawLines && orbit && body.orbit) this.#placeOrbit(orbit, body.orbit, at, origin);
       const parent = body.parent ? states.get(body.parent) : undefined;
-      if (redrawLines && parent) this.#faceParent(mesh, at, parent);
-      // A moon's ellipse is around its planet; a small body's, around the Sun.
+      if (redrawLines && parent && body.kind === 'moon') this.#faceParent(mesh, at, parent);
+      // A moon's or an orbiter's ellipse is around its planet; a small body's, the Sun's.
       const center = body.parent ? parent : sunAt;
-      if (redrawLines && orbit && center && body.localOrbit) {
-        const ellipse = body.localOrbit(this.#time);
-        if (ellipse) this.#placeOrbit(orbit, ellipse, at, origin, center);
+      const ellipse = body.localOrbit?.(this.#time) ?? null;
+      if (body.kind === 'spacecraft' && body.localOrbit) {
+        // At its planet, its orbit around it says more than a trail of daily points.
+        if (orbit) orbit.visible = ellipse !== null && !closeUp;
+        if (trail && ellipse) trail.visible = false;
+      }
+      if (redrawLines && orbit && center && ellipse) {
+        this.#placeOrbit(orbit, ellipse, at, origin, center);
       }
       if (redrawLines && trail) this.#placeTrail(trail, body.chunks, origin);
     }
@@ -766,7 +778,8 @@ export class SolarScene {
   #hideCrowdedMoons(): void {
     const [moon, planet] = [new THREE.Vector3(), new THREE.Vector3()];
     for (const drawn of this.#drawn) {
-      if (!drawn.body.parent || !drawn.mesh.visible) continue;
+      // Spacecraft are what the app is about: never hidden beside their planet.
+      if (drawn.body.kind !== 'moon' || !drawn.body.parent || !drawn.mesh.visible) continue;
       const parent = this.#drawn.find((other) => other.body.id === drawn.body.parent);
       if (!parent?.mesh.visible) continue;
       moon.copy(drawn.mesh.position).project(this.#camera);

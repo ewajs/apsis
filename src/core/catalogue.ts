@@ -34,6 +34,11 @@ export type Mission = {
   noEphemeris?: Localized;
   /** The span Horizons covers, as calendar dates; fetches are clipped to it. */
   coverage?: { from: string; to: string };
+  /**
+   * When it orbits a planet (ADR 0015): which, and from when (to when, if it left or
+   * ended there). Its position comes from daily orbital elements around that planet.
+   */
+  orbiting?: { body: string; from: string; to?: string };
   /** In date order. The UI shows the ones around the displayed instant. */
   milestones: Milestone[];
   blurb: Localized;
@@ -120,6 +125,18 @@ export function parseCatalogue(data: unknown): Mission[] {
         problem('coverage needs from and to, as YYYY-MM-DD');
       } else if (coverage.from >= coverage.to) {
         problem('coverage.from must come before coverage.to');
+      }
+    }
+
+    if (entry.orbiting !== undefined) {
+      const orbiting = entry.orbiting;
+      if (!isRecord(orbiting) || typeof orbiting.body !== 'string' || !isDay(orbiting.from)) {
+        problem('orbiting needs body (a planet id) and from (YYYY-MM-DD)');
+      } else if (
+        orbiting.to !== undefined &&
+        (!isDay(orbiting.to) || orbiting.to <= orbiting.from)
+      ) {
+        problem('orbiting.to must be a YYYY-MM-DD after orbiting.from');
       }
     }
 

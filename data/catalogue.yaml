@@ -4,6 +4,8 @@
 # - `horizons` is the JPL Horizons ID, quoted ("-61"), or null with `noEphemeris`.
 # - `coverage` is the span Horizons has data for (docs/guides/data.md says how to find it).
 # - Milestone dates can be a day, a month or a year: YYYY-MM-DD, YYYY-MM or YYYY.
+# - `orbiting: { body, from, to? }` while it circles a planet: daily orbital elements around
+#   it (ADR 0015); `from` the day after orbit insertion, when the orbit is closed.
 # - `encounter: true` (a flyby, a perihelion, an arrival) samples hourly for 3 days either
 #   side; it needs an exact day.
 # - A pull request that changes facts links its sources.
@@ -16,6 +18,7 @@
   status: active
   horizons: '-61'
   coverage: { from: 2011-08-06, to: 2028-09-01 }
+  orbiting: { body: jupiter, from: 2016-07-06 }
   milestones:
     - {
         date: 2016-07-05,
@@ -161,6 +164,7 @@
   status: active
   horizons: '-121'
   coverage: { from: 2018-10-21, to: 2027-04-10 }
+  orbiting: { body: mercury, from: 2026-11-22 }
   milestones:
     - {
         date: 2020-04-10,
@@ -247,6 +251,7 @@
   status: ended
   horizons: '-82'
   coverage: { from: 1997-10-16, to: 2017-09-15 }
+  orbiting: { body: saturn, from: 2004-07-02, to: 2017-09-15 }
   milestones:
     - {
         date: 1998-04-26,
@@ -296,6 +301,7 @@
   status: ended
   horizons: '-77'
   coverage: { from: 1989-10-20, to: 2003-09-21 }
+  orbiting: { body: jupiter, from: 1995-12-09, to: 2003-09-21 }
   milestones:
     - {
         date: 1990-02-10,
