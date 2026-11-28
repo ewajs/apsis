@@ -127,8 +127,8 @@ The owner's priority: models and AR first, and they should look stunning (up to 
       the high-gain antenna to Earth, or the arrays to the Sun, as each one flies.
 - [x] **5.5 Our own models.** Where nothing free exists: a simplified model built in
       code (bus, arrays, dish, booms), labelled as ours on the card.
-- [ ] **5.6 Credits and caching.** Model credits in the info panel and the card;
-      models load on demand and stay cached for offline once seen.
+- [~] **5.6 Credits and caching.** Model credits in the info panel and the card;
+  models load on demand and stay cached for offline once seen.
 
 ## M6 — AR (v0.6.0)
 

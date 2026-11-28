@@ -49,6 +49,11 @@ export class CraftModels {
     this.#onLoad = onLoad;
   }
 
+  /** What a spacecraft's model faces in flight (Earth unless it says the Sun). */
+  pointing(id: string): 'earth' | 'sun' {
+    return this.#entries.get(id)?.pointing ?? 'earth';
+  }
+
   /** A spacecraft's size in km, if it has a model. */
   lengthKm(id: string): number | undefined {
     const entry = this.#entries.get(id);

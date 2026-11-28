@@ -17,3 +17,87 @@
   lengthM: 24.8
   credit: Apsis
   licence: MIT
+
+- id: juno
+  url: https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/j/Juno.glb
+  page: https://science.nasa.gov/resource/juno-3d-model/
+  credit: NASA VTAD
+  licence: Public domain
+  lengthM: 20.1
+  rotate: [90, 0, 0]
+
+- id: europa-clipper
+  url: https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/c/clipper_spacecraft.glb
+  page: https://science.nasa.gov/resource/europa-clipper-3d-model/
+  credit: NASA VTAD
+  licence: Public domain
+  lengthM: 30.5
+  simplify: 0.35
+  rotate: [90, 90, 0]
+
+- id: parker-solar-probe
+  url: https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/p/s/PSP.glb
+  page: https://science.nasa.gov/resource/parker-solar-probe-3d-model/
+  credit: NASA VTAD
+  licence: Public domain
+  lengthM: 3
+  rotate: [0, 180, 0]
+  pointing: sun
+
+- id: voyager-1
+  url: https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/v/Voyager.glb
+  page: https://science.nasa.gov/resource/voyager-3d-model/
+  credit: NASA VTAD
+  licence: Public domain
+  lengthM: 13
+  rotate: [90, 0, 0]
+
+- id: new-horizons
+  url: https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/n/New_Horizons.glb
+  page: https://science.nasa.gov/resource/new-horizons-3d-model/
+  credit: NASA VTAD
+  licence: Public domain
+  lengthM: 2.7
+  rotate: [90, 0, 0]
+
+- id: jwst
+  url: https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/James%20Webb%20Space%20Telescope%20(B)/James%20Webb%20Space%20Telescope%20(B).glb
+  page: https://science.nasa.gov/3d-resources/james-webb-space-telescope-b/
+  credit: NASA/Christopher R. Meaney
+  licence: Public domain
+  lengthM: 21.2
+  rotate: [-90, 0, 0]
+  pointing: sun
+
+- id: cassini
+  url: https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/09/c/Cassini.glb
+  page: https://science.nasa.gov/resource/cassini-3d-model/
+  credit: NASA VTAD
+  licence: Public domain
+  lengthM: 11
+  rotate: [90, 0, 0]
+
+- id: galileo
+  url: https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/Galileo/Galileo.glb
+  page: https://science.nasa.gov/3d-resources/galileo/
+  credit: NASA/JPL/Solar System Simulator
+  licence: Public domain
+  lengthM: 11
+  materials: { 'bus:black': black, 'rtga_top:gold_fo': gold, 'ribs:gold_mesh': gold }
+
+- id: rosetta
+  url: https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/Rosetta/Rosetta.glb
+  page: https://github.com/nasa/NASA-3D-Resources
+  credit: NASA
+  licence: Public domain
+  lengthM: 32
+  rotate: [0, 0, 90]
+
+- id: dawn
+  url: https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/Dawn/Dawn.glb
+  page: https://science.nasa.gov/3d-resources/dawn/
+  credit: NASA/Brian E. Kumanchik
+  licence: Public domain
+  lengthM: 19.7
+  rotate: [0, 0, 90]
+  materials: { shiny_panel: cells }

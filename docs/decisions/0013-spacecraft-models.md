@@ -27,7 +27,9 @@
   than the marker (ADR 0005 amended). The near plane follows the camera down to
   millimetres; the camera may come within 0.8 model-lengths.
 - **Attitude:** Horizons has none, so each model takes the pose most fly in: antenna to
-  Earth, rolled so the Sun lies across the arrays' axis (`core/attitude.ts`).
+  Earth, rolled so the Sun lies across the arrays' axis (`core/attitude.ts`). Those that
+  fly with a shield to the Sun (Parker's heat shield, Webb's sunshield) say
+  `pointing: sun` and turn it there, Earth across.
 - **Light:** the Sun is the key light. Models alone also reflect a soft studio surround
   (three's `RoomEnvironment`, prefiltered, at 0.45): in space there's nothing else to
   reflect and metal goes black, and every spacecraft render cheats the same way.
