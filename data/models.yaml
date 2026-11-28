@@ -6,6 +6,12 @@
 # - `own: true` builds ours from scripts/models/own/<id>.ts; the card says so.
 # - `lengthM` is the real largest dimension; the model is scaled to it.
 
+- id: bepicolombo
+  own: true
+  lengthM: 11.4
+  credit: Apsis
+  licence: MIT
+
 - id: psyche
   own: true
   lengthM: 24.8
