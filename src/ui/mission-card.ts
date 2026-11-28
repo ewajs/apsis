@@ -3,12 +3,14 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import { milestonesAround, type Milestone, type Mission } from '../core/catalogue.ts';
 import type { EarthOrbitFacts, Facts } from '../core/facts.ts';
+import type { ArSize } from '../core/ar.ts';
 import type { ModelEntry } from '../core/models.ts';
 import { lightTimeSeconds } from '../core/units.ts';
 import { bodyType } from '../i18n/bodies.ts';
 import { currentLocale, localized } from '../i18n/localization.ts';
 import { formatDistance, formatDuration, formatLooseDate, formatSpeed } from './format.ts';
 import { glass } from './glass.ts';
+import { arSizeNotes } from './messages.ts';
 import { icons } from './icons.ts';
 
 /** What the card shows: the selection at the displayed instant. */
@@ -39,11 +41,12 @@ export type Card = {
   /** Whether the 3D view is close up to the model. */
   closeUp: boolean;
   /**
-   * How this phone shows the model in AR (its own viewer, ADR 0014): a link that opens
-   * Android's Scene Viewer, or Quick Look on an iPhone (the model is converted first,
-   * so a button); none elsewhere.
+   * How this phone shows the model in AR (its own viewer, ADR 0014), in two sizes (1 m,
+   * and real): links that open Android's Scene Viewer, or buttons for Quick Look on an
+   * iPhone (opened from the page); none elsewhere.
    */
-  ar?: { viewer: 'scene-viewer'; href: string } | { viewer: 'quick-look' } | undefined;
+  ar?:
+    { viewer: 'scene-viewer'; href: Record<ArSize, string> } | { viewer: 'quick-look' } | undefined;
 };
 
 /**
@@ -55,7 +58,8 @@ export type Card = {
  * Properties: `card` (see `Card`).
  * Events: `body-select` with `null` when closed (closing clears the selection);
  * `close-up` (detail: whether to go close up to the model, or back out); `ar-view`
- * (show the model in the room in Quick Look; Scene Viewer is a plain link).
+ * (detail: the size, `room` or `real`: show the model in Quick Look; Scene Viewer's
+ * are plain links).
  */
 @customElement('mission-card')
 export class MissionCard extends LitElement {
@@ -197,6 +201,19 @@ export class MissionCard extends LitElement {
       }
       a.close-up {
         text-decoration: none;
+      }
+      /* An AR size: its name, and under it what to expect (scale, or dimensions). */
+      .close-up.ar {
+        flex-direction: column;
+        gap: 2px;
+        padding: 8px 10px;
+        border-radius: 16px;
+        text-align: center;
+      }
+      .close-up.ar small {
+        font-weight: 400;
+        font-size: 0.72rem;
+        color: var(--color-muted);
       }
       .note {
         margin: 10px 0 0;
@@ -382,37 +399,20 @@ export class MissionCard extends LitElement {
       ${
         card.model
           ? html`<div class="actions">
-              <button
-                type="button"
-                class="close-up"
-                aria-pressed=${card.closeUp}
-                @click=${() => this.#closeUp(!card.closeUp)}
-              >
-                ${
-                  card.closeUp
-                    ? msg('Volver a su vecindario', { id: 'card-close-up-out' })
-                    : msg('Ver la nave de cerca', { id: 'card-close-up' })
-                }
-              </button>
-              ${
-                card.ar?.viewer === 'scene-viewer'
-                  ? html`<a class="close-up" href=${card.ar.href}>
-                      ${msg('En tu casa (RA)', { id: 'card-ar' })}
-                    </a>`
-                  : card.ar?.viewer === 'quick-look'
-                    ? html`<button
-                        type="button"
-                        class="close-up"
-                        @click=${() =>
-                          this.dispatchEvent(
-                            new CustomEvent('ar-view', { bubbles: true, composed: true }),
-                          )}
-                      >
-                        ${msg('En tu casa (RA)', { id: 'card-ar' })}
-                      </button>`
-                    : nothing
-              }
-            </div>`
+                <button
+                  type="button"
+                  class="close-up"
+                  aria-pressed=${card.closeUp}
+                  @click=${() => this.#closeUp(!card.closeUp)}
+                >
+                  ${
+                    card.closeUp
+                      ? msg('Volver a su vecindario', { id: 'card-close-up-out' })
+                      : msg('Ver la nave de cerca', { id: 'card-close-up' })
+                  }
+                </button>
+              </div>
+              ${card.ar ? this.#arActions(card.model, card.ar) : nothing}`
           : nothing
       }
       ${
@@ -478,6 +478,39 @@ export class MissionCard extends LitElement {
             )
       }
     </p>`;
+  }
+
+  /**
+   * The two AR sizes, each with what to expect: the room size's scale, the real size's
+   * dimensions.
+   */
+  #arActions(model: ModelEntry, ar: NonNullable<Card['ar']>) {
+    const notes = arSizeNotes(model);
+    const sizes: [ArSize, string][] = [
+      ['room', msg('En tu casa (RA)', { id: 'card-ar' })],
+      ['real', msg('Tamaño real (RA)', { id: 'card-ar-real' })],
+    ];
+    return html`<div class="actions">
+      ${sizes.map(([size, label]) => {
+        const content = html`<span>${label}</span><small>${notes[size]}</small>`;
+        return ar.viewer === 'scene-viewer'
+          ? html`<a class="close-up ar" href=${ar.href[size]}>${content}</a>`
+          : html`<button
+              type="button"
+              class="close-up ar"
+              @click=${() =>
+                this.dispatchEvent(
+                  new CustomEvent<ArSize>('ar-view', {
+                    detail: size,
+                    bubbles: true,
+                    composed: true,
+                  }),
+                )}
+            >
+              ${content}
+            </button>`;
+      })}
+    </div>`;
   }
 
   /** The line under the name: the agency, the target and how it stands; or what it is. */

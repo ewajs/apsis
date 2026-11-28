@@ -4,22 +4,40 @@ test.use({ locale: 'en-US' });
 
 const card = (page: import('@playwright/test').Page) => page.locator('mission-card');
 
-test('offers Android’s AR viewer a real-size copy of the spacecraft', async ({ page, request }) => {
+test('offers Android’s AR viewer the spacecraft at 1 m and at real size, saying how big', async ({
+  page,
+  request,
+}) => {
   await page.goto('./?t=2026-11-23T12:00Z&focus=juno&ar=scene-viewer');
-  const link = card(page).getByRole('link', { name: 'In your room (AR)' });
-  const href = (await link.getAttribute('href'))!;
-  expect(href.startsWith('intent://arvr.google.com/scene-viewer/1.0?')).toBe(true);
-  const query = new URLSearchParams(href.slice(href.indexOf('?') + 1, href.indexOf('#')));
-  expect(query.get('mode')).toBe('ar_preferred');
-  expect(query.get('resizable')).toBe('false');
-  // The file Scene Viewer fetches is there, a plain binary glTF.
-  const glb = await request.get(query.get('file')!);
-  expect(glb.ok()).toBe(true);
-  expect((await glb.body()).subarray(0, 4).toString()).toBe('glTF');
+  const query = async (name: RegExp) => {
+    const href = (await card(page).getByRole('link', { name }).getAttribute('href'))!;
+    expect(href.startsWith('intent://arvr.google.com/scene-viewer/1.0?')).toBe(true);
+    return new URLSearchParams(href.slice(href.indexOf('?') + 1, href.indexOf('#')));
+  };
+  const room = await query(/^In your room \(AR\)/);
+  expect(room.get('mode')).toBe('ar_preferred');
+  expect(room.get('resizable')).toBe('true');
+  expect(room.get('file')).toMatch(/\/models\/ar\/juno-1m\.glb$/);
+  expect(room.get('title')).toBe('Juno · 1 m · scale 1:20');
+  const real = await query(/^Real size \(AR\)/);
+  expect(real.get('resizable')).toBe('false');
+  expect(real.get('file')).toMatch(/\/models\/ar\/juno\.glb$/);
+  expect(real.get('title')).toMatch(/^Juno · \d+ × \d+ m, \d+(\.\d)? m tall$/);
+  // The card says the same before the tap.
+  await expect(card(page).getByRole('link', { name: /Real size/ })).toContainText(/m tall/);
+  // The files Scene Viewer fetches are there, plain binary glTF.
+  for (const params of [room, real]) {
+    const glb = await request.get(params.get('file')!);
+    expect(glb.ok()).toBe(true);
+    expect((await glb.body()).subarray(0, 4).toString()).toBe('glTF');
+  }
 });
 
-test('hands the spacecraft to Quick Look as USDZ', async ({ page }) => {
-  // Keep the page: in a desktop browser, following the blob would leave it.
+test('hands the spacecraft to Quick Look ready-made, at 1 m or locked at real size', async ({
+  page,
+  request,
+}) => {
+  // Keep the page: a desktop browser would follow the link to the file.
   await page.addInitScript(() => {
     document.addEventListener(
       'click',
@@ -30,12 +48,21 @@ test('hands the spacecraft to Quick Look as USDZ', async ({ page }) => {
     );
   });
   await page.goto('./?t=2026-11-23T12:00Z&focus=juno&ar=quick-look');
-  await card(page).getByRole('button', { name: 'In your room (AR)' }).click();
   const handoff = page.locator('a[rel="ar"][data-ar="quick-look"]');
-  await expect(handoff).toBeAttached({ timeout: 20_000 });
-  expect(await handoff.getAttribute('href')).toMatch(/^blob:/);
+  await card(page)
+    .getByRole('button', { name: /^In your room \(AR\)/ })
+    .click();
+  await expect(handoff).toHaveAttribute('href', /\/models\/ar\/juno-1m\.usdz$/);
   // Quick Look answers a link whose only child is an image.
   await expect(handoff.locator('img')).toHaveCount(1);
+  await card(page)
+    .getByRole('button', { name: /^Real size \(AR\)/ })
+    .click();
+  await expect(handoff).toHaveAttribute('href', /\/models\/ar\/juno\.usdz#allowsContentScaling=0$/);
+  await expect(page.locator('a[rel="ar"]')).toHaveCount(1);
+  const usdz = await request.get((await handoff.getAttribute('href'))!.split('#')[0]!);
+  expect(usdz.ok()).toBe(true);
+  expect((await usdz.body()).subarray(0, 2).toString()).toBe('PK');
 });
 
 test('offers no AR where there’s no AR viewer', async ({ page }, testInfo) => {

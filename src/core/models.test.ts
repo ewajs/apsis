@@ -5,6 +5,7 @@ const juno = {
   id: 'juno',
   file: 'juno.glb',
   lengthM: 20,
+  dimensionsM: [20, 4.5, 9],
   credit: 'NASA/JPL-Caltech',
   licence: 'Public domain',
   source: 'https://science.nasa.gov/3d-resources/',
@@ -22,7 +23,11 @@ describe('parseModelIndex', () => {
     try {
       parseModelIndex({
         version: 1,
-        models: [{ ...juno, lengthM: 0, credit: '' }, 3, { ...juno, pointing: 'mars' }],
+        models: [
+          { ...juno, lengthM: 0, credit: '' },
+          3,
+          { ...juno, pointing: 'mars', dimensionsM: [1, 2] },
+        ],
       });
     } catch (error) {
       message = (error as Error).message;
@@ -36,6 +41,7 @@ describe('parseModelIndex', () => {
       'models[0].credit is missing',
       'models[0].lengthM must be a positive number of metres',
       'models[1] is not an object',
+      'models[2].dimensionsM must be three positive numbers of metres',
       'models[2].pointing must be earth or sun',
     ]);
   });
