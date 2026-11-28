@@ -1,8 +1,15 @@
 # Plan
 
 One step is one reviewable PR. `[ ]` planned, `[~]` in progress, `[x]` done. Details
-are settled when a step starts; the owner reviews each step before the next begins
-unless they say to keep going. Each milestone ends with a `0.N.0` release.
+are settled when a step starts. Each milestone ends with a `0.N.0` release.
+
+**From M5 on the work runs unsupervised** (the owner, 2026-11-28): the agent merges its
+own PRs once CI is green and the full local browser matrix passes, releases each
+milestone (tag, GitHub Release, live check) and posts a summary at each release: what
+shipped, the calls it made alone, and what needs a human (a real phone, taste). Open
+questions get an ADR marked _Proposed_ with an easily reversed default. Wherever an
+orbit is computed rather than taken from a source, or a model is our own, the app says
+so.
 
 ## M0 — Foundation
 
@@ -103,35 +110,78 @@ The interface first (ADR 0012, direction A chosen 2026-11-23), then picking a mi
 - [x] **4.4 More ended missions.** Rosetta (a comet), Galileo, Dawn (moved from M3's 3.6
       at the v0.3.0 release; the archive they need is in place).
 
-## M5 — Local views (v0.5.0)
+## M5 — Spacecraft models (v0.5.0)
 
-- [ ] **5.1 Target-centred views.** Frames centred on a planet or asteroid, finer-step
-      local data for orbiters (target-centred, minutes apart: heliocentric samples 3 h
-      apart still miss Juno's perijove by 29,000 km).
-- [ ] **5.2 First targets.** BepiColombo at Mercury, Juno at Jupiter, Hera at Didymos,
-      Cassini at Saturn, and the ISS around Earth (it laps Earth every 92 minutes, so it
-      only makes sense here, with Earth-centred data minutes apart).
+The owner's priority: models and AR first, and they should look stunning (up to about
+5 MB each; data is where we save, not models).
 
-## M6 — Spacecraft models (v0.6.0)
+- [ ] **5.1 Model survey.** For each mission: the best free model, its exact licence and
+      credit (NASA 3D Resources are mostly public domain; ESA's terms vary), or "build
+      our own" with reference dimensions. Recorded in `docs/models.md`.
+- [ ] **5.2 The model pipeline.** `npm run models`: fetch each source, convert to GLB,
+      scale to metres, orient to a common frame, compress; committed outputs with a
+      credits file. ADR 0013.
+- [ ] **5.3 Models in 3D.** Focus a spacecraft and zoom in: the marker hands over to the
+      model once it's big enough on screen; lit by the Sun, its shadow side dark.
+- [ ] **5.4 Attitude.** A sensible default pose per spacecraft (Horizons has none):
+      the high-gain antenna to Earth, or the arrays to the Sun, as each one flies.
+- [ ] **5.5 Our own models.** Where nothing free exists: a simplified model built in
+      code (bus, arrays, dish, booms), labelled as ours on the card.
+- [ ] **5.6 Credits and caching.** Model credits in the info panel and the card;
+      models load on demand and stay cached for offline once seen.
 
-- [ ] **6.1 Model survey.** For each mission: an available model, its source and
-      license (NASA 3D Resources, ESA, others), or "make our own".
-- [ ] **6.2 Models in local views.** GLB loading, scale, orientation (attitude is not
-      in Horizons; a sensible default pose).
+## M6 — AR (v0.6.0)
 
-## M7 — AR (v0.7.0)
+- [ ] **6.1 A spacecraft in your room.** Hand the model to the phone's AR viewer at real
+      size: Scene Viewer on Android (GLB), Quick Look on iPhone (USDZ, made with
+      three.js's exporter).
+- [ ] **6.2 A tabletop solar system.** The scene at the shown instant as a snapshot,
+      sizes enlarged and the scale stated, handed off the same way.
+- [ ] **6.3 Live AR,** only if the snapshot falls short (WebXR on Android).
 
-- [ ] **7.1 Spacecraft in your room.** Hand off each model to the phone's own AR
-      viewer: Scene Viewer on Android (GLB), Quick Look on iPhone (USDZ). Static
-      models at real size, no live data.
-- [ ] **7.2 Tabletop solar system.** Export the scene at the displayed instant as a
-      GLB/USDZ snapshot and hand it off the same way. Live AR (WebXR) only if the
-      snapshot falls short.
+## M7 — Close-ups (v0.7.0)
+
+- [ ] **7.1 Target-centred views.** A view centred on a planet or small body, with a
+      smooth hand-over from the solar system.
+- [ ] **7.2 Moons.** The Moon, Io, Europa, Ganymede, Callisto, Titan, Enceladus.
+- [ ] **7.3 Small bodies.** Pluto, Ceres, Vesta, 67P, Arrokoth, Psyche, Didymos; real
+      shapes where a free shape model exists.
+- [ ] **7.4 Orbiters from daily elements.** Osculating elements once a day from
+      Horizons, propagated in between (tiny data; disclosed as computed): Juno's
+      perijoves, Cassini's Grand Finale, BepiColombo at Mercury, Dawn, Rosetta at 67P.
+- [ ] **7.5 Mars orbiters** (time-boxed): MRO, MAVEN, Mars Express, TGO, Odyssey, and
+      others Horizons has.
+- [ ] **7.6 Earth orbit** (time-boxed): the ISS, Hubble and a few more, from CelesTrak
+      orbital data fetched by CI (free, no key, once a day), propagated in `core` with an
+      ellipse plus Earth's-bulge drift: approximate, and labelled so. The data run goes
+      daily.
+
+## M8 — Everyone (v0.8.0)
+
+- [ ] **8.1 The catalogue to about 30 missions,** each fact-checked with sources:
+      Voyager 2, Pioneer 10 and 11, Ulysses, MESSENGER, JUICE, Lucy, Hera, Solar Orbiter,
+      Hayabusa2, OSIRIS-REx/APEX and more. Parallel research, one PR per few entries.
+- [ ] **8.2 Coming up.** A list of upcoming events across missions (flybys, arrivals).
+- [ ] **8.3 The January archive, automatic.** A scheduled job opens the archive PR.
+
+## M9 — Hardening (v0.9.0)
+
+- [ ] **9.1 Budgets in CI.** Bundle size; a frame-rate floor in software rendering.
+- [ ] **9.2 Accessibility audit** in the browser tests (axe).
+- [ ] **9.3 Link previews** per mission, generated at build.
+- [ ] **9.4 Offline and failure states,** made solid.
+- [ ] **9.5 About the data:** Horizons, computed orbits, model credits, in the app.
+
+## M10 — Stories (v1.0.0)
+
+- [ ] **10.1 Guided tours as data:** time, camera and captions, shareable links.
+- [ ] **10.2 The first tours:** Voyager's Grand Tour, Cassini's 13 years, Rosetta's
+      chase, New Horizons at Pluto.
+- [ ] **10.3 1.0.**
 
 ## Later, not planned
 
-SPICE for missions Horizons lacks; major moons; Earth-centred view for near-Earth
-missions; a link to fly a trajectory in gravitas.
+SPICE for missions Horizons lacks; a link to fly a trajectory in gravitas.
 
 ## Releases
 

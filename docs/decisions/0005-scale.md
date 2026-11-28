@@ -13,7 +13,9 @@
   the camera approaches, the true size takes over smoothly.
 - **A "true scale" setting** removes the minimum, so you see how empty space is.
 - **Spacecraft are markers** (a glowing sprite and a label) at any distance until
-  models exist (M6), and models only appear in local views.
+  models exist (M5). A model takes over from the marker once the camera is close enough
+  for it to be bigger on screen than the marker (amended 2026-11-28: no separate local
+  view is needed for that; the floating origin keeps metres precise).
 - **No view shows everything.** The default camera frames the selected spacecraft's
   neighbourhood: the inner planets for Psyche, the outer system for New Horizons. The
   2D map is the view of everything, with an optional logarithmic distance scale.

@@ -7,7 +7,7 @@
 
 **Frame.** Heliocentric (Horizons `CENTER='500@10'`, the Sun's centre), ecliptic
 and mean equinox of J2000 (`REF_PLANE=ECLIPTIC`, `REF_SYSTEM=ICRF`). +x points to
-the vernal equinox, +z to ecliptic north. Local views (M5) use the same axes centred
+the vernal equinox, +z to ecliptic north. Close-ups (M7) use the same axes centred
 on the target body.
 
 **Units.** Kilometres and km/s everywhere in data and logic (`OUT_UNITS=KM-S`). AU
@@ -44,7 +44,7 @@ logarithmic.
   with a linear buffer (far objects flicker through each other). three.js supports
   `logarithmicDepthBuffer` on `WebGPURenderer`, on both backends. It also offers a
   reversed depth buffer, which can be more precise. Step 2.1 shipped the logarithmic
-  one: no depth artefacts in any view tried. Compare the two if close-ups (M5) show any.
+  one: no depth artefacts in any view tried. Compare the two if close-ups (M7) show any.
 - **Orbit lines pass through their planets** (step 2.1). Densest at the planet and
   shifted by its drift from the osculating ellipse; see `orbitPathThrough` and
   [the scene guide](../guides/scene.md).

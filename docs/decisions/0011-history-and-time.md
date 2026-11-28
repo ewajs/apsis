@@ -42,7 +42,7 @@ archive. A monthly cut-off would mean editing archived files, or chunks by month
   **Measured (step 3.4):** Parker at its 2 December 2026 perihelion, 1.85 km at worst;
   Europa Clipper at its 3 December Earth flyby (3,200 km from Earth), 815 km: invisible
   at solar-system scale, but its path bends around Earth within the hour, so the local
-  Earth view (M5) still needs Earth-centred samples minutes apart.
+  Earth view (M7) still needs Earth-centred samples minutes apart.
 
 ### 3. Size
 
