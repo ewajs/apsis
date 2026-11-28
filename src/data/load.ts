@@ -4,7 +4,18 @@
  * (`ChunkStore`). See docs/guides/data.md.
  */
 import type { Mission } from '../core/catalogue.ts';
-import { chunkPath, DATA_FORMAT, type Chunk, type DataIndex } from '../core/ephemeris.ts';
+import {
+  CHUNK_FORMAT,
+  chunkPath,
+  DATA_FORMAT,
+  TRACK_FORMAT,
+  trackPath,
+  type Chunk,
+  type DataIndex,
+  type TrackChunk,
+  type YearEntry,
+} from '../core/ephemeris.ts';
+import type { World } from '../core/positions.ts';
 import { parseModelIndex, type ModelEntry } from '../core/models.ts';
 import { assertOrbitFile, type OrbitFile } from '../core/orbit-file.ts';
 
@@ -46,6 +57,10 @@ export class ChunkStore {
    * arrives is there for them at once (then call their refresh).
    */
   readonly chunks = new Map<string, Map<number, Chunk>>();
+  /** Each body's loaded track chunks (orbital elements around a parent), by year. */
+  readonly tracks = new Map<string, Map<number, TrackChunk>>();
+  /** Everything loaded, as `positionAt` reads it; it fills in as years arrive. */
+  readonly world: World;
   #base: string;
   #index: DataIndex;
   #requested = new Set<string>();
@@ -54,7 +69,16 @@ export class ChunkStore {
   constructor(base: string, index: DataIndex) {
     this.#base = base;
     this.#index = index;
-    for (const body of index.bodies) this.chunks.set(body.id, new Map());
+    const world = new Map<string, World extends ReadonlyMap<string, infer D> ? D : never>();
+    for (const body of index.bodies) {
+      this.chunks.set(body.id, new Map());
+      if (body.track) this.tracks.set(body.id, new Map());
+      world.set(body.id, {
+        states: this.chunks.get(body.id)!,
+        track: body.track && { center: body.track.center, chunks: this.tracks.get(body.id)! },
+      });
+    }
+    this.world = world;
   }
 
   /** Whether any year is still on its way. */
@@ -68,30 +92,52 @@ export class ChunkStore {
    * their way are skipped.
    */
   async ensure(years: readonly number[]): Promise<boolean> {
-    const loads = this.#index.bodies.flatMap((body) =>
-      body.years
-        .filter((entry) => years.includes(entry.year))
-        .filter((entry) => !this.#requested.has(`${body.id}/${entry.year}`))
-        .map(async (entry) => {
-          this.#requested.add(`${body.id}/${entry.year}`);
-          this.#pending++;
-          try {
-            const chunk = await getJson<Chunk>(`${this.#base}${chunkPath(body.id, entry)}`);
-            if (chunk.format !== DATA_FORMAT) {
-              throw new Error(`${body.id}/${entry.year}: format ${chunk.format}`);
-            }
-            this.chunks.get(body.id)!.set(entry.year, chunk);
-          } catch (error) {
-            // Let a later call try again.
-            this.#requested.delete(`${body.id}/${entry.year}`);
-            throw error;
-          } finally {
-            this.#pending--;
-          }
-        }),
-    );
-    await Promise.all(loads);
-    return loads.length > 0;
+    const wanted = (entries: readonly YearEntry[]) =>
+      entries.filter((entry) => years.includes(entry.year));
+    const loads = this.#index.bodies.flatMap((body) => [
+      ...wanted(body.years).map((entry) =>
+        this.#load(
+          `${body.id}/${entry.year}`,
+          chunkPath(body.id, entry),
+          CHUNK_FORMAT,
+          (chunk: Chunk) => this.chunks.get(body.id)!.set(entry.year, chunk),
+        ),
+      ),
+      ...wanted(body.track?.years ?? []).map((entry) =>
+        this.#load(
+          `${body.id}/${entry.year}.track`,
+          trackPath(body.id, entry),
+          TRACK_FORMAT,
+          (chunk: TrackChunk) => this.tracks.get(body.id)!.set(entry.year, chunk),
+        ),
+      ),
+    ]);
+    const arrived = await Promise.all(loads);
+    return arrived.some(Boolean);
+  }
+
+  /** Fetches one file unless it's loaded or on its way; resolves to whether it fetched. */
+  async #load<T extends { format: number }>(
+    key: string,
+    path: string,
+    format: number,
+    keep: (chunk: T) => void,
+  ): Promise<boolean> {
+    if (this.#requested.has(key)) return false;
+    this.#requested.add(key);
+    this.#pending++;
+    try {
+      const chunk = await getJson<T>(`${this.#base}${path}`);
+      if (chunk.format !== format) throw new Error(`${key}: format ${chunk.format}`);
+      keep(chunk);
+      return true;
+    } catch (error) {
+      // Let a later call try again.
+      this.#requested.delete(key);
+      throw error;
+    } finally {
+      this.#pending--;
+    }
   }
 }
 

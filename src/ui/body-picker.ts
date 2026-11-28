@@ -7,7 +7,7 @@ import { bodyName } from '../i18n/bodies.ts';
 import { localized } from '../i18n/localization.ts';
 import { glass } from './glass.ts';
 import { icons } from './icons.ts';
-import { matches } from './search.ts';
+import { bestMatch, matches } from './search.ts';
 
 /** One line of the picker's list. */
 export type PickerEntry = {
@@ -23,8 +23,13 @@ export type PickerEntry = {
  * The picker's list, in the language showing now: missions under way, then ended ones,
  * each in catalogue order, then the Sun and the planets.
  * @param planets The planets' ids, from the Sun outwards.
+ * @param moons The moons and the planet each circles; listed after their planet.
  */
-export function pickerEntries(missions: readonly Mission[], planets: readonly string[]) {
+export function pickerEntries(
+  missions: readonly Mission[],
+  planets: readonly string[],
+  moons: readonly { id: string; parent: string }[] = [],
+) {
   const entries: PickerEntry[] = missions.map((mission) => {
     const detail = `${mission.agency} · ${localized(mission.target)}`;
     const end = mission.coverage?.to.slice(0, 4);
@@ -36,8 +41,18 @@ export function pickerEntries(missions: readonly Mission[], planets: readonly st
         mission.status === 'ended' ? `${detail} · ${mission.launch.slice(0, 4)}–${end}` : detail,
     };
   });
+  // Each planet followed by its moons.
   for (const id of ['sun', ...planets]) {
     entries.push({ id, name: bodyName(id), group: 'planets', detail: '' });
+    for (const moon of moons.filter((entry) => entry.parent === id)) {
+      const parent = bodyName(id);
+      entries.push({
+        id: moon.id,
+        name: bodyName(moon.id),
+        group: 'planets',
+        detail: msg(str`Luna de ${parent}`, { id: 'card-moon-of' }),
+      });
+    }
   }
   return entries;
 }
@@ -207,7 +222,7 @@ export class BodyPicker extends LitElement {
     const groups = [
       { key: 'active', title: msg('Misiones en curso', { id: 'picker-active' }) },
       { key: 'ended', title: msg('Misiones terminadas', { id: 'picker-ended' }) },
-      { key: 'planets', title: msg('El Sol y los planetas', { id: 'picker-planets' }) },
+      { key: 'planets', title: msg('El Sol, los planetas y sus lunas', { id: 'picker-planets' }) },
     ] as const;
     const clear = msg('Quitar la selección', { id: 'picker-clear' });
     return html`
@@ -256,8 +271,9 @@ export class BodyPicker extends LitElement {
           .value=${live(this.search)}
           @input=${(event: Event) => (this.search = (event.target as HTMLInputElement).value)}
           @keydown=${(event: KeyboardEvent) => {
-            // A name that matches beats a mention: "jupi" means Jupiter, not Juno.
-            const first = shown.find((entry) => matches(this.search, [entry.name])) ?? shown[0];
+            // An exact name, then one that starts with the search, beats a mention: "io"
+            // means Ío, not Mercurio; "jupi" means Jupiter, not Juno.
+            const first = bestMatch(this.search, shown);
             if (event.key !== 'Enter' || !first) return;
             // Closing hands focus back to the pill; without this, WebKit lets the same
             // Enter press it and the list opens again.

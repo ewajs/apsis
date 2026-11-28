@@ -16,6 +16,13 @@ export function bodyName(id: string): string {
     saturn: () => msg('Saturno', { id: 'planet-saturn' }),
     uranus: () => msg('Urano', { id: 'planet-uranus' }),
     neptune: () => msg('Neptuno', { id: 'planet-neptune' }),
+    moon: () => msg('Luna', { id: 'moon-moon' }),
+    io: () => msg('Ío', { id: 'moon-io' }),
+    europa: () => msg('Europa', { id: 'moon-europa' }),
+    ganymede: () => msg('Ganimedes', { id: 'moon-ganymede' }),
+    callisto: () => msg('Calisto', { id: 'moon-callisto' }),
+    enceladus: () => msg('Encélado', { id: 'moon-enceladus' }),
+    titan: () => msg('Titán', { id: 'moon-titan' }),
   };
   return names[id]?.() ?? id;
 }

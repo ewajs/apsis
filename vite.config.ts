@@ -55,6 +55,8 @@ export default defineConfig({
           '**/*.{js,css,html,svg,png,jpg,webmanifest}',
           '**/*-latin-wght-normal-*.woff2',
         ],
+        // Moons' and small bodies' maps: only for close-ups, cached when first seen.
+        globIgnores: ['**/textures/bodies/**'],
         // Data is cached as it's used, never precached (ADR 0007, 0011). Archived years
         // never change: once fetched, always from the cache. Everything else in data/
         // shows the cached copy at once and refreshes it in the background.
@@ -68,6 +70,11 @@ export default defineConfig({
             urlPattern: /\/data\/.+\.json$/,
             handler: 'StaleWhileRevalidate',
             options: { cacheName: 'apsis-data' },
+          },
+          {
+            urlPattern: /\/textures\/bodies\/.+\.jpg$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'apsis-bodies' },
           },
           // Spacecraft models (ADR 0013): a few MB each, so never precached; kept once
           // seen, for offline close-ups, and refreshed in the background.

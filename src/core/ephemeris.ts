@@ -2,6 +2,7 @@
  * Ephemeris data as Apsis stores it (ADR 0003): state vectors in yearly chunks.
  * Positions are km and velocities km/s, heliocentric ecliptic J2000 (ADR 0004).
  */
+import type { ElementSample } from './elements.ts';
 import type { Vector3 } from './math.ts';
 
 /** One state vector: `[t, x, y, z, vx, vy, vz]`, with `t` in TDB seconds since J2000. */
@@ -21,14 +22,20 @@ export function position(sample: Sample): Vector3 {
 }
 
 /**
- * Version of the chunk and index formats. 2 since the archive (ADR 0011): each year in
- * the index says whether it's archived or live.
+ * Version of the index format. 2 since the archive (ADR 0011): each year says whether
+ * it's archived or live. 3 since the close-ups (ADR 0015): a body may have a track of
+ * orbital elements around a parent, and moons have only that. Each file type versions
+ * its own shape: a state chunk is still format 2, a track chunk 1.
  */
-export const DATA_FORMAT = 2;
+export const DATA_FORMAT = 3;
+/** Version of a state chunk's format (unchanged since the archive, ADR 0011). */
+export const CHUNK_FORMAT = 2;
+/** Version of a track chunk's format (ADR 0015). */
+export const TRACK_FORMAT = 1;
 
 /** One body's samples for one calendar year, plus the first sample of the next year. */
 export type Chunk = {
-  format: typeof DATA_FORMAT;
+  format: typeof CHUNK_FORMAT;
   body: string;
   horizonsId: string;
   year: number;
@@ -36,7 +43,20 @@ export type Chunk = {
 };
 
 /** What kind of body a data entry is. */
-export type BodyKind = 'planet' | 'spacecraft';
+export type BodyKind = 'planet' | 'spacecraft' | 'moon';
+
+/**
+ * One body's orbital elements around a parent for one calendar year, plus the first
+ * sample of the next year (ADR 0015).
+ */
+export type TrackChunk = {
+  format: typeof TRACK_FORMAT;
+  body: string;
+  /** The parent's id: the body circles it ('jupiter' for Io and Juno). */
+  center: string;
+  year: number;
+  samples: ElementSample[];
+};
 
 /** One year of a body's data, and where it's kept (ADR 0011). */
 export type YearEntry = {
@@ -52,7 +72,15 @@ export type DataIndex = {
   fetchedAt: string;
   /** The span of the live data, as calendar dates (TDB). */
   span: { start: string; stop: string };
-  bodies: { id: string; horizonsId: string; kind: BodyKind; years: YearEntry[] }[];
+  bodies: {
+    id: string;
+    horizonsId: string;
+    kind: BodyKind;
+    /** Years of heliocentric states (none for a moon). */
+    years: YearEntry[];
+    /** Years of orbital elements around a parent, if any (ADR 0015). */
+    track?: { center: string; years: YearEntry[] };
+  }[];
 };
 
 /**
@@ -62,6 +90,14 @@ export type DataIndex = {
  */
 export function chunkPath(body: string, { year, archived }: YearEntry): string {
   return `${archived ? 'archive' : 'live'}/${body}/${year}.json`;
+}
+
+/**
+ * Where a body's year of orbital elements lives, beside its states.
+ * @example trackPath('io', { year: 2025, archived: true }) // 'archive/io/2025.track.json'
+ */
+export function trackPath(body: string, { year, archived }: YearEntry): string {
+  return `${archived ? 'archive' : 'live'}/${body}/${year}.track.json`;
 }
 
 /** The J2000 epoch (2000-01-01 12:00 TDB) as a Julian date. */
@@ -117,30 +153,52 @@ export function mergeSamples(coarse: readonly Sample[], fine: readonly Sample[])
 }
 
 /**
- * Splits a body's samples into yearly chunks. Each chunk also repeats the first sample
- * of the next year, so interpolating up to the end of a year needs only one file.
- * Samples must already be valid (see `assertValidSamples`).
+ * Splits samples (anything with a time first) into calendar years. Each year also
+ * repeats the first sample of the next, so interpolating up to a year's end needs one
+ * file. Samples must be in time order.
  */
-export function chunkByYear(
-  samples: readonly Sample[],
-  body: { id: string; horizonsId: string },
-): Chunk[] {
-  const chunks: Chunk[] = [];
+export function splitByYear<S extends readonly [number, ...number[]]>(
+  samples: readonly S[],
+): { year: number; samples: S[] }[] {
+  const years: { year: number; samples: S[] }[] = [];
   for (const sample of samples) {
     const year = yearOf(sample[0]);
-    const last = chunks.at(-1);
+    const last = years.at(-1);
     if (last?.year === year) {
       last.samples.push(sample);
       continue;
     }
     last?.samples.push(sample);
-    chunks.push({
-      format: DATA_FORMAT,
-      body: body.id,
-      horizonsId: body.horizonsId,
-      year,
-      samples: [sample],
-    });
+    years.push({ year, samples: [sample] });
   }
-  return chunks;
+  return years;
+}
+
+/** A body's states as yearly chunks (`splitByYear`). Samples must already be valid. */
+export function chunkByYear(
+  samples: readonly Sample[],
+  body: { id: string; horizonsId: string },
+): Chunk[] {
+  return splitByYear(samples).map(({ year, samples: inYear }) => ({
+    format: CHUNK_FORMAT,
+    body: body.id,
+    horizonsId: body.horizonsId,
+    year,
+    samples: inYear,
+  }));
+}
+
+/** A body's orbital elements around `center` as yearly chunks (`splitByYear`). */
+export function trackByYear(
+  samples: readonly ElementSample[],
+  body: string,
+  center: string,
+): TrackChunk[] {
+  return splitByYear(samples).map(({ year, samples: inYear }) => ({
+    format: TRACK_FORMAT,
+    body,
+    center,
+    year,
+    samples: inYear,
+  }));
 }

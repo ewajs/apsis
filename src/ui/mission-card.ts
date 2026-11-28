@@ -1,6 +1,6 @@
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { msg, updateWhenLocaleChanges } from '@lit/localize';
+import { msg, str, updateWhenLocaleChanges } from '@lit/localize';
 import { milestonesAround, type Milestone, type Mission } from '../core/catalogue.ts';
 import type { Facts } from '../core/facts.ts';
 import type { ModelEntry } from '../core/models.ts';
@@ -13,13 +13,17 @@ import { icons } from './icons.ts';
 /** What the card shows: the selection at the displayed instant. */
 export type Card = {
   id: string;
-  kind: 'sun' | 'planet' | 'spacecraft';
+  kind: 'sun' | 'planet' | 'spacecraft' | 'moon';
   /** In the language showing. */
   name: string;
   /** The catalogue's entry, for a spacecraft. */
   mission?: Mission | undefined;
   /** Distances and speed now; `null` when there's no position for this instant. */
   facts: Facts | null;
+  /** For a moon: its planet's name. */
+  parent?: string | undefined;
+  /** Whether the position is computed from daily orbital elements (ADR 0015). */
+  computed?: boolean | undefined;
   /** The displayed instant, UTC ms: which milestones are past. */
   instantMs: number;
   /** Its 3D model, if it has one: the close-up button and the credit. */
@@ -186,6 +190,11 @@ export class MissionCard extends LitElement {
       a.close-up {
         text-decoration: none;
       }
+      .note {
+        margin: 10px 0 0;
+        font-size: 0.72rem;
+        color: var(--color-muted);
+      }
       .credit {
         margin: 12px 0 0;
         font-size: 0.72rem;
@@ -337,6 +346,15 @@ export class MissionCard extends LitElement {
             </p>`
       }
       ${
+        card.computed && card.facts
+          ? html`<p class="note">
+              ${msg('Posición calculada a partir de elementos orbitales diarios de JPL Horizons.', {
+                id: 'card-computed',
+              })}
+            </p>`
+          : nothing
+      }
+      ${
         card.model
           ? html`<div class="actions">
               <button
@@ -417,6 +435,9 @@ export class MissionCard extends LitElement {
   /** The line under the name: the agency, the target and how it stands; or what it is. */
   #about(card: Card) {
     if (card.kind === 'sun') return msg('Nuestra estrella', { id: 'card-star' });
+    if (card.kind === 'moon') {
+      return card.parent ? msg(str`Luna de ${card.parent}`, { id: 'card-moon-of' }) : '';
+    }
     if (!card.mission) return msg('Planeta', { id: 'card-planet' });
     const { agency, target, status } = card.mission;
     return html`${agency} · ${localized(target)} ·

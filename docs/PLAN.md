@@ -144,9 +144,9 @@ The owner's priority: models and AR first, and they should look stunning (up to 
 - [x] **7.0 Positions from daily elements.** `core/elements.ts`: Kepler propagation and
       blending between samples, tested against Horizons (ADR 0015).
 
-- [ ] **7.1 Target-centred views.** A view centred on a planet or small body, with a
+- [x] **7.1 Target-centred views.** A view centred on a planet or small body, with a
       smooth hand-over from the solar system.
-- [ ] **7.2 Moons.** The Moon, Io, Europa, Ganymede, Callisto, Titan, Enceladus.
+- [x] **7.2 Moons.** The Moon, Io, Europa, Ganymede, Callisto, Titan, Enceladus.
 - [ ] **7.3 Small bodies.** Pluto, Ceres, Vesta, 67P, Arrokoth, Psyche, Didymos; real
       shapes where a free shape model exists.
 - [ ] **7.4 Orbiters from daily elements.** Osculating elements once a day from

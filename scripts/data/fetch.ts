@@ -18,13 +18,15 @@ import {
   chunkByYear,
   chunkPath,
   DATA_FORMAT,
+  trackByYear,
+  trackPath,
   type DataIndex,
   type YearEntry,
 } from '../../src/core/ephemeris.ts';
 import { ARCHIVE_DIR, archivedYears } from './archive-files.ts';
 import { allBodies, PLANETS } from './bodies.ts';
 import { readCatalogue } from './catalogue.ts';
-import { fetchWithEncounters } from './horizons-client.ts';
+import { fetchTrack, fetchWithEncounters } from './horizons-client.ts';
 
 /** Days of data ahead of today (and at least behind): how long the site stays right. */
 const LIVE_WINDOW_DAYS = 60;
@@ -71,11 +73,17 @@ try {
   // One request at a time, to be polite to Horizons (ADR 0002).
   for (const body of bodies) {
     const archived = archivedYears(body.id);
-    // Years already in the archive are never fetched again.
-    let from = start;
-    while (archived.includes(Number(from.slice(0, 4))))
-      from = `${Number(from.slice(0, 4)) + 1}-01-01`;
-    const samples = await fetchWithEncounters(body, from, stop, STEP);
+    // The live window, from the first year that isn't archived: archived years are never
+    // fetched again.
+    const liveFrom = (done: number[]) => {
+      let from = start;
+      while (done.includes(Number(from.slice(0, 4))))
+        from = `${Number(from.slice(0, 4)) + 1}-01-01`;
+      return from;
+    };
+    // A moon has no heliocentric states, only its track around its planet.
+    const samples =
+      body.kind === 'moon' ? [] : await fetchWithEncounters(body, liveFrom(archived), stop, STEP);
     const live = chunkByYear(samples, body).filter((chunk) => !archived.includes(chunk.year));
     console.log(
       `  ${body.id.padEnd(20)} archive ${archived.length} year(s), live ${live.length} chunk(s), ${samples.length} samples`,
@@ -86,9 +94,30 @@ try {
     ];
     for (const chunk of live)
       files.push([chunkPath(body.id, { year: chunk.year, archived: false }), chunk]);
-    if (years.length === 0) continue;
+    let track: { center: string; years: YearEntry[] } | undefined;
+    if (body.track) {
+      const archivedTrack = archivedYears(body.id, 'track');
+      const elements = await fetchTrack(body, liveFrom(archivedTrack), stop);
+      const liveTrack = trackByYear(elements, body.id, body.track.center).filter(
+        (chunk) => !archivedTrack.includes(chunk.year),
+      );
+      for (const chunk of liveTrack) {
+        files.push([trackPath(body.id, { year: chunk.year, archived: false }), chunk]);
+      }
+      track = {
+        center: body.track.center,
+        years: [
+          ...archivedTrack.map((year) => ({ year, archived: true })),
+          ...liveTrack.map((chunk) => ({ year: chunk.year, archived: false })),
+        ],
+      };
+      console.log(
+        `  ${''.padEnd(20)} track around ${body.track.center}: archive ${archivedTrack.length}, ${elements.length} live samples`,
+      );
+    }
+    if (years.length === 0 && !track?.years.length) continue;
     const { id, horizonsId, kind } = body;
-    index.bodies.push({ id, horizonsId, kind, years });
+    index.bodies.push({ id, horizonsId, kind, years, ...(track && { track }) });
   }
 } catch (error) {
   console.error(`\nData fetch failed: ${error instanceof Error ? error.message : error}`);

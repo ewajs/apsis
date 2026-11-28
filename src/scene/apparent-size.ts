@@ -9,6 +9,8 @@ export const MIN_DIAMETER_PX = 7;
 export const SUN_MIN_DIAMETER_PX = 12;
 /** Spacecraft are metres across: always this size, a little smaller than planets. */
 export const CRAFT_MIN_DIAMETER_PX = 6;
+/** Moons, smaller still: they sit beside their planet and shouldn't crowd it. */
+export const MOON_MIN_DIAMETER_PX = 4;
 
 /**
  * How many world units one screen pixel spans at `distance` from a perspective camera.
