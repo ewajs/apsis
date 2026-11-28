@@ -58,7 +58,7 @@ gzipped**.
 About 18 MB in the repository, once. **Measured after step 3.5:** 490 body-years (8
 planets × 49 years, Voyager 1 × 49, Cassini × 21, and the other missions from launch),
 14.9 MB raw, 6.9 MB gzipped. **After step 4.4** (New Horizons, BepiColombo, James
-Webb, Galileo, Rosetta, Dawn): 563 body-years, 17.3 MB raw, 7.7 MB gzipped. **After step 7.2** (seven moons' tracks from 1977, ADR 0015): about 30 MB raw. **A visit
+Webb, Galileo, Rosetta, Dawn): 563 body-years, 17.3 MB raw, 7.7 MB gzipped. **After step 7.2** (seven moons' tracks from 1977, ADR 0015): about 30 MB raw; after 7.3 (four more moons, seven small bodies every 10 days), 41 MB. **A visit
 loads only the years it shows:** about
 18 chunks (8 planets and ~10 spacecraft) for one year, roughly 250 KB gzipped. Dragging
 the slider across fifty years would load more, but only what's looked at.

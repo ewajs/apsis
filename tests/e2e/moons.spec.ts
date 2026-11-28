@@ -37,3 +37,25 @@ test('shows a planet’s moons around it in 3D', async ({ page }, testInfo) => {
     });
   }
 });
+
+test('lists dwarf planets, asteroids and comets, and describes one', async ({ page }) => {
+  await page.goto('./?t=2026-11-28T12:00Z');
+  await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
+  await page.getByRole('button', { name: /Buscar una misión|Buscar otro/ }).click();
+  await page.getByRole('searchbox', { name: 'Buscar una misión o un planeta' }).fill('pluton');
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/focus=pluto/);
+  const card = page.locator('mission-card');
+  await expect(card.getByRole('heading', { name: 'Plutón' })).toBeVisible();
+  await expect(card).toContainText('Planeta enano');
+  // Pluto is about 35 AU out in 2026.
+  await expect(card.locator('dl > div', { hasText: 'Distancia al Sol' }).locator('dd')).toHaveText(
+    /^3[45],\d UA$/,
+  );
+  // On the map too, a quiet marker of its own.
+  await expect(page.locator('solar-map [data-body="pluto"] circle.small')).toBeAttached();
+  // Its orbit is a line, like every orbit, never a filled shape.
+  for (const id of ['pluto', 'earth']) {
+    await expect(page.locator(`solar-map [data-orbit="${id}"]`)).toHaveCSS('fill', 'none');
+  }
+});

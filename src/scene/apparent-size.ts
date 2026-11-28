@@ -11,6 +11,8 @@ export const SUN_MIN_DIAMETER_PX = 12;
 export const CRAFT_MIN_DIAMETER_PX = 6;
 /** Moons, smaller still: they sit beside their planet and shouldn't crowd it. */
 export const MOON_MIN_DIAMETER_PX = 4;
+/** Dwarf planets, asteroids and comets: a little smaller than the planets. */
+export const SMALL_MIN_DIAMETER_PX = 5;
 
 /**
  * How many world units one screen pixel spans at `distance` from a perspective camera.

@@ -81,7 +81,7 @@ test('fits a phone held either way', async ({ page }) => {
   }
 });
 
-test('puts every planet on its drawn orbit', async ({ page }) => {
+test('puts every planet and small body on its drawn orbit', async ({ page }) => {
   await page.goto('./');
   await expect(page.locator('solar-map [data-body="earth"]')).toBeAttached();
   // Read every marker and orbit in one go, from one render.
@@ -111,7 +111,10 @@ test('puts every planet on its drawn orbit', async ({ page }) => {
     }
     return result;
   });
-  expect(Object.keys(gaps)).toHaveLength(index.bodies.filter((b) => b.kind === 'planet').length);
+  // Planets and small bodies alike sit on the orbits drawn for them.
+  expect(Object.keys(gaps)).toHaveLength(
+    index.bodies.filter((b) => b.kind === 'planet' || b.kind === 'small').length,
+  );
   for (const [id, gap] of Object.entries(gaps)) expect(gap, id).toBeLessThan(1.5);
 });
 

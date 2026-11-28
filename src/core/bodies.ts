@@ -22,6 +22,18 @@ export const RADIUS_KM: Readonly<Record<string, number>> = {
   callisto: 2_410.3,
   enceladus: 252.1,
   titan: 2_574.7,
+  phobos: 11.08,
+  deimos: 6.27,
+  triton: 1_353.4,
+  charon: 606,
+  // Small bodies (mean radii; Arrokoth and 67P are far from round).
+  pluto: 1_188.3,
+  ceres: 469.7,
+  vesta: 262.7,
+  'psyche-asteroid': 111,
+  didymos: 0.39,
+  'comet-67p': 1.65,
+  arrokoth: 9,
 };
 
 /**

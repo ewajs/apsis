@@ -81,7 +81,7 @@ export async function fetchTrack(
     horizonsId: body.horizonsId,
     start,
     stop,
-    step: '1d',
+    step: body.track.step ?? '1d',
     center: body.track.centerCode,
   });
   const samples = parseElementSeries(

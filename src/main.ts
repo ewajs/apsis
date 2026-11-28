@@ -62,6 +62,20 @@ const TEXTURES: Readonly<Record<string, string>> = {
   callisto: 'bodies/2k_callisto.jpg',
   enceladus: 'bodies/2k_enceladus.jpg',
   titan: 'bodies/2k_titan.jpg',
+  phobos: 'bodies/2k_phobos.jpg',
+  deimos: 'bodies/2k_deimos.jpg',
+  triton: 'bodies/2k_triton.jpg',
+  charon: 'bodies/2k_charon.jpg',
+  pluto: 'bodies/2k_pluto.jpg',
+  ceres: 'bodies/2k_ceres.jpg',
+  vesta: 'bodies/2k_vesta.jpg',
+};
+/** Small bodies without a map: a rock colour each (no shape models yet). */
+const COLORS: Readonly<Record<string, string>> = {
+  'psyche-asteroid': '#8d877d',
+  didymos: '#77716b',
+  'comet-67p': '#56524d',
+  arrokoth: '#a0675c',
 };
 
 const params = new URLSearchParams(location.search);
@@ -322,10 +336,12 @@ function fillPicker() {
   const moons = data.index.bodies.flatMap((body) =>
     body.kind === 'moon' && body.track ? [{ id: body.id, parent: body.track.center }] : [],
   );
+  const small = data.index.bodies.filter((body) => body.kind === 'small').map((body) => body.id);
   app.pickerEntries = pickerEntries(
     data.missions,
     planets.map((body) => body.id),
     moons,
+    small,
   );
 }
 
@@ -441,17 +457,20 @@ function names(): Record<string, string> {
   const all: Record<string, string> = { sun: bodyName('sun') };
   for (const body of data?.index.bodies ?? []) {
     all[body.id] =
-      body.kind === 'planet' || body.kind === 'moon'
+      body.kind === 'planet' || body.kind === 'moon' || body.kind === 'small'
         ? bodyName(body.id)
         : (data!.missions.find((mission) => mission.id === body.id)?.name ?? body.id);
   }
   return all;
 }
 
-/** A moon's planet, and its ellipse around it at an instant (from its track). */
-function moonExtras(id: string, parent: string) {
+/**
+ * A tracked body's ellipse at an instant, to draw (from its track); for a moon, also its
+ * planet. A small body's centre is the Sun: no parent.
+ */
+function trackExtras(id: string, center: string) {
   return {
-    parent,
+    parent: center === 'sun' ? undefined : center,
     localOrbit: (t: number) => {
       const chunks = store!.world.get(id)?.track?.chunks;
       const sample = chunks ? trackSampleAt(chunks, t) : null;
@@ -485,7 +504,8 @@ function fillScene() {
           : undefined,
       // One way to place everything: a track where there is one, else states (ADR 0015).
       place: (t: number) => positionAt(body.id, t, store!.world),
-      ...(body.kind === 'moon' && body.track && moonExtras(body.id, body.track.center)),
+      color: COLORS[body.id],
+      ...(body.track && body.kind !== 'spacecraft' && trackExtras(body.id, body.track.center)),
     })),
     {
       name: named.sun!,
@@ -516,6 +536,10 @@ try {
     chunks: store!.chunks.get(body.id) ?? new Map(),
     years: body.years.map((entry) => entry.year),
     orbit: data!.orbits.planets[body.id],
+    ...(body.kind === 'small' && {
+      place: (t: number) => positionAt(body.id, t, store!.world),
+      orbitAt: trackExtras(body.id, 'sun').localOrbit,
+    }),
   }));
   map.bodies = bodies;
   fillPicker();

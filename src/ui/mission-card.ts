@@ -5,6 +5,7 @@ import { milestonesAround, type Milestone, type Mission } from '../core/catalogu
 import type { Facts } from '../core/facts.ts';
 import type { ModelEntry } from '../core/models.ts';
 import { lightTimeSeconds } from '../core/units.ts';
+import { bodyType } from '../i18n/bodies.ts';
 import { currentLocale, localized } from '../i18n/localization.ts';
 import { formatDistance, formatDuration, formatLooseDate, formatSpeed } from './format.ts';
 import { glass } from './glass.ts';
@@ -13,7 +14,7 @@ import { icons } from './icons.ts';
 /** What the card shows: the selection at the displayed instant. */
 export type Card = {
   id: string;
-  kind: 'sun' | 'planet' | 'spacecraft' | 'moon';
+  kind: 'sun' | 'planet' | 'spacecraft' | 'moon' | 'small';
   /** In the language showing. */
   name: string;
   /** The catalogue's entry, for a spacecraft. */
@@ -435,6 +436,7 @@ export class MissionCard extends LitElement {
   /** The line under the name: the agency, the target and how it stands; or what it is. */
   #about(card: Card) {
     if (card.kind === 'sun') return msg('Nuestra estrella', { id: 'card-star' });
+    if (card.kind === 'small') return bodyType(card.id);
     if (card.kind === 'moon') {
       return card.parent ? msg(str`Luna de ${card.parent}`, { id: 'card-moon-of' }) : '';
     }

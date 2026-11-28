@@ -46,9 +46,24 @@ A moon's card reads "Luna de Júpiter", with its distances and speed; its veloci
 from two positions a minute apart (`velocityAt`). Any position from a track carries a
 note: "Posición calculada a partir de elementos orbitales diarios de JPL Horizons".
 
+## Small bodies
+
+Where missions went: the dwarf planets Pluto and Ceres, the asteroids Vesta, Psyche and
+Didymos, comet 67P/Churyumov–Gerasimenko and the Kuiper belt object Arrokoth (7.3). Each
+has a track around the Sun (`center: 'sun'`) sampled every 10 days, enough for their
+slow ellipses; 67P's Horizons ID is `DES=1000012;CAP;`, the orbit solution of its closest
+apparition. Moons and small bodies have only a track: the scripts fetch no heliocentric
+states for them (`TRACK_ONLY`).
+
+They're drawn at least 5 px across, with their orbits around the Sun (fainter on the
+map), Pluto, Ceres and Vesta with their maps, the rest in a plain rock colour: spheres
+for now, real shapes later. The picker lists them in a group of their own, and each
+card says what it is ("Planeta enano", "Cometa"…).
+
 ## The moons
 
-The Moon; Io, Europa, Ganymede and Callisto; Enceladus and Titan. Archived from 1977, so
+The Moon; Io, Europa, Ganymede and Callisto; Enceladus and Titan; Phobos and Deimos;
+Triton; Charon, around Pluto. Archived from 1977, so
 Voyager's flybys show the moons it saw.
 
 Their maps (and the small bodies', for step 7.3) are in `public/textures/bodies/`, with
