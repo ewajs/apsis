@@ -168,10 +168,13 @@ test('zooms from the tool column', async ({ page }, testInfo) => {
   // software WebGL draws a few frames a second, and each call waits for one.
   const apart = () =>
     page.evaluate(() => {
-      const label = (id: string) => document.querySelector(`[data-label="${id}"]`)!;
-      if (getComputedStyle(label('venus')).visibility !== 'visible') return -1;
-      const [sun, venus] = [label('sun'), label('venus')].map((e) => e.getBoundingClientRect());
-      return Math.hypot(venus!.x - sun!.x, venus!.y - sun!.y);
+      const [sun, venus] = ['sun', 'venus'].map((id) =>
+        document.querySelector(`[data-label="${id}"]`),
+      );
+      // The labels appear with the 3D view's first frames: until then, not yet.
+      if (!sun || !venus || getComputedStyle(venus).visibility !== 'visible') return -1;
+      const [a, b] = [sun.getBoundingClientRect(), venus.getBoundingClientRect()];
+      return Math.hypot(b.x - a.x, b.y - a.y);
     });
   await expect.poll(apart).toBeGreaterThan(0);
   const start = await apart();
