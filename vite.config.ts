@@ -76,6 +76,18 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: { cacheName: 'apsis-bodies' },
           },
+          // Quick Look's files (ADR 0014): fetched ahead when a spacecraft's card shows on
+          // an iPhone, kept for offline. A few at most, since they run to 11 MB, and
+          // from the cache without asking again (they change only with the models), for
+          // a month at most, so a model that changed arrives within one.
+          {
+            urlPattern: /\/models\/ar\/.+\.usdz$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'apsis-ar',
+              expiration: { maxEntries: 6, maxAgeSeconds: 30 * 24 * 3600 },
+            },
+          },
           // Spacecraft models (ADR 0013): a few MB each, so never precached; kept once
           // seen, for offline close-ups, and refreshed in the background.
           {

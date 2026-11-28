@@ -33,7 +33,7 @@ test('offers Android’s AR viewer the spacecraft at 1 m and at real size, sayin
   }
 });
 
-test('hands the spacecraft to Quick Look ready-made, at 1 m or locked at real size', async ({
+test('hands the spacecraft to Quick Look ready-made: 1 m fetched ahead, real size locked', async ({
   page,
   request,
 }) => {
@@ -47,12 +47,18 @@ test('hands the spacecraft to Quick Look ready-made, at 1 m or locked at real si
       true,
     );
   });
+  // The 1 m file is fetched as soon as the card shows; once here, a tap opens it from
+  // memory (before, it opens the file's address).
+  const fetched = page.waitForResponse(/\/models\/ar\/juno-1m\.usdz$/);
   await page.goto('./?t=2026-11-23T12:00Z&focus=juno&ar=quick-look');
+  expect((await fetched).ok()).toBe(true);
   const handoff = page.locator('a[rel="ar"][data-ar="quick-look"]');
-  await card(page)
-    .getByRole('button', { name: /^In your room \(AR\)/ })
-    .click();
-  await expect(handoff).toHaveAttribute('href', /\/models\/ar\/juno-1m\.usdz$/);
+  await expect(async () => {
+    await card(page)
+      .getByRole('button', { name: /^In your room \(AR\)/ })
+      .click();
+    await expect(handoff).toHaveAttribute('href', /^blob:/, { timeout: 1_000 });
+  }).toPass();
   // Quick Look answers a link whose only child is an image.
   await expect(handoff.locator('img')).toHaveCount(1);
   await card(page)
@@ -63,6 +69,19 @@ test('hands the spacecraft to Quick Look ready-made, at 1 m or locked at real si
   const usdz = await request.get((await handoff.getAttribute('href'))!.split('#')[0]!);
   expect(usdz.ok()).toBe(true);
   expect((await usdz.body()).subarray(0, 2).toString()).toBe('PK');
+});
+
+test('says so when an AR file isn’t on the phone and there’s no connection', async ({
+  page,
+  context,
+}) => {
+  await page.goto('./?t=2026-11-23T12:00Z&focus=juno&ar=quick-look');
+  const real = card(page).getByRole('button', { name: /^Real size \(AR\)/ });
+  await expect(real).toBeVisible();
+  await context.setOffline(true);
+  await real.click();
+  await expect(page.getByText('Offline: this model isn’t saved on this phone yet.')).toBeVisible();
+  await expect(page.locator('a[rel="ar"]')).toHaveCount(0);
 });
 
 test('offers no AR where there’s no AR viewer', async ({ page }, testInfo) => {
