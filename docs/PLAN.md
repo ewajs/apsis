@@ -125,7 +125,7 @@ The owner's priority: models and AR first, and they should look stunning (up to 
       model once it's big enough on screen; lit by the Sun, its shadow side dark.
 - [x] **5.4 Attitude.** A sensible default pose per spacecraft (Horizons has none):
       the high-gain antenna to Earth, or the arrays to the Sun, as each one flies.
-- [ ] **5.5 Our own models.** Where nothing free exists: a simplified model built in
+- [x] **5.5 Our own models.** Where nothing free exists: a simplified model built in
       code (bus, arrays, dish, booms), labelled as ours on the card.
 - [ ] **5.6 Credits and caching.** Model credits in the info panel and the card;
       models load on demand and stay cached for offline once seen.

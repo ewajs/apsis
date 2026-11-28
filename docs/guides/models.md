@@ -27,10 +27,21 @@ from `own/parts.ts`), add its entry, run the script, and look at it close up in 
 
 ## Our own
 
-`own/parts.ts` has the pieces: a bus in gold or silver blanket, solar wings of real cells
-(tiles with gaps, which catch the light the way a flat panel can't), a parabolic dish with
-its feed, struts and engine bells. Materials are physically based (metalness, roughness),
-tuned for one hard light, the Sun. Builders stay short; a model is a few dozen parts.
+`own/parts.ts` has the pieces: a bus quilted in blanket (`blanketBox`: gold, silver, or the
+white ceramic of spacecraft that fly near the Sun, in slightly puffed pillows with dark
+seams, so a hard light shades them softly), solar panels of real cells (tiles with gaps,
+which catch the light the way a flat panel can't; optionally every few columns a mirror,
+or all mirrors) and wings of them on a yoke, a parabolic dish with its feed and rim,
+struts, cans, engine bells and Hall thrusters. Materials are physically based
+(metalness, roughness), tuned for one hard light, the Sun. Builders stay short; a model
+is a few dozen parts, and its comment names where its sizes come from.
+
+- **Psyche** stands upright along X (instrument deck at +X, thrusters at −X), its 2 m
+  dish on +Z and its two cross-shaped wings of five panels along ±Y.
+- **BepiColombo** is the Mercury Planetary Orbiter with Mio in its sunshield (MOSIF), as
+  it flies between orbit insertion and the orbiters' separation. Its radiator faces −X:
+  the default pose keeps the Sun on the +X side, so the radiator stays in shade, as the
+  real one must.
 
 ## In the 3D view
 
